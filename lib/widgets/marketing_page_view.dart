@@ -106,7 +106,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
     super.initState();
     _flightController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: _isRunningTests ? 60 : 960),
+      duration: Duration(milliseconds: _isRunningTests ? 80 : 1550),
     )
       ..addListener(_handleFlightTick)
       ..addStatusListener(_handleFlightStatus);
@@ -126,7 +126,8 @@ class _MarketingPageViewState extends State<MarketingPageView>
 
   void _handleFlightTick() {
     if (!_isFlightActive || _stageSwappedForFlight) return;
-    if (_flightController.value >= 0.44) {
+    if (_flightController.value >=
+        BoostFlightKinematics.swapProgressThreshold) {
       _commitPendingStage();
     }
   }
@@ -781,6 +782,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
 
     return FrostedCloudBackdrop(
       accentColor: _robotPaint.swatch,
+      paused: _isFlightActive,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         floatingActionButton: FloatingActionButton(
@@ -811,18 +813,60 @@ class _MarketingPageViewState extends State<MarketingPageView>
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 980),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildMinimalHeaderStrip(isTiny),
-                          SizedBox(height: isTiny ? 10 : 16),
-                          _buildGuidedRobotStage(
-                            isWideStage: isWideStage,
-                            isTiny: isTiny,
-                          ),
-                          const SizedBox(height: 14),
-                          _buildMinimalFooter(isTiny),
-                        ],
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final stageW = constraints.maxWidth.isFinite
+                              ? constraints.maxWidth
+                              : 600.0;
+                          final fallbackStart = isWideStage
+                              ? Offset(stageW * 0.21, 224.0)
+                              : Offset(isTiny ? 56.0 : 66.0, 166.0);
+                          final fallbackTarget = isWideStage
+                              ? Offset(stageW * 0.68, 265.0)
+                              : Offset(stageW * 0.54, 390.0);
+
+                          return Stack(
+                            key: _stageStackKey,
+                            clipBehavior: Clip.none,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildMinimalHeaderStrip(isTiny),
+                                  SizedBox(height: isTiny ? 10 : 16),
+                                  _buildGuidedRobotStage(
+                                    isWideStage: isWideStage,
+                                    isTiny: isTiny,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _buildMinimalFooter(isTiny),
+                                ],
+                              ),
+                              if (_isFlightActive)
+                                Positioned.fill(
+                                  child: AnimatedBuilder(
+                                    animation: _flightController,
+                                    builder: (context, _) {
+                                      return BoostFlightStageOverlay(
+                                        progress: _flightController.value,
+                                        startCenter:
+                                            _takeoffCenter ?? fallbackStart,
+                                        portalTargetCenter:
+                                            _portalTargetCenter ??
+                                                fallbackTarget,
+                                        robotHeight: _takeoffRobotHeight,
+                                        isWideStage: isWideStage,
+                                        targetStage: _pendingStage,
+                                        paintStyle: _robotPaint,
+                                        hat: _robotHat,
+                                        isDancing: _isDancing,
+                                      );
+                                    },
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -1043,82 +1087,45 @@ class _MarketingPageViewState extends State<MarketingPageView>
     required bool isWideStage,
     required bool isTiny,
   }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final stageW =
-            constraints.maxWidth.isFinite ? constraints.maxWidth : 600.0;
-        final fallbackStart = isWideStage
-            ? Offset(stageW * 0.21, 134.0)
-            : Offset(isTiny ? 56.0 : 66.0, isTiny ? 58.0 : 68.0);
-        final fallbackTarget = isWideStage
-            ? Offset(stageW * 0.68, 175.0)
-            : Offset(stageW * 0.54, 290.0);
-
-        return Stack(
-          key: _stageStackKey,
-          clipBehavior: Clip.none,
-          children: [
-            GlassSurface(
-              borderRadius: 26,
-              blurSigma: 18,
-              tintColor: _robotPaint.swatch,
-              topOpacity: 0.78,
-              bottomOpacity: 0.56,
-              borderColor: Colors.white.withValues(alpha: 0.90),
-              borderWidth: 1.5,
-              padding: EdgeInsets.all(isTiny ? 12 : 22),
-              child: isWideStage
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 5,
-                          child: _buildRobotHostPane(
-                            isWideStage: true,
-                            isTiny: false,
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          flex: 7,
-                          child: _buildStageRightPane(isTiny: false),
-                        ),
-                      ],
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildRobotHostPane(isWideStage: false, isTiny: isTiny),
-                        const SizedBox(height: 14),
-                        _buildStageRightPane(isTiny: isTiny),
-                        const SizedBox(height: 14),
-                        _buildQuickReplyChips(),
-                      ],
+    return RepaintBoundary(
+      child: GlassSurface(
+        borderRadius: 26,
+        blurSigma: 18,
+        tintColor: _robotPaint.swatch,
+        topOpacity: 0.78,
+        bottomOpacity: 0.56,
+        borderColor: Colors.white.withValues(alpha: 0.90),
+        borderWidth: 1.5,
+        padding: EdgeInsets.all(isTiny ? 12 : 22),
+        child: isWideStage
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: _buildRobotHostPane(
+                      isWideStage: true,
+                      isTiny: false,
                     ),
-            ),
-            if (_isFlightActive)
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _flightController,
-                  builder: (context, _) {
-                    return BoostFlightStageOverlay(
-                      progress: _flightController.value,
-                      startCenter: _takeoffCenter ?? fallbackStart,
-                      portalTargetCenter:
-                          _portalTargetCenter ?? fallbackTarget,
-                      robotHeight: _takeoffRobotHeight,
-                      isWideStage: isWideStage,
-                      targetStage: _pendingStage,
-                      paintStyle: _robotPaint,
-                      hat: _robotHat,
-                      isDancing: _isDancing,
-                    );
-                  },
-                ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 7,
+                    child: _buildStageRightPane(isTiny: false),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildRobotHostPane(isWideStage: false, isTiny: isTiny),
+                  const SizedBox(height: 14),
+                  _buildStageRightPane(isTiny: isTiny),
+                  const SizedBox(height: 14),
+                  _buildQuickReplyChips(),
+                ],
               ),
-          ],
-        );
-      },
+      ),
     );
   }
 
@@ -1432,49 +1439,62 @@ class _MarketingPageViewState extends State<MarketingPageView>
   Widget _buildStageRightPane({required bool isTiny}) {
     return KeyedSubtree(
       key: _rightPaneKey,
-      child: AnimatedBuilder(
-        animation: _flightController,
-        builder: (context, child) {
-          if (!_isFlightActive) return child!;
-          final xf =
-              BoostFlightKinematics.evaluatePaneTransition(_flightController.value);
-          return Opacity(
-            opacity: xf.opacity,
-            child: Transform.scale(
-              scale: xf.scale,
-              alignment: Alignment.center,
-              child: child,
-            ),
-          );
-        },
-        child: AnimatedSwitcher(
-          duration: Duration(milliseconds: _isFlightActive ? 0 : 220),
-          child: KeyedSubtree(
-            key: ValueKey('stage_$_activeStage'),
-            child: _activeStage == 0
-                ? ScrapToRobotWorkbench(
-                    onReaction: (msg, {bool complete = false}) {
-                      setState(() {
-                        _robotMood =
-                            complete ? RobotMood.excited : RobotMood.explaining;
-                        _botMessage = msg;
-                      });
-                    },
-                  )
-                : _activeStage == 1
-                    ? InteractiveMachinePlayground(
-                        activeIndex: _exampleIdx,
-                        onSelectMachine: _onSelectMachineExample,
-                        onBoltsComment: (msg) {
+      child: GlassMotionScope(
+        suppressBlur: _isFlightActive,
+        child: AnimatedBuilder(
+          animation: _flightController,
+          builder: (context, child) {
+            if (!_isFlightActive) return child!;
+            final xf = BoostFlightKinematics.evaluatePaneTransition(
+              _flightController.value,
+            );
+            return Opacity(
+              opacity: xf.opacity,
+              child: Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.0012)
+                  ..rotateY(xf.rotateY),
+                child: Transform.scale(
+                  scale: xf.scale,
+                  alignment: Alignment.center,
+                  child: child,
+                ),
+              ),
+            );
+          },
+          child: RepaintBoundary(
+            child: AnimatedSwitcher(
+              duration: Duration(milliseconds: _isFlightActive ? 0 : 220),
+              child: KeyedSubtree(
+                key: ValueKey('stage_$_activeStage'),
+                child: _activeStage == 0
+                    ? ScrapToRobotWorkbench(
+                        onReaction: (msg, {bool complete = false}) {
                           setState(() {
-                            _robotMood = RobotMood.excited;
+                            _robotMood = complete
+                                ? RobotMood.excited
+                                : RobotMood.explaining;
                             _botMessage = msg;
                           });
                         },
                       )
-                    : _activeStage == 2
-                        ? _buildInteractivePlanCard(isTiny)
-                        : _buildMinimalPassCard(isTiny),
+                    : _activeStage == 1
+                        ? InteractiveMachinePlayground(
+                            activeIndex: _exampleIdx,
+                            onSelectMachine: _onSelectMachineExample,
+                            onBoltsComment: (msg) {
+                              setState(() {
+                                _robotMood = RobotMood.excited;
+                                _botMessage = msg;
+                              });
+                            },
+                          )
+                        : _activeStage == 2
+                            ? _buildInteractivePlanCard(isTiny)
+                            : _buildMinimalPassCard(isTiny),
+              ),
+            ),
           ),
         ),
       ),

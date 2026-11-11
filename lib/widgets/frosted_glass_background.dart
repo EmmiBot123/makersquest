@@ -7,16 +7,40 @@ import '../theme/app_theme.dart';
 bool get _isRunningTests =>
     WidgetsBinding.instance.runtimeType.toString().contains('Test');
 
+/// Temporarily pauses expensive BackdropFilter shader passes on animated glass
+/// children during fast 3D transform transitions so frame rates stay buttery smooth.
+class GlassMotionScope extends InheritedWidget {
+  final bool suppressBlur;
+
+  const GlassMotionScope({
+    super.key,
+    required this.suppressBlur,
+    required super.child,
+  });
+
+  static bool isSuppressed(BuildContext context) {
+    final scope =
+        context.dependOnInheritedWidgetOfExactType<GlassMotionScope>();
+    return scope?.suppressBlur ?? false;
+  }
+
+  @override
+  bool updateShouldNotify(GlassMotionScope oldWidget) =>
+      oldWidget.suppressBlur != suppressBlur;
+}
+
 /// Full-bleed Frosted Cloud Light background with gently drifting pastel orbs,
 /// translucent bubble rings, and subtle floating STEM sparkles.
 class FrostedCloudBackdrop extends StatefulWidget {
   final Widget child;
   final Color? accentColor;
+  final bool paused;
 
   const FrostedCloudBackdrop({
     super.key,
     required this.child,
     this.accentColor,
+    this.paused = false,
   });
 
   @override
@@ -36,8 +60,21 @@ class _FrostedCloudBackdropState extends State<FrostedCloudBackdrop>
     );
     if (_isRunningTests) {
       _controller.value = 0.28;
-    } else {
+    } else if (!widget.paused) {
       _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant FrostedCloudBackdrop oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_isRunningTests) return;
+    if (oldWidget.paused != widget.paused) {
+      if (widget.paused) {
+        _controller.stop();
+      } else {
+        _controller.repeat();
+      }
     }
   }
 
@@ -328,20 +365,27 @@ class GlassSurface extends StatelessWidget {
             ),
         ];
 
-    Widget surface = ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: radius,
-            border: Border.all(color: resolvedBorder, width: borderWidth),
-          ),
-          child: child,
-        ),
+    final suppressBlur =
+        GlassMotionScope.isSuppressed(context) || blurSigma <= 0;
+
+    final innerContainer = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: radius,
+        border: Border.all(color: resolvedBorder, width: borderWidth),
       ),
+      child: child,
+    );
+
+    final Widget surface = ClipRRect(
+      borderRadius: radius,
+      child: suppressBlur
+          ? innerContainer
+          : BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+              child: innerContainer,
+            ),
     );
 
     return Container(

@@ -1,5 +1,6 @@
 // Tests for Bolts' jetpack boost & fly-into-page stage transitions
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,16 +13,25 @@ void main() {
     const start = Offset(190, 120);
     const target = Offset(660, 190);
 
-    final launch = BoostFlightKinematics.evaluate(
+    final crouch = BoostFlightKinematics.evaluate(
       t: 0.05,
       start: start,
       target: target,
       isWideStage: true,
       stageWidth: 960,
     );
-    expect(launch.boostThrust, greaterThan(0.9));
-    expect(launch.opacity, 1.0);
-    expect(launch.position.dy, lessThan(start.dy));
+    expect(crouch.boostThrust, greaterThan(0.9));
+    expect(crouch.opacity, 1.0);
+    expect(crouch.position.dy, greaterThan(start.dy)); // anticipation squash down
+
+    final springUp = BoostFlightKinematics.evaluate(
+      t: 0.13,
+      start: start,
+      target: target,
+      isWideStage: true,
+      stageWidth: 960,
+    );
+    expect(springUp.position.dy, lessThan(start.dy)); // launched skyward!
 
     final midDive = BoostFlightKinematics.evaluate(
       t: 0.27,
@@ -32,17 +42,19 @@ void main() {
     );
     expect(midDive.position.dx, greaterThan(start.dx));
     expect(midDive.position.dx, lessThan(target.dx));
-    expect(midDive.boostThrust, greaterThan(1.2));
+    expect(midDive.scale, greaterThan(1.12)); // foreground zoom fly-by!
+    expect(midDive.boostThrust, greaterThan(1.3));
 
-    final portalFlash = BoostFlightKinematics.evaluate(
-      t: 0.47,
+    final portalImpact = BoostFlightKinematics.evaluate(
+      t: 0.49,
       start: start,
       target: target,
       isWideStage: true,
       stageWidth: 960,
     );
-    expect(portalFlash.position, target);
-    expect(portalFlash.opacity, 0.0);
+    expect(portalImpact.position.dx, closeTo(target.dx, 0.5));
+    expect(portalImpact.position.dy, closeTo(target.dy, 0.5));
+    expect(portalImpact.opacity, 0.0);
 
     final returnFlight = BoostFlightKinematics.evaluate(
       t: 0.72,
@@ -64,13 +76,15 @@ void main() {
     expect(landed.position.dx, closeTo(start.dx, 0.01));
     expect(landed.position.dy, closeTo(start.dy, 0.01));
     expect(landed.scale, closeTo(1.0, 0.01));
-    expect(landed.tiltAngle, closeTo(0.0, 0.01));
+    expect(landed.tiltAngle.abs(), closeTo(math.pi * 2.0, 0.02));
 
     final preSwapPane = BoostFlightKinematics.evaluatePaneTransition(0.32);
     expect(preSwapPane.scale, lessThan(1.0));
+    expect(preSwapPane.rotateY, lessThan(0.0));
     final settledPane = BoostFlightKinematics.evaluatePaneTransition(1.0);
     expect(settledPane.scale, closeTo(1.0, 0.01));
     expect(settledPane.opacity, closeTo(1.0, 0.01));
+    expect(settledPane.rotateY, closeTo(0.0, 0.01));
   });
 
   testWidgets('Clicking Examples triggers jetpack boost overlay and swoops cleanly into Examples on desktop',
@@ -89,9 +103,10 @@ void main() {
     // Tap "Try Live Examples" with idle boosters OFF
     await tester.tap(find.text('Try Live Examples'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 18)); // t ≈ 0.30 (mid-air dive!)
+    await tester.pump(const Duration(milliseconds: 24)); // t ≈ 0.30 (foreground hero fly-by!)
 
     expect(find.byType(BoostFlightStageOverlay), findsOneWidget);
+    expect(find.text('🚀 WARP TO EXAMPLES! ⚙️'), findsOneWidget);
 
     final trailFinder = find.byWidgetPredicate(
       (w) => w is CustomPaint && w.painter is BoostFlightTrailPainter,
@@ -108,8 +123,8 @@ void main() {
     });
     expect(flyingRobotFinder, findsOneWidget);
 
-    // Advance past portal swap (t >= 0.44 -> ~0.60)
-    await tester.pump(const Duration(milliseconds: 18));
+    // Advance past portal swap (t >= 0.49 -> ~0.60)
+    await tester.pump(const Duration(milliseconds: 24));
     expect(find.text('Scissor Lift'), findsOneWidget);
 
     // Finish return flight & verify clean handoff back to docked Bolts
@@ -129,7 +144,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('← Back to Examples'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 18));
+    await tester.pump(const Duration(milliseconds: 24));
     expect(find.byType(BoostFlightStageOverlay), findsOneWidget);
 
     await tester.pumpAndSettle();
@@ -160,10 +175,10 @@ void main() {
 
     await tester.tap(find.text('2. Examples'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 18));
+    await tester.pump(const Duration(milliseconds: 24));
     expect(find.byType(BoostFlightStageOverlay), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 18));
+    await tester.pump(const Duration(milliseconds: 24));
     expect(find.text('Scissor Lift'), findsOneWidget);
 
     await tester.pumpAndSettle();
@@ -173,7 +188,7 @@ void main() {
 
   testWidgets('Render 4-stage boost flight sequence contact sheet cleanly',
       (WidgetTester tester) async {
-    const frames = [0.06, 0.24, 0.39, 0.68];
+    const frames = [0.06, 0.25, 0.43, 0.66];
     const cellW = 460.0;
     const cellH = 270.0;
     final totalW = cellW * frames.length;

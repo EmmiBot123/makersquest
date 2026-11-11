@@ -126,33 +126,52 @@ void playSoundBoostImpl() {
     if (ctx == null) return;
     final now = ctx.currentTime;
 
-    // Thruster ignition whoosh (ascending dual sweep)
-    final thrustOsc = ctx.createOscillator();
-    final thrustGain = ctx.createGain();
-    thrustOsc.connect(thrustGain);
-    thrustGain.connect(ctx.destination);
-    thrustOsc.type = 'sawtooth';
-    thrustOsc.frequency.setValueAtTime(140, now);
-    thrustOsc.frequency.exponentialRampToValueAtTime(780, now + 0.34);
-    thrustGain.gain.setValueAtTime(0.055, now);
-    thrustGain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
-    thrustOsc.start(now);
-    thrustOsc.stop(now + 0.38);
+    // 1. Sub-bass thruster ignition thump
+    final subOsc = ctx.createOscillator();
+    final subGain = ctx.createGain();
+    subOsc.connect(subGain);
+    subGain.connect(ctx.destination);
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(115, now);
+    subOsc.frequency.exponentialRampToValueAtTime(48, now + 0.16);
+    subGain.gain.setValueAtTime(0.11, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    subOsc.start(now);
+    subOsc.stop(now + 0.18);
 
-    // Portal sparkle chime when Bolts dives into the target page
-    final chimeNotes = [783.99, 1046.50, 1318.51];
+    // 2. Smooth dual-oscillator rising turbo jet whoosh (synced to ~760ms portal dive)
+    for (final cfg in [
+      (type: 'triangle', f0: 145.0, f1: 880.0, vol: 0.065),
+      (type: 'sawtooth', f0: 152.0, f1: 920.0, vol: 0.028),
+    ]) {
+      final osc = ctx.createOscillator();
+      final gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = cfg.type;
+      osc.frequency.setValueAtTime(cfg.f0, now + 0.05);
+      osc.frequency.exponentialRampToValueAtTime(cfg.f1, now + 0.72);
+      gain.gain.setValueAtTime(0.004, now + 0.05);
+      gain.gain.linearRampToValueAtTime(cfg.vol, now + 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.78);
+      osc.start(now + 0.05);
+      osc.stop(now + 0.78);
+    }
+
+    // 3. Portal warp sparkle shimmer right at ~760ms card reveal + touchdown chime
+    final chimeNotes = [783.99, 1046.50, 1318.51, 1567.98];
     for (int i = 0; i < chimeNotes.length; i++) {
       final osc = ctx.createOscillator();
       final gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.type = 'sine';
-      final t = now + 0.30 + (i * 0.055);
+      final t = now + 0.72 + (i * 0.055);
       osc.frequency.setValueAtTime(chimeNotes[i], t);
-      gain.gain.setValueAtTime(0.065, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      gain.gain.setValueAtTime(0.06, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
       osc.start(t);
-      osc.stop(t + 0.18);
+      osc.stop(t + 0.22);
     }
   } catch (_) {}
 }

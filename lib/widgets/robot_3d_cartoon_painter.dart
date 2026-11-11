@@ -421,7 +421,14 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     _Vec3 rightElbow3;
     _Vec3 rightWrist3;
 
-    if (isDancing) {
+    if (boostThrust > 0.3) {
+      // Superhero rocket flight pose: right fist punches forward/up, left sweeps back!
+      final punchFlutter = math.sin(idle * 12 * math.pi) * 2.5;
+      leftElbow3 = _Vec3(-39, -40, -6);
+      leftWrist3 = _Vec3(-49, -24 + punchFlutter, -14);
+      rightElbow3 = _Vec3(34, -67, 12);
+      rightWrist3 = _Vec3(39, -90 - punchFlutter, 24);
+    } else if (isDancing) {
       final groove = math.sin(idle * 10 * math.pi);
       leftElbow3 = _Vec3(-39, -54 - groove * 5, 6);
       leftWrist3 = _Vec3(-44 + groove * 5, -72 - groove * 10, 14);
@@ -1312,7 +1319,28 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
       final ey = eyeCenter.p.dy;
       final es = eyeCenter.scale;
 
-      if (isBlinking) {
+      if (boostThrust > 0.3) {
+        // Hyped turbo star eyes during rocket flight!
+        final starR = 7.2 * es;
+        final star = Path()
+          ..moveTo(ex, ey - starR)
+          ..quadraticBezierTo(ex, ey, ex + starR, ey)
+          ..quadraticBezierTo(ex, ey, ex, ey + starR)
+          ..quadraticBezierTo(ex, ey, ex - starR, ey)
+          ..quadraticBezierTo(ex, ey, ex, ey - starR)
+          ..close();
+        canvas.drawCircle(
+          Offset(ex, ey),
+          starR * 1.15,
+          Paint()..color = const Color(0xFF38BDF8).withValues(alpha: 0.35),
+        );
+        canvas.drawPath(star, Paint()..color = const Color(0xFFFDE047));
+        canvas.drawCircle(
+          Offset(ex, ey),
+          2.2 * es,
+          Paint()..color = Colors.white,
+        );
+      } else if (isBlinking) {
         // Gentle curved happy blink lash
         final blinkPath = Path()
           ..moveTo(ex - 5.5 * es, ey)
@@ -2504,6 +2532,25 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
             ? const Color(0xFFE0F2FE)
             : const Color(0xFFFEF08A),
     );
+
+    if (thrustExtra > 0.45) {
+      // Mach shock-diamond thruster rings during overdrive boost
+      for (int r = 1; r <= 2; r++) {
+        final ringY = flameBase.dy + flameLen * (0.28 * r);
+        final ringW = (11.5 - r * 2.5) * s;
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(flameBase.dx, ringY),
+            width: ringW,
+            height: 3.4 * s,
+          ),
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.62 - r * 0.14)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.6 * s,
+        );
+      }
+    }
   }
 
   // ------------------------------------------------------------------
