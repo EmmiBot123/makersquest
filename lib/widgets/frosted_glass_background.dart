@@ -35,12 +35,14 @@ class FrostedCloudBackdrop extends StatefulWidget {
   final Widget child;
   final Color? accentColor;
   final bool paused;
+  final String sceneTheme;
 
   const FrostedCloudBackdrop({
     super.key,
     required this.child,
     this.accentColor,
     this.paused = false,
+    this.sceneTheme = 'cloud',
   });
 
   @override
@@ -119,6 +121,7 @@ class _FrostedCloudBackdropState extends State<FrostedCloudBackdrop>
                           progress: _controller.value,
                           accentColor: widget.accentColor,
                           parallax: _parallax,
+                          sceneTheme: widget.sceneTheme,
                         ),
                       );
                     },
@@ -138,12 +141,47 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
   final double progress;
   final Color? accentColor;
   final Offset parallax;
+  final String sceneTheme;
 
   const _FrostedCloudBackdropPainter({
     required this.progress,
     this.accentColor,
     this.parallax = Offset.zero,
+    this.sceneTheme = 'cloud',
   });
+
+  List<Color> _themeGradientColors() {
+    switch (sceneTheme) {
+      case 'space':
+        return const [
+          Color(0xFFEDE9FE),
+          Color(0xFFDBEAFE),
+          Color(0xFFE0E7FF),
+          Color(0xFFFCE7F3),
+        ];
+      case 'sunset':
+        return const [
+          Color(0xFFFFEDD5),
+          Color(0xFFFCE7F3),
+          Color(0xFFFEF3C7),
+          Color(0xFFEFF6FF),
+        ];
+      case 'cyber':
+        return const [
+          Color(0xFFCFFAFE),
+          Color(0xFFDCFCE7),
+          Color(0xFFE0E7FF),
+          Color(0xFFFAE8FF),
+        ];
+      default:
+        return const [
+          Color(0xFFEAF2FF),
+          Color(0xFFF6F4FF),
+          Color(0xFFECFEFF),
+          Color(0xFFFFF7ED),
+        ];
+    }
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -157,22 +195,29 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
 
     // 1. Airy Frosted Studio Base Gradient
     final basePaint = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [
-          Color(0xFFEAF2FF),
-          Color(0xFFF6F4FF),
-          Color(0xFFECFEFF),
-          Color(0xFFFFF7ED),
-        ],
-        stops: [0.0, 0.35, 0.72, 1.0],
+        colors: _themeGradientColors(),
+        stops: const [0.0, 0.35, 0.72, 1.0],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), basePaint);
 
     // 2. Seamless Drifting Pastel Cloud Orbs (soft radial gradients + pointer parallax)
     final accent = accentColor ?? const Color(0xFF6366F1);
     final baseSpan = math.max(w, h);
+    final orb1Color = sceneTheme == 'sunset'
+        ? const Color(0xFFFB7185)
+        : (sceneTheme == 'space'
+            ? const Color(0xFFA855F7)
+            : (sceneTheme == 'cyber'
+                ? const Color(0xFF06B6D4)
+                : const Color(0xFF38BDF8)));
+    final orb3Color = sceneTheme == 'sunset'
+        ? const Color(0xFFF59E0B)
+        : (sceneTheme == 'space'
+            ? const Color(0xFF38BDF8)
+            : const Color(0xFF34D399));
 
     _drawCloudOrb(
       canvas,
@@ -181,8 +226,8 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
         h * (0.18 + 0.07 * math.cos(theta)) + pyShift * 0.9,
       ),
       radius: baseSpan * (0.36 + 0.03 * math.sin(theta * 2)),
-      color: const Color(0xFF38BDF8),
-      peakAlpha: 0.22,
+      color: orb1Color,
+      peakAlpha: 0.24,
     );
 
     _drawCloudOrb(
@@ -193,7 +238,7 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
       ),
       radius: baseSpan * (0.38 + 0.03 * math.cos(theta * 2)),
       color: accent,
-      peakAlpha: 0.19,
+      peakAlpha: 0.20,
     );
 
     _drawCloudOrb(
@@ -203,8 +248,8 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
         h * (0.80 + 0.07 * math.sin(theta + 1.4)) - pyShift * 0.8,
       ),
       radius: baseSpan * (0.34 + 0.025 * math.sin(theta)),
-      color: const Color(0xFF34D399),
-      peakAlpha: 0.17,
+      color: orb3Color,
+      peakAlpha: 0.19,
     );
 
     _drawCloudOrb(
@@ -313,7 +358,8 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
   bool shouldRepaint(covariant _FrostedCloudBackdropPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.accentColor != accentColor ||
-        oldDelegate.parallax != parallax;
+        oldDelegate.parallax != parallax ||
+        oldDelegate.sceneTheme != sceneTheme;
   }
 }
 

@@ -218,3 +218,87 @@ void playSoundBackflipImpl() {
   } catch (_) {}
 }
 
+void playSoundSpinWhooshImpl() {
+  try {
+    final ctx = _getAudioContext();
+    if (ctx == null) return;
+    final now = ctx.currentTime;
+    final osc = ctx.createOscillator();
+    final gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(920, now + 0.25);
+    osc.frequency.exponentialRampToValueAtTime(360, now + 0.55);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.56);
+    osc.start(now);
+    osc.stop(now + 0.56);
+  } catch (_) {}
+}
+
+void playSoundBeatPadImpl(int padIndex) {
+  try {
+    final ctx = _getAudioContext();
+    if (ctx == null) return;
+    final now = ctx.currentTime;
+    switch (padIndex % 4) {
+      case 0: // Punchy Cardboard Kick
+        final osc = ctx.createOscillator();
+        final gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(145, now);
+        osc.frequency.exponentialRampToValueAtTime(46, now + 0.14);
+        gain.gain.setValueAtTime(0.16, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc.start(now);
+        osc.stop(now + 0.16);
+        break;
+      case 1: // Crisp Ruler Clack
+        final osc = ctx.createOscillator();
+        final gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(720, now);
+        osc.frequency.exponentialRampToValueAtTime(280, now + 0.08);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.start(now);
+        osc.stop(now + 0.09);
+        break;
+      case 2: // Futuristic Servo Zap
+        final osc = ctx.createOscillator();
+        final gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1120, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.14);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+        break;
+      default: // Sparkling Bot Chord
+        final chord = [523.25, 659.25, 783.99];
+        for (final f in chord) {
+          final osc = ctx.createOscillator();
+          final gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now);
+          gain.gain.setValueAtTime(0.055, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        }
+        break;
+    }
+  } catch (_) {}
+}
+

@@ -53,5 +53,17 @@ class SoundEffects {
     if (!enabled) return;
     playSoundBackflipImpl();
   }
+
+  /// Plays a futuristic 360-degree levitation spin whoosh
+  static void playSpinWhoosh() {
+    if (!enabled) return;
+    playSoundSpinWhooshImpl();
+  }
+
+  /// Plays a real-time Boombox synthesized percussion/synth note (pads 0..3)
+  static void playBeatPad(int padIndex) {
+    if (!enabled) return;
+    playSoundBeatPadImpl(padIndex);
+  }
 }
 

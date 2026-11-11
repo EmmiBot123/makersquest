@@ -17,6 +17,8 @@ class BoltsSavedState {
   final int catapultBestStreak;
   final int skyGearsBest;
   final Set<String> clearedChallenges;
+  final String sceneTheme;
+  final int sandboxStars;
 
   const BoltsSavedState({
     this.paintName = 'cobalt',
@@ -31,6 +33,8 @@ class BoltsSavedState {
     this.catapultBestStreak = 0,
     this.skyGearsBest = 0,
     this.clearedChallenges = const {},
+    this.sceneTheme = 'cloud',
+    this.sandboxStars = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -46,6 +50,8 @@ class BoltsSavedState {
         'catapultBestStreak': catapultBestStreak,
         'skyGearsBest': skyGearsBest,
         'clearedChallenges': clearedChallenges.toList(),
+        'sceneTheme': sceneTheme,
+        'sandboxStars': sandboxStars,
       };
 
   factory BoltsSavedState.fromJson(Map<String, dynamic> map) {
@@ -69,6 +75,8 @@ class BoltsSavedState {
       catapultBestStreak: (map['catapultBestStreak'] as num?)?.toInt() ?? 0,
       skyGearsBest: (map['skyGearsBest'] as num?)?.toInt() ?? 0,
       clearedChallenges: cleared,
+      sceneTheme: map['sceneTheme'] as String? ?? 'cloud',
+      sandboxStars: (map['sandboxStars'] as num?)?.toInt() ?? 0,
     );
   }
 }

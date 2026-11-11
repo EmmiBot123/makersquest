@@ -288,6 +288,8 @@ class BoostFlightStageOverlay extends StatelessWidget {
         return '🎯 WARP TO YOUR PLAN!';
       case 3:
         return '🚀 WARP TO CADET PASS!';
+      case 4:
+        return '🛠️ WARP TO SANDBOX! 🚀';
       default:
         return '🤖 WARP BACK TO BOLTS!';
     }

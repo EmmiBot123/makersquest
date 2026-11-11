@@ -7,4 +7,6 @@ void playSoundBoingImpl() {}
 void playSoundBoostImpl() {}
 void playSoundPowerUpImpl() {}
 void playSoundBackflipImpl() {}
+void playSoundSpinWhooshImpl() {}
+void playSoundBeatPadImpl(int padIndex) {}
 

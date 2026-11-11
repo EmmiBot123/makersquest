@@ -250,6 +250,8 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
   final bool isRainbowMode;
   final double overchargeProgress;
   final double flipProgress;
+  final double spinProgress;
+  final double winkProgress;
 
   TalkingRobot3DCartoonPainter({
     required this.idle,
@@ -270,6 +272,8 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     this.isRainbowMode = false,
     this.overchargeProgress = 0.0,
     this.flipProgress = 0.0,
+    this.spinProgress = 0.0,
+    this.winkProgress = 0.0,
   });
 
   Color get _activeNeon => isRainbowMode
@@ -372,13 +376,33 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
         flipProgress > 0.001 && flipProgress < 0.999
             ? math.sin(flipProgress * math.pi) * 28.0 * scale
             : 0.0;
+    final spinLift =
+        spinProgress > 0.001 && spinProgress < 0.999
+            ? math.sin(spinProgress * math.pi) * 18.0 * scale
+            : 0.0;
     final baseY = groundY -
         4.0 * scale -
         jumpOffset -
         flipLift -
+        spinLift -
         danceHop -
         boosterLift +
         bobOffset;
+
+    if (showGroundShadow && spinProgress > 0.02 && spinProgress < 0.98) {
+      final ringAlpha = math.sin(spinProgress * math.pi).clamp(0.0, 1.0);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(cx, groundY - 4.0 * scale),
+          width: 82.0 * scale,
+          height: 18.0 * scale,
+        ),
+        Paint()
+          ..color = const Color(0xFF38BDF8).withValues(alpha: ringAlpha * 0.65)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.6 * scale,
+      );
+    }
 
     canvas.translate(cx, baseY);
     canvas.scale(scale);
@@ -389,23 +413,31 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
       canvas.translate(0, 60);
     }
 
-    // Squash & stretch cartoon physics!
+    // Squash & stretch + 3D turntable spin physics!
     double stretchY = 1.0;
     if (tapBounce > 0.01 && tapBounce < 0.99) {
       stretchY = 1.0 + math.sin(tapBounce * 2 * math.pi) * 0.11;
+    } else if (winkProgress > 0.02 && winkProgress < 0.98) {
+      stretchY = 1.0 + math.sin(winkProgress * math.pi).abs() * 0.04;
     } else if (isDancing) {
       stretchY = 1.0 + math.cos(idle * 10 * math.pi) * 0.048;
     } else {
       stretchY = 1.0 - math.sin(idle * 2 * math.pi) * 0.018;
     }
     final squashX = 1.0 / math.sqrt(stretchY);
-    canvas.scale(squashX, stretchY);
+    final turntableX = spinProgress > 0.001 && spinProgress < 0.999
+        ? (0.24 + 0.76 * math.cos(spinProgress * math.pi * 2.0).abs())
+        : 1.0;
+    canvas.scale(squashX * turntableX, stretchY);
 
     // Compute natural hero 3/4 + interactive 3D angles
+    final spinYawWave = spinProgress > 0.001 && spinProgress < 0.999
+        ? math.sin(spinProgress * math.pi * 4.0) * 0.58
+        : 0.0;
     final danceTurn = isDancing ? math.sin(idle * 6 * math.pi) * 0.28 : 0.0;
     final idleLook = math.sin(idle * 2 * math.pi) * 0.14;
     final explainTurn = mood == RobotMood.explaining ? 0.18 : 0.0;
-    final baseBodyYaw = (0.14 + idleLook * 0.55 + danceTurn + explainTurn * 0.65 + userYaw)
+    final baseBodyYaw = (0.14 + idleLook * 0.55 + danceTurn + explainTurn * 0.65 + spinYawWave + userYaw)
         .clamp(-0.78, 0.78);
     final baseBodyPitch =
         ((mood == RobotMood.excited ? -0.07 : 0.02) + userPitch * 0.75)
@@ -454,6 +486,12 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
       leftWrist3 = _Vec3(-49, -24 + punchFlutter, -14);
       rightElbow3 = _Vec3(34, -67, 12);
       rightWrist3 = _Vec3(39, -90 - punchFlutter, 24);
+    } else if (winkProgress > 0.02 && winkProgress < 0.98) {
+      final wWave = math.sin(winkProgress * math.pi * 6.0);
+      leftElbow3 = _Vec3(-39, -56, 8);
+      leftWrist3 = _Vec3(-45 + wWave * 8, -78 + wWave.abs() * 3, 18);
+      rightElbow3 = _Vec3(37, -36, 6);
+      rightWrist3 = const _Vec3(26, -54, 18);
     } else if (isDancing) {
       final groove = math.sin(idle * 10 * math.pi);
       leftElbow3 = _Vec3(-39, -54 - groove * 5, 6);
@@ -1336,7 +1374,12 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     }
 
     // 2. Big Expressive 3D Glossy Cartoon Eyes!
-    final isBlinking = idle > 0.92 && !isTalking && !isDancing && tapBounce < 0.05;
+    final isWinkingNow = winkProgress > 0.06 && winkProgress < 0.94;
+    final isBlinking = !isWinkingNow &&
+        idle > 0.92 &&
+        !isTalking &&
+        !isDancing &&
+        tapBounce < 0.05;
     final isJoySquint =
         mood == RobotMood.excited || isDancing || tapBounce > 0.15;
 
@@ -1347,13 +1390,14 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
 
     final eyeGlowColor = isRainbowMode || overchargeProgress > 0.05
         ? _activeNeon
-        : (isJoySquint ? const Color(0xFF34D399) : paintStyle.neonColor);
+        : (isJoySquint || isWinkingNow ? const Color(0xFF34D399) : paintStyle.neonColor);
 
     for (final side in [-1.0, 1.0]) {
       final eyeCenter = project(_Vec3(side * 10.6, -96.5, 22.4));
       final ex = eyeCenter.p.dx;
       final ey = eyeCenter.p.dy;
       final es = eyeCenter.scale;
+      final thisEyeWinks = isWinkingNow && side > 0;
 
       if (boostThrust > 0.3) {
         // Hyped turbo star eyes during rocket flight!
@@ -1376,17 +1420,22 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
           2.2 * es,
           Paint()..color = Colors.white,
         );
-      } else if (isBlinking) {
-        // Gentle curved happy blink lash
+      } else if (isBlinking || thisEyeWinks) {
+        // Gentle curved happy blink / cute wink lash
         final blinkPath = Path()
           ..moveTo(ex - 5.5 * es, ey)
-          ..quadraticBezierTo(ex, ey + 3.2 * es, ex + 5.5 * es, ey);
+          ..quadraticBezierTo(
+            ex,
+            ey + (thisEyeWinks ? -4.2 : 3.2) * es,
+            ex + 5.5 * es,
+            ey,
+          );
         canvas.drawPath(
           blinkPath,
           Paint()
-            ..color = eyeGlowColor
+            ..color = thisEyeWinks ? const Color(0xFFFDE047) : eyeGlowColor
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 2.6 * es
+            ..strokeWidth = (thisEyeWinks ? 3.2 : 2.6) * es
             ..strokeCap = StrokeCap.round,
         );
       } else if (isJoySquint) {
@@ -2795,6 +2844,8 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
         oldDelegate.boostThrust != boostThrust ||
         oldDelegate.isRainbowMode != isRainbowMode ||
         oldDelegate.overchargeProgress != overchargeProgress ||
-        oldDelegate.flipProgress != flipProgress;
+        oldDelegate.flipProgress != flipProgress ||
+        oldDelegate.spinProgress != spinProgress ||
+        oldDelegate.winkProgress != winkProgress;
   }
 }

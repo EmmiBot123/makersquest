@@ -9,7 +9,9 @@ import '../services/quest_state.dart';
 import '../services/sound_effects.dart';
 import '../services/stencil_exporter.dart';
 import '../theme/app_theme.dart';
+import 'bolts_arcade_deck.dart';
 import 'bolts_free_flight_overlay.dart';
+import 'inventor_sandbox_widget.dart';
 import 'kid_robot_builder_animation.dart';
 import 'robot_boost_flight_overlay.dart';
 import 'stem_infographics.dart';
@@ -37,14 +39,17 @@ class _MarketingPageViewState extends State<MarketingPageView>
     with SingleTickerProviderStateMixin {
   // Guided Stage Index:
   // 0: Meet Bolts (Intro + Scrap-to-Robot bench)
-  // 1: Play With Examples (4 interactive physics demos)
+  // 1: Play With Examples (5 interactive physics demos)
   // 2: Your Plan (Lightweight interactive plan builder + drafting hologram)
   // 3: Cadet Pass (Minimal ₹199 unlock card + Ask Bolts FAQ + WhatsApp help)
+  // 4: Inventor Sandbox (Modular cardboard machine builder + 3 live tracks)
   int _activeStage = 0;
   final int _robotEntranceKey = 0;
   int _confettiKey = 0;
   int _overchargeKey = 0;
   int _backflipKey = 0;
+  int _spinKey = 0;
+  int _winkKey = 0;
   int _highFiveCount = 0;
   bool _isRobotTalking = false;
   RobotMood _robotMood = RobotMood.greeting;
@@ -55,6 +60,8 @@ class _MarketingPageViewState extends State<MarketingPageView>
   bool _isRainbowMode = false;
   bool _soundEnabled = SoundEffects.enabled;
   bool _voiceEnabled = BoltsVoiceService.enabled;
+  String _sceneTheme = 'cloud';
+  int _sandboxStars = 0;
   String _botMessage =
       'Beep-boop! I am Bolts! Tap scraps on my bench, paint me a new color, or give me a high-five!';
 
@@ -68,6 +75,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
   bool _isFreeFlightActive = false;
 
   // Interactive command bar & Household scrap matcher
+  final _scrollController = ScrollController();
   final _commandController = TextEditingController();
   final Set<String> _homeScraps = {'box', 'straws', 'band'};
 
@@ -114,6 +122,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
     (id: 'examples', label: '2. Examples', icon: '⚙️'),
     (id: 'plan', label: '3. Your Plan', icon: '🎯'),
     (id: 'pass', label: '4. Pass ₹199', icon: '🚀'),
+    (id: 'sandbox', label: '5. Sandbox', icon: '🛠️'),
   ];
 
   static const List<String> _machineIntros = [
@@ -161,6 +170,8 @@ class _MarketingPageViewState extends State<MarketingPageView>
     _racerBestMeters = saved.racerBestMeters;
     _catapultBestStreak = saved.catapultBestStreak;
     _skyGearsBest = saved.skyGearsBest;
+    _sceneTheme = saved.sceneTheme;
+    _sandboxStars = saved.sandboxStars;
     _clearedChallenges.addAll(saved.clearedChallenges);
   }
 
@@ -178,6 +189,8 @@ class _MarketingPageViewState extends State<MarketingPageView>
         racerBestMeters: _racerBestMeters,
         catapultBestStreak: _catapultBestStreak,
         skyGearsBest: _skyGearsBest,
+        sceneTheme: _sceneTheme,
+        sandboxStars: _sandboxStars,
         clearedChallenges: _clearedChallenges,
       ),
     );
@@ -203,10 +216,26 @@ class _MarketingPageViewState extends State<MarketingPageView>
   @override
   void dispose() {
     _flightController.dispose();
+    _scrollController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _commandController.dispose();
     super.dispose();
+  }
+
+  void _scrollToStageTop() {
+    if (!_scrollController.hasClients || _scrollController.offset <= 0.0) {
+      return;
+    }
+    if (_isRunningTests) {
+      _scrollController.jumpTo(0.0);
+    } else {
+      _scrollController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   void _handleFlightTick() {
@@ -234,6 +263,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
   void _commitPendingStage() {
     if (!mounted) return;
     HapticFeedback.lightImpact();
+    _scrollToStageTop();
     setState(() {
       _stageSwappedForFlight = true;
       _applyStageState(_pendingStage, customMessage: _pendingCustomMessage);
@@ -318,6 +348,14 @@ class _MarketingPageViewState extends State<MarketingPageView>
           speak: speak,
         );
         break;
+      case 4:
+        _setBotSpeech(
+          customMessage ??
+              'INVENTOR SANDBOX! 🛠️ Snap together a cardboard Body, Motor, Wheels & Gadget — then test-drive it live!',
+          mood: _isDancing ? RobotMood.dancing : RobotMood.excited,
+          speak: speak,
+        );
+        break;
     }
   }
 
@@ -327,6 +365,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
     if (!targetChanged) {
       HapticFeedback.selectionClick();
       SoundEffects.playPop();
+      _scrollToStageTop();
       if (_isFreeFlightActive || customMessage != null) {
         setState(() {
           _isFreeFlightActive = false;
@@ -603,13 +642,189 @@ class _MarketingPageViewState extends State<MarketingPageView>
     });
   }
 
+  void _triggerSpin() {
+    HapticFeedback.mediumImpact();
+    SoundEffects.playSpinWhoosh();
+    setState(() {
+      _spinKey++;
+      _confettiKey++;
+      _setBotSpeech(
+        'WHEEE-WHOOSH! 🌀 Full 360° levitation turntable spin locked! Check out my cardboard backplate!',
+        mood: RobotMood.excited,
+      );
+    });
+  }
+
+  void _triggerWink() {
+    HapticFeedback.lightImpact();
+    SoundEffects.playRobotBeep();
+    setState(() {
+      _winkKey++;
+      _setBotSpeech(
+        'Heeeey Cadet! 😉 *Wink & wave!* Tap any mini-game in the Arcade below to stack bonus Starter XP!',
+        mood: RobotMood.greeting,
+      );
+    });
+  }
+
+  void _triggerConfettiPop() {
+    HapticFeedback.mediumImpact();
+    SoundEffects.playFanfare();
+    setState(() {
+      _confettiKey++;
+      _setBotSpeech(
+        'CONFETTI BLAST! 🎉 Every cardboard scrap you fold today is a real engineering win!',
+        mood: RobotMood.excited,
+      );
+    });
+  }
+
+  void _selectSceneTheme(String themeId) {
+    late String themeMsg;
+    switch (themeId) {
+      case 'space':
+        themeMsg =
+            'Orbital Space Lab backdrop active! 🌌 Zero-gravity cardboard testing initialized!';
+        break;
+      case 'sunset':
+        themeMsg =
+            'Golden Workshop Sunset active! 🌅 Evening build session ready!';
+        break;
+      case 'cyber':
+        themeMsg =
+            'Mint Cyber Grid active! 🔋 Precision neon blueprint glow engaged!';
+        break;
+      default:
+        themeMsg =
+            'Frosted Cloud Workshop restored! ☁️ Fresh daylight maker bench!';
+        break;
+    }
+    setState(() {
+      _sceneTheme = themeId;
+      _setBotSpeech(themeMsg, mood: RobotMood.excited);
+    });
+    _persistBoltsState();
+  }
+
+  void _openCircuitGame() {
+    HapticFeedback.selectionClick();
+    SoundEffects.playPop();
+    showDialog(
+      context: context,
+      builder: (ctx) => CircuitSnapDialog(
+        onSolved: () {
+          _awardDemoXp('circuit_snap', 15);
+          if (mounted) {
+            setState(() {
+              _confettiKey++;
+              _setBotSpeech(
+                'BRIGHT IDEA! 💡 Closed-loop copper-tape circuit lit cleanly (+15 Starter XP)!',
+                mood: RobotMood.excited,
+              );
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  void _openTriviaGame() {
+    HapticFeedback.selectionClick();
+    SoundEffects.playPop();
+    showDialog(
+      context: context,
+      builder: (ctx) => BoltsTriviaDialog(
+        onWon: () {
+          _awardDemoXp('trivia_ace', 15);
+          if (mounted) {
+            setState(() {
+              _confettiKey++;
+              _setBotSpeech(
+                'TRIVIA MASTER! 🧠 You beat Bolts in physics (+15 Starter XP unlocked)!',
+                mood: RobotMood.excited,
+              );
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  void _openBoomboxGame() {
+    HapticFeedback.selectionClick();
+    SoundEffects.playPop();
+    showDialog(
+      context: context,
+      builder: (ctx) => BoomboxBeatDialog(
+        paintStyle: _robotPaint,
+        onBeatDropped: () {
+          _awardDemoXp('boombox_dj', 10);
+          if (mounted) {
+            setState(() {
+              _isDancing = true;
+              _confettiKey++;
+              _setBotSpeech(
+                'DROP THE BEAT! 🎵 DJ Mode unlocked +10 Starter XP and got my servos grooving!',
+                mood: RobotMood.dancing,
+              );
+            });
+          }
+        },
+      ),
+    );
+  }
+
   void _handleBotCommand(String raw) {
     final q = raw.trim().toLowerCase();
     _commandController.clear();
     if (q.isEmpty) return;
 
-    if (q.contains('flip') || q.contains('spin')) {
+    if (q.contains('flip')) {
       _triggerBackflip();
+      return;
+    }
+    if (q.contains('spin') || q.contains('twirl')) {
+      _triggerSpin();
+      return;
+    }
+    if (q.contains('wink') || q.contains('wave')) {
+      _triggerWink();
+      return;
+    }
+    if (q.contains('confetti') || q.contains('celebrate')) {
+      _triggerConfettiPop();
+      return;
+    }
+    if (q.contains('sandbox') || q.contains('invent')) {
+      _goToStage(4);
+      return;
+    }
+    if (q.contains('circuit') || q.contains('led') || q.contains('copper')) {
+      _openCircuitGame();
+      return;
+    }
+    if (q.contains('trivia') || q.contains('quiz')) {
+      _openTriviaGame();
+      return;
+    }
+    if (q.contains('beat') || q.contains('music') || q.contains('boombox')) {
+      _openBoomboxGame();
+      return;
+    }
+    if (q.contains('orbit') || q.contains('space')) {
+      _selectSceneTheme('space');
+      return;
+    }
+    if (q.contains('sunset')) {
+      _selectSceneTheme('sunset');
+      return;
+    }
+    if (q.contains('cyber')) {
+      _selectSceneTheme('cyber');
+      return;
+    }
+    if (q.contains('cloud')) {
+      _selectSceneTheme('cloud');
       return;
     }
     if (q.contains('rainbow') || q.contains('prism') || q.contains('party')) {
@@ -711,7 +926,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
     SoundEffects.playRobotBeep();
     setState(() {
       _setBotSpeech(
-        'Beep! Try typing "backflip", "rainbow", "charge", "fly", "joke", "kit", or "price"!',
+        'Beep! Try typing "backflip", "spin", "wink", "sandbox", "circuit", "quiz", "music", or "price"!',
         mood: RobotMood.thinking,
       );
     });
@@ -1218,6 +1433,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
     return FrostedCloudBackdrop(
       accentColor: _robotPaint.swatch,
       paused: _isFlightActive || _isFreeFlightActive,
+      sceneTheme: _sceneTheme,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         floatingActionButton: FloatingActionButton(
@@ -1242,6 +1458,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
                   key: _viewportStackKey,
                   children: [
                     SingleChildScrollView(
+                      controller: _scrollController,
                       padding: EdgeInsets.fromLTRB(
                         isTiny ? 12 : 24,
                         isTiny ? 12 : 22,
@@ -1275,6 +1492,20 @@ class _MarketingPageViewState extends State<MarketingPageView>
                                       _buildGuidedRobotStage(
                                         isWideStage: isWideStage,
                                         isTiny: isTiny,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      BoltsArcadeShelf(
+                                        accentColor: _robotPaint.swatch,
+                                        sceneTheme: _sceneTheme,
+                                        onSelectTheme: _selectSceneTheme,
+                                        onTriggerSpin: _triggerSpin,
+                                        onTriggerWink: _triggerWink,
+                                        onTriggerConfetti: _triggerConfettiPop,
+                                        onOpenSandbox: () => _goToStage(4),
+                                        onOpenCircuitGame: _openCircuitGame,
+                                        onOpenTriviaGame: _openTriviaGame,
+                                        onOpenBoomboxGame: _openBoomboxGame,
+                                        clearedMilestones: _clearedChallenges,
                                       ),
                                       const SizedBox(height: 14),
                                       _buildMinimalFooter(isTiny),
@@ -1676,6 +1907,8 @@ class _MarketingPageViewState extends State<MarketingPageView>
                       confettiBurstKey: _confettiKey,
                       overchargeKey: _overchargeKey,
                       backflipKey: _backflipKey,
+                      spinKey: _spinKey,
+                      winkKey: _winkKey,
                       paintStyle: _robotPaint,
                       hat: _robotHat,
                       hasBoosters: _hasBoosters,
@@ -1745,6 +1978,8 @@ class _MarketingPageViewState extends State<MarketingPageView>
                     confettiBurstKey: _confettiKey,
                     overchargeKey: _overchargeKey,
                     backflipKey: _backflipKey,
+                    spinKey: _spinKey,
+                    winkKey: _winkKey,
                     paintStyle: _robotPaint,
                     hat: _robotHat,
                     hasBoosters: _hasBoosters,
@@ -1794,7 +2029,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
                     color: AppColors.textMain,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Command Bolts (backflip, rainbow, joke)...',
+                    hintText: 'Command Bolts (backflip, spin, sandbox, quiz)...',
                     hintStyle: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textDim,
@@ -1981,7 +2216,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
           ],
         );
 
-      default:
+      case 3:
         // Interactive "Ask Bolts" Parent & Kid Question Chips!
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2017,6 +2252,54 @@ class _MarketingPageViewState extends State<MarketingPageView>
                   'Send a quick photo to our real human mentors on WhatsApp +918075971988 — we reply fast with alignment help!',
                 ),
               ],
+            ),
+          ],
+        );
+
+      default:
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.bolt_rounded, size: 16),
+              label: const Text(
+                'Circuit Snapper 💡',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: _openCircuitGame,
+            ),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.auto_awesome_rounded, size: 15),
+              label: const Text(
+                'My Starter Plan 🎯',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textMain,
+                side: const BorderSide(color: AppColors.border),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => _goToStage(2),
+            ),
+            TextButton(
+              onPressed: () => _goToStage(3),
+              child: const Text(
+                'Get Pass ₹199 🚀',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         );
@@ -2117,7 +2400,30 @@ class _MarketingPageViewState extends State<MarketingPageView>
                           )
                         : _activeStage == 2
                             ? _buildInteractivePlanCard(isTiny)
-                            : _buildMinimalPassCard(isTiny),
+                            : _activeStage == 3
+                                ? _buildMinimalPassCard(isTiny)
+                                : InventorSandboxWidget(
+                                    bestStars: _sandboxStars,
+                                    onTestResult: (comment, stars, earnedXp) {
+                                      setState(() {
+                                        if (stars > _sandboxStars) {
+                                          _sandboxStars = stars;
+                                        }
+                                        if (stars >= 2) _confettiKey++;
+                                        _setBotSpeech(
+                                          comment,
+                                          mood: stars >= 2
+                                              ? RobotMood.excited
+                                              : RobotMood.explaining,
+                                        );
+                                      });
+                                      if (earnedXp) {
+                                        _awardDemoXp('sandbox_win', 20);
+                                      } else if (stars > 0) {
+                                        _persistBoltsState();
+                                      }
+                                    },
+                                  ),
               ),
             ),
           ),

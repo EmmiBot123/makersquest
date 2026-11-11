@@ -30,6 +30,8 @@ class TalkingRobotCharacter extends StatefulWidget {
   final int confettiBurstKey;
   final int overchargeKey;
   final int backflipKey;
+  final int spinKey;
+  final int winkKey;
   final double height;
   final RobotPaint paintStyle;
   final RobotHat hat;
@@ -47,6 +49,8 @@ class TalkingRobotCharacter extends StatefulWidget {
     this.confettiBurstKey = 0,
     this.overchargeKey = 0,
     this.backflipKey = 0,
+    this.spinKey = 0,
+    this.winkKey = 0,
     this.height = 176,
     this.paintStyle = RobotPaint.cobalt,
     this.hat = RobotHat.none,
@@ -70,6 +74,8 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
   late AnimationController _tiltSpringController;
   late AnimationController _overchargeController;
   late AnimationController _flipController;
+  late AnimationController _spinController;
+  late AnimationController _winkController;
 
   double _userYaw = 0.0;
   double _userPitch = 0.0;
@@ -121,6 +127,16 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
       vsync: this,
       duration: Duration(milliseconds: _isRunningTests ? 60 : 820),
     );
+
+    _spinController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: _isRunningTests ? 60 : 960),
+    );
+
+    _winkController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: _isRunningTests ? 60 : 1200),
+    );
   }
 
   @override
@@ -140,6 +156,13 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
       _flipController.forward(from: 0.0);
       _confettiController.forward(from: 0.0);
     }
+    if (oldWidget.spinKey != widget.spinKey) {
+      _spinController.forward(from: 0.0);
+      _confettiController.forward(from: 0.0);
+    }
+    if (oldWidget.winkKey != widget.winkKey) {
+      _winkController.forward(from: 0.0);
+    }
   }
 
   @override
@@ -151,6 +174,8 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
     _tiltSpringController.dispose();
     _overchargeController.dispose();
     _flipController.dispose();
+    _spinController.dispose();
+    _winkController.dispose();
     super.dispose();
   }
 
@@ -240,6 +265,8 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
                     _tiltSpringController,
                     _overchargeController,
                     _flipController,
+                    _spinController,
+                    _winkController,
                   ]),
                   builder: (context, _) {
                     double effectiveYaw = _userYaw;
@@ -275,6 +302,12 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
                             : 0.0,
                         flipProgress: _flipController.isAnimating
                             ? _flipController.value
+                            : 0.0,
+                        spinProgress: _spinController.isAnimating
+                            ? _spinController.value
+                            : 0.0,
+                        winkProgress: _winkController.isAnimating
+                            ? _winkController.value
                             : 0.0,
                       ),
                     );
