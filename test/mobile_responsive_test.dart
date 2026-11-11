@@ -34,7 +34,7 @@ void main() {
 
   group('Mobile Responsiveness Tests (No RenderFlex Overflows or Layout Errors)', () {
     for (final size in viewports) {
-      testWidgets('MarketingPageView, diagnostics, CAD preview & checkout fit at ${size.width.toInt()}x${size.height.toInt()}', (tester) async {
+      testWidgets('Talking robot guided stage, examples, planner & checkout fit at ${size.width.toInt()}x${size.height.toInt()}', (tester) async {
         final capturedErrors = <String>[];
         final prevOnError = FlutterError.onError;
         FlutterError.onError = (details) {
@@ -54,32 +54,41 @@ void main() {
 
         expect(find.byType(NavigationRail), findsNothing);
         expect(find.byType(NavigationBar), findsNothing);
-        expect(find.text('Transform Cardboard into Real Robotics.'), findsOneWidget);
+        expect(find.text('Turn Cardboard into Real Robotics.'), findsOneWidget);
+        expect(find.text('BOLTS'), findsOneWidget);
 
-        // Open Sample 3D CAD Preview dialog on mobile
-        await _scrollCenterAndTap(tester, find.textContaining('Watch 3D Schematics in Action'));
+        // Stage 0: Scrap workbench taps & CAD Preview
+        await _scrollCenterAndTap(tester, find.text('Delivery Box'));
+        await _scrollCenterAndTap(tester, find.text('Straws'));
+        await _scrollCenterAndTap(tester, find.text('Rubber Band'));
+        expect(find.textContaining('RUNNING FROM SCRAPS'), findsOneWidget);
+
+        await _scrollCenterAndTap(tester, find.text('Preview 3D CAD'));
         expect(find.text('Sample 3D CAD Blueprint Preview'), findsOneWidget);
-
         await tester.tap(find.text('Close Preview'));
         await tester.pumpAndSettle();
 
-        // Scroll steadily down the full marketing page so every section is laid out & verified
-        final scrollFinder = find.byType(SingleChildScrollView).first;
-        for (int step = 0; step < 12; step++) {
-          await tester.drag(scrollFinder, const Offset(0, -500));
-          await tester.pump(const Duration(milliseconds: 50));
+        // Stage 1: All 4 interactive machine playgrounds
+        await _scrollCenterAndTap(tester, find.text('2. Examples'));
+        for (final machine in ['Scissor Lift', 'Torque Racer', 'Claw Gripper', 'Gravity Coaster']) {
+          await _scrollCenterAndTap(tester, find.text(machine));
         }
-        await tester.pumpAndSettle();
+        await _scrollCenterAndTap(tester, find.text('Drop Marble 🔮'));
 
-        // Run Capability Diagnostic on mobile
-        await _scrollCenterAndTap(tester, find.textContaining('Analyze Maker Capability'));
-        await tester.pump(const Duration(milliseconds: 1600));
+        // Stage 2: Minimal planner & drafting hologram
+        await _scrollCenterAndTap(tester, find.text('3. Your Plan'));
+        await _scrollCenterAndTap(tester, find.text('Let Bolts Draft My Plan 🤖✨'));
+        await tester.pump(const Duration(milliseconds: 1200));
         await tester.pumpAndSettle();
+        expect(find.text('Kinetic Drive Pioneer'), findsOneWidget);
 
-        expect(find.textContaining('Maker Profile:'), findsOneWidget);
+        // Stage 3: Minimal Cadet Pass & Ask Bolts Q&A
+        await _scrollCenterAndTap(tester, find.text('4. Pass ₹199'));
+        await _scrollCenterAndTap(tester, find.text('📦 Do we need kits?'));
+        expect(find.textContaining('Zero kits!'), findsOneWidget);
 
         // Open Checkout modal and test promo + UPI layout
-        await _scrollCenterAndTap(tester, find.textContaining('Enroll Now 💳'));
+        await _scrollCenterAndTap(tester, find.textContaining('Unlock Workshop Now (₹199) 🚀'));
         expect(find.text('Secure Checkout'), findsOneWidget);
 
         final promoField = find.byWidgetPredicate(
@@ -123,7 +132,7 @@ void main() {
         await tester.pumpWidget(const MakerQuestApp());
         await tester.pumpAndSettle();
 
-        // Unlock workshop via checkout flow with MAKER100
+        // Unlock workshop via top bar CTA with MAKER100
         await _scrollCenterAndTap(
           tester,
           find.text(size.width < 420 ? 'Pass ₹199' : 'Get Cadet Pass ₹199'),
@@ -155,7 +164,6 @@ void main() {
         await _scrollCenterAndTap(tester, find.textContaining('Blueprint Tree'));
         await _scrollCenterAndTap(tester, find.textContaining('Quest Trail'));
 
-        // Tap Scissor Lift station in LevelMapView to verify launchpad dialog fits mobile
         final scissorStation = find.descendant(
           of: find.byType(LevelMapView),
           matching: find.text('Scissor Lift'),
@@ -181,7 +189,6 @@ void main() {
         await tester.drag(find.byType(ListView).last, const Offset(0, -400));
         await tester.pumpAndSettle();
 
-        // Switch through Step Guide and Submit Proof tabs
         await _scrollCenterAndTap(tester, find.textContaining('Step Guide'));
         await _scrollCenterAndTap(tester, find.text('Submit Proof'));
 
@@ -270,7 +277,6 @@ void main() {
 
       final questState = QuestState(initiallyEnrolled: true);
 
-      // Pump every distinct simulator project directly at 320px width
       for (final project in kSeedProjects) {
         await tester.pumpWidget(
           MaterialApp(
@@ -285,7 +291,6 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      // Also verify RewardCelebrationDialog fits cleanly on 320x640
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -307,7 +312,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Verify ProjectDetailView opens cleanly for solar tracker (last tier) on 320x640
       await tester.pumpWidget(
         MaterialApp(
           home: ProjectDetailView(

@@ -1,4 +1,4 @@
-// MakerQuest Modern Marketing & Student Capability Assessment Page
+// MakerQuest Minimal Interactive Talking-Robot Landing Page (MarketingPageView)
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +8,7 @@ import '../services/sound_effects.dart';
 import '../theme/app_theme.dart';
 import 'kid_robot_builder_animation.dart';
 import 'stem_infographics.dart';
+import 'talking_robot_guide.dart';
 
 class MarketingPageView extends StatefulWidget {
   final QuestState questState;
@@ -24,35 +25,52 @@ class MarketingPageView extends StatefulWidget {
 }
 
 class _MarketingPageViewState extends State<MarketingPageView> {
-  final _formKey = GlobalKey<FormState>();
-  final _scrollController = ScrollController();
-  final GlobalKey _assessmentKey = GlobalKey();
-  final GlobalKey _resultsKey = GlobalKey();
-  final GlobalKey _curriculumKey = GlobalKey();
-  final GlobalKey _pricingKey = GlobalKey();
-  final GlobalKey _faqKey = GlobalKey();
+  // Guided Stage Index:
+  // 0: Meet Bolts (Intro + Scrap-to-Robot bench)
+  // 1: Play With Examples (4 interactive physics demos)
+  // 2: Your Plan (Lightweight interactive plan builder + drafting hologram)
+  // 3: Cadet Pass (Minimal ₹199 unlock card + Ask Bolts FAQ + WhatsApp help)
+  int _activeStage = 0;
+  int _robotEntranceKey = 0;
+  bool _isRobotTalking = false;
+  RobotMood _robotMood = RobotMood.greeting;
+  String _botMessage =
+      'Beep-boop! I am Bolts! Tap the household scraps on my bench — watch plain cardboard turn into a real moving robot!';
 
+  // Interactive example index (Stage 1)
+  int _exampleIdx = 0;
+  int _tapQuipIdx = 0;
+
+  // Lightweight plan builder state (Stage 2)
+  final _planFormKey = GlobalKey<FormState>();
   final _nameController = TextEditingController(text: 'Aarav Sharma');
   final _emailController = TextEditingController(text: 'aarav.maker@example.com');
   int _selectedAge = 9;
-  String _experienceLevel = 'Intermediate (Lego, crafting & kits)';
   String _favoriteInterest = 'Speed Racers & Drive Systems';
+  bool _isDraftingPlan = false;
+  bool _planReady = false;
 
-  bool _isAnalyzing = false;
-  bool _analysisComplete = false;
-
-  // Analysis result states
-  String _archetype = 'Kinetic Mechanism Pioneer';
+  String _archetype = 'Kinetic Drive Pioneer';
   String _archetypeIcon = '🏎️';
   int _aptitudeScore = 96;
-  final String _recommendedTrack = 'Level 1: Cardboard Mechanics ➔ Level 2: Simple Machines';
-  List<({String name, String icon, String diff, String time, String desc})> _recommendedProjects = [];
+  List<({String name, String icon, String time, String desc})> _recommendedProjects = [];
 
-  // Payment dialog state
   final double _planPrice = 199.0;
   final String _currencySymbol = '₹';
-  final Set<int> _expandedFaqs = {0};
-  final Set<String> _checkedScrapItems = {'box', 'skewers', 'straws', 'bands', 'scissors'};
+
+  static const List<({String id, String label, String icon})> _stageTabs = [
+    (id: 'meet', label: '1. Meet Bolts', icon: '🤖'),
+    (id: 'examples', label: '2. Examples', icon: '⚙️'),
+    (id: 'plan', label: '3. Your Plan', icon: '🎯'),
+    (id: 'pass', label: '4. Pass ₹199', icon: '🚀'),
+  ];
+
+  static const List<String> _machineIntros = [
+    'Example 1 — Scissor Lift: Slide the handle to stretch criss-cross cardboard arms 4× taller!',
+    'Example 2 — Torque Racer: Wind the rubber band, hit Launch, and watch it zoom across the floor!',
+    'Example 3 — Claw Gripper: Pull the trigger slider to squeeze both cardboard jaws around objects!',
+    'Example 4 — Gravity Coaster: Tilt the ramp slope and drop the marble through banked curves!',
+  ];
 
   @override
   void initState() {
@@ -65,22 +83,64 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
   }
 
-  void _scrollToKey(GlobalKey key) {
-    final ctx = key.currentContext;
-    if (ctx != null) {
-      Scrollable.ensureVisible(
-        ctx,
-        duration: const Duration(milliseconds: 700),
-        curve: Curves.easeInOutCubic,
-        alignment: 0.05,
-      );
-    }
+  void _goToStage(int stage, {String? customMessage}) {
+    SoundEffects.playPop();
+    setState(() {
+      _activeStage = stage;
+      _robotEntranceKey++;
+      switch (stage) {
+        case 0:
+          _robotMood = RobotMood.greeting;
+          _botMessage = customMessage ??
+              'Beep-boop! I am Bolts! Tap the household scraps on my bench — watch plain cardboard turn into a real moving robot!';
+          break;
+        case 1:
+          _robotMood = RobotMood.explaining;
+          _botMessage = customMessage ?? _machineIntros[_exampleIdx];
+          break;
+        case 2:
+          _robotMood = _planReady ? RobotMood.excited : RobotMood.thinking;
+          _botMessage = customMessage ??
+              (_planReady
+                  ? 'Awesome, $_safeName! Here are 3 cardboard machines tailored right for your skills!'
+                  : 'Quick 10-second check! Tell me your name, age & favorite build — I will draft your starter plan.');
+          break;
+        case 3:
+          _robotMood = RobotMood.excited;
+          _botMessage = customMessage ??
+              'All 17 projects, 3D blueprints & workshops unlock for ₹199 once! Tap any question below to ask me.';
+          break;
+      }
+    });
+  }
+
+  String get _safeName =>
+      _nameController.text.trim().isEmpty ? 'Cadet' : _nameController.text.trim();
+
+  void _onTapRobot() {
+    const quips = [
+      'High-five! Zero ₹2,500 plastic kits needed — just everyday delivery boxes and imagination!',
+      'Fun fact: Aligning cardboard flutes lengthwise makes a strip 300% stronger!',
+      'Tap "2. Examples" anytime to test real cardboard linkages right on screen!',
+    ];
+    setState(() {
+      _tapQuipIdx = (_tapQuipIdx + 1) % quips.length;
+      _robotMood = RobotMood.excited;
+      _botMessage = quips[_tapQuipIdx];
+    });
+  }
+
+  void _onSelectMachineExample(int idx) {
+    setState(() {
+      _exampleIdx = idx;
+      _robotMood = RobotMood.explaining;
+      _botMessage = _machineIntros[idx];
+    });
   }
 
   void _computeRecommendations() {
@@ -89,74 +149,131 @@ class _MarketingPageViewState extends State<MarketingPageView> {
       _archetypeIcon = '🏎️';
       _aptitudeScore = 95 + (_selectedAge % 4);
       _recommendedProjects = [
-        (name: 'Rubber-Band Wind-Up Drive Racer', icon: '🏎️', diff: 'Beginner', time: '35 mins', desc: 'Direct-axle elastic energy storage with high-traction tires'),
-        (name: 'Smooth-Rolling Test Cart with Straw Bearings', icon: '🛒', diff: 'Beginner', time: '30 mins', desc: 'Low-friction cylindrical straw sleeves with donut spacers'),
-        (name: 'Cardboard Scissor Lift Mechanism', icon: '✂️', diff: 'Beginner', time: '35 mins', desc: '3-tier pantograph linkage elevating 4x vertical height'),
-        (name: 'Gravity-Fed Marble Coaster Run', icon: '🎢', diff: 'Beginner', time: '45 mins', desc: 'U-channel banked chutes testing potential to kinetic velocity'),
+        (
+          name: 'Rubber-Band Wind-Up Racer',
+          icon: '🏎️',
+          time: '35 mins',
+          desc: 'Twist rubber bands onto straw axles to race 5+ meters.',
+        ),
+        (
+          name: 'Low-Friction Test Cart',
+          icon: '🛒',
+          time: '30 mins',
+          desc: 'Drinking-straw axle sleeves built from one small box.',
+        ),
+        (
+          name: 'Cardboard Scissor Lift',
+          icon: '✂️',
+          time: '35 mins',
+          desc: 'Pantograph linkage lifting 4× vertical stroke.',
+        ),
       ];
-    } else if (_favoriteInterest.contains('Scissor') || _favoriteInterest.contains('Cranes')) {
+    } else if (_favoriteInterest.contains('Scissor') || _favoriteInterest.contains('Lifts')) {
       _archetype = 'Kinematic Linkage Architect';
       _archetypeIcon = '🏗️';
       _aptitudeScore = 94 + (_selectedAge % 5);
       _recommendedProjects = [
-        (name: 'Cardboard Scissor Lift Mechanism', icon: '✂️', diff: 'Beginner', time: '35 mins', desc: 'Pantograph linkage expanding 4x vertical stroke'),
-        (name: 'Dual-Pulley Mechanical Crane', icon: '🏗️', diff: 'Intermediate', time: '40 mins', desc: 'Compound pulley system doubling lifting mechanical advantage'),
-        (name: 'Articulated Mechanical Robot Gripper', icon: '🦾', diff: 'Intermediate', time: '45 mins', desc: 'Opposing jaw levers with spring-return tension'),
-        (name: 'Smooth-Rolling Test Cart with Straw Bearings', icon: '🛒', diff: 'Beginner', time: '30 mins', desc: 'Straw-bearing chassis with parallel axle alignment'),
+        (
+          name: 'Cardboard Scissor Lift',
+          icon: '✂️',
+          time: '35 mins',
+          desc: '3-tier criss-cross linkage lifting 250g cargo.',
+        ),
+        (
+          name: 'Dual-Pulley Crane',
+          icon: '🏗️',
+          time: '40 mins',
+          desc: 'Double-advantage hoist with cardboard lock pawl.',
+        ),
+        (
+          name: 'Mechanical Claw Gripper',
+          icon: '🦾',
+          time: '45 mins',
+          desc: 'Finger-pull lever jaws that pinch bottles & toys.',
+        ),
       ];
-    } else if (_favoriteInterest.contains('Roller') || _favoriteInterest.contains('Coaster')) {
-      _archetype = 'Gravitational Physics Explorer';
+    } else if (_favoriteInterest.contains('Coaster') || _favoriteInterest.contains('Marble')) {
+      _archetype = 'Gravity Energy Explorer';
       _archetypeIcon = '🎢';
       _aptitudeScore = 97;
       _recommendedProjects = [
-        (name: 'Gravity-Fed Marble Coaster Run', icon: '🎢', diff: 'Beginner', time: '45 mins', desc: 'Banked turns counteracting centrifugal forces'),
-        (name: 'Rubber-Band Wind-Up Drive Racer', icon: '🏎️', diff: 'Beginner', time: '35 mins', desc: 'Elastic torque converted to forward kinetic propulsion'),
-        (name: 'Cardboard Scissor Lift Mechanism', icon: '✂️', diff: 'Beginner', time: '35 mins', desc: 'Multi-stage scissor linkage with sliding track shoe'),
-        (name: 'Dual-Pulley Mechanical Crane', icon: '🏗️', diff: 'Intermediate', time: '40 mins', desc: 'Compound rigging with smooth crank spool'),
+        (
+          name: 'Gravity Marble Coaster',
+          icon: '🎢',
+          time: '45 mins',
+          desc: 'Banked cardboard turns using gravity & centrifugal force.',
+        ),
+        (
+          name: 'Rubber-Band Wind-Up Racer',
+          icon: '🏎️',
+          time: '35 mins',
+          desc: 'Elastic energy propulsion with zero electronics.',
+        ),
+        (
+          name: 'Cardboard Scissor Lift',
+          icon: '✂️',
+          time: '35 mins',
+          desc: 'Precision sliding track shoe & X-linkages.',
+        ),
       ];
     } else {
-      _archetype = 'Robotics & Mechanisms Innovator';
-      _archetypeIcon = '🤖';
+      _archetype = 'Bionic Robotics Inventor';
+      _archetypeIcon = '🦾';
       _aptitudeScore = 96;
       _recommendedProjects = [
-        (name: 'Articulated Mechanical Robot Gripper', icon: '🦾', diff: 'Intermediate', time: '45 mins', desc: 'Dual-lever linkage clamping mechanism with high-friction pads'),
-        (name: 'Cardboard Scissor Lift Mechanism', icon: '✂️', diff: 'Beginner', time: '35 mins', desc: 'Aligned flute corrugation for 4x bending resistance'),
-        (name: 'Rubber-Band Wind-Up Drive Racer', icon: '🏎️', diff: 'Beginner', time: '35 mins', desc: 'Stored elastic potential energy converted into axle torque'),
-        (name: 'Dual-Pulley Mechanical Crane', icon: '🏗️', diff: 'Intermediate', time: '40 mins', desc: 'Compound mechanical advantage lifting 150g cargo'),
+        (
+          name: 'Mechanical Claw Gripper',
+          icon: '🦾',
+          time: '45 mins',
+          desc: 'Trigger-pulled opposite jaws with rubber-pad grip.',
+        ),
+        (
+          name: 'Cardboard Bionic Hand',
+          icon: '🖐️',
+          time: '50 mins',
+          desc: 'Straw knuckles & string tendons mimicking human fingers.',
+        ),
+        (
+          name: 'Dual-Pulley Crane',
+          icon: '🏗️',
+          time: '40 mins',
+          desc: 'Compound lifting arm with smooth rotary spool.',
+        ),
       ];
     }
   }
 
-  void _runAnalysis() {
-    if (!_formKey.currentState!.validate()) return;
-
+  void _startPlanDrafting() {
+    if (_planFormKey.currentState != null && !_planFormKey.currentState!.validate()) {
+      return;
+    }
     SoundEffects.playPop();
-    setState(() {
-      _isAnalyzing = true;
-      _analysisComplete = false;
-    });
-
     _computeRecommendations();
+    setState(() {
+      _isDraftingPlan = true;
+      _planReady = false;
+      _robotMood = RobotMood.thinking;
+      _botMessage = 'Scanning $_safeName\'s build picks now... sketching your blueprint trajectory!';
+    });
   }
 
-  void _onRobotDraftingComplete() {
+  void _onDraftingComplete() {
     if (!mounted) return;
     setState(() {
-      _isAnalyzing = false;
-      _analysisComplete = true;
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _scrollToKey(_resultsKey);
-      }
+      _isDraftingPlan = false;
+      _planReady = true;
+      _robotMood = RobotMood.excited;
+      _botMessage =
+          'Boom, $_safeName! You are a $_archetype ($_aptitudeScore% match)! Start with these 3 builds:';
     });
   }
 
   void _openCheckoutDialog() {
     SoundEffects.playPop();
-    final studentName = _nameController.text.trim().isEmpty ? 'Young Cadet' : _nameController.text.trim();
-    final studentEmail = _emailController.text.trim().isEmpty ? 'cadet@makerquest.edu' : _emailController.text.trim();
+    final studentName = _safeName;
+    final studentEmail = _emailController.text.trim().isEmpty
+        ? 'cadet@makerquest.edu'
+        : _emailController.text.trim();
 
     showDialog(
       context: context,
@@ -171,7 +288,6 @@ class _MarketingPageViewState extends State<MarketingPageView> {
         planPrice: _planPrice,
         currencySymbol: _currencySymbol,
         onPaymentSuccess: (paidName, paidEmail) {
-          // Register cadet in QuestState
           widget.questState.registerNewCadet(
             name: paidName,
             email: paidEmail,
@@ -207,9 +323,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.emerald, width: 2),
                   ),
-                  child: const Center(
-                    child: Text('🎉', style: TextStyle(fontSize: 36)),
-                  ),
+                  child: const Center(child: Text('🎉', style: TextStyle(fontSize: 36))),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -295,7 +409,6 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -341,8 +454,6 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     ],
                   ),
                   const SizedBox(height: 12),
-
-                  // Interactive Blueprint Viewer (Sample Scissor Linkage)
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
@@ -352,11 +463,11 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                             visualType: 'pantograph_cut',
                             title: 'Measure & Cut Cardboard Struts with Aligned Flutes',
                             stepNumber: 1,
-                            instruction: 'Use a ruler to draw six identical cardboard strips (15 cm long, 2 cm wide). Cut them so internal corrugation flutes run longitudinally for maximum bending resistance.',
-                            tip: 'Internal flutes vertically aligned resist over 300% more compressive load than horizontal cut strips.',
+                            instruction:
+                                'Cut six identical cardboard strips (15 cm long, 2 cm wide) so internal corrugation flutes run lengthwise for maximum strength.',
+                            tip: 'Longitudinal flutes resist over 300% more bending force than cross-cut strips.',
                           ),
                           const SizedBox(height: 16),
-                          // Lock Notice Banner
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
@@ -364,21 +475,21 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(color: const Color(0xFFF59E0B)),
                             ),
-                            child: Row(
+                            child: const Row(
                               children: [
-                                const Text('🔒', style: TextStyle(fontSize: 24)),
-                                const SizedBox(width: 12),
+                                Text('🔒', style: TextStyle(fontSize: 24)),
+                                SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
                                         'Sample Blueprint Only (Project 1 of 17)',
                                         style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF92400E)),
                                       ),
                                       SizedBox(height: 2),
                                       Text(
-                                        'Full workshop access to all 17 projects, step guides, physics simulations, and checkpoint challenges unlocks after Cadet Pass enrollment.',
+                                        'All 17 projects, step guides, physics simulations & quizzes unlock after Cadet Pass enrollment.',
                                         style: TextStyle(fontSize: 11, color: Color(0xFF78350F)),
                                       ),
                                     ],
@@ -392,8 +503,6 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Action Footer
                   SizedBox(
                     width: double.infinity,
                     child: Wrap(
@@ -436,10 +545,27 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     );
   }
 
+  void _copyWhatsAppNumber() {
+    SoundEffects.playPop();
+    Clipboard.setData(
+      const ClipboardData(text: ExternalLauncher.whatsAppPhoneDisplay),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Copied WhatsApp number ${ExternalLauncher.whatsAppPhoneDisplay} to clipboard!',
+        ),
+        backgroundColor: Color(0xFF15803D),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.sizeOf(context).width;
-    final isDesktop = screenW >= 900;
+    final isWideStage = screenW >= 780;
+    final isTiny = screenW < 420;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -448,55 +574,62 @@ class _MarketingPageViewState extends State<MarketingPageView> {
         tooltip: 'WhatsApp Mentor Helpline: ${ExternalLauncher.whatsAppPhoneDisplay}',
         backgroundColor: const Color(0xFF25D366),
         foregroundColor: Colors.white,
-        elevation: 6,
+        elevation: 5,
         onPressed: () {
           SoundEffects.playPop();
           ExternalLauncher.openWhatsApp();
         },
-        child: const Icon(Icons.chat_rounded, size: 26),
+        child: const Icon(Icons.chat_rounded, size: 24),
       ),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildTopNavigation(context),
-              _buildHeroSection(isDesktop),
-              _buildLiveActivityTicker(),
-              _buildTrustBadgeBar(isDesktop),
-              _buildScreenTimeContrastSection(isDesktop),
-              _buildWeekendOutcomesSection(isDesktop),
-              _buildScrapAuditWidget(isDesktop),
-              _buildScienceExhibitionSection(isDesktop),
-              _buildHowItWorksSection(isDesktop),
-              _buildCurriculumRoadmapSection(isDesktop),
-              _buildCertificatePreviewSection(isDesktop),
-              _buildWhatWeOfferSection(isDesktop),
-              _buildParentRoiCalculator(isDesktop),
-              _buildAssessmentSection(isDesktop),
-              if (_analysisComplete) _buildAnalysisResultsSection(isDesktop),
-              _buildPricingSection(isDesktop),
-              _buildCurriculumComparison(isDesktop),
-              _buildWhatsAppSupportSection(isDesktop),
-              _buildFaqSection(isDesktop),
-              _buildTestimonialsSection(isDesktop),
-              _buildFooter(),
-            ],
-          ),
+        child: Column(
+          children: [
+            _buildTopNavigation(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  isTiny ? 12 : 24,
+                  isTiny ? 12 : 22,
+                  isTiny ? 12 : 24,
+                  84, // clearance above WhatsApp FAB
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 980),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildMinimalHeaderStrip(isTiny),
+                        SizedBox(height: isTiny ? 10 : 16),
+                        _buildGuidedRobotStage(
+                          isWideStage: isWideStage,
+                          isTiny: isTiny,
+                        ),
+                        const SizedBox(height: 14),
+                        _buildMinimalFooter(isTiny),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // 1. TOP MARKETING NAVIGATION
   Widget _buildTopNavigation(BuildContext context) {
     final screenW = MediaQuery.sizeOf(context).width;
     final showWideNav = screenW >= 720;
     final isTiny = screenW < 420;
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isTiny ? 12 : 24, vertical: isTiny ? 10 : 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTiny ? 12 : 24,
+        vertical: isTiny ? 8 : 12,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
@@ -513,13 +646,15 @@ class _MarketingPageViewState extends State<MarketingPageView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: isTiny ? 32 : 38,
-                  height: isTiny ? 32 : 38,
+                  width: isTiny ? 30 : 36,
+                  height: isTiny ? 30 : 36,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFFEC4899)]),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, Color(0xFFEC4899)],
+                    ),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Center(child: Text('⚡', style: TextStyle(fontSize: isTiny ? 17 : 20))),
+                  child: Center(child: Text('⚡', style: TextStyle(fontSize: isTiny ? 16 : 19))),
                 ),
                 SizedBox(width: isTiny ? 8 : 10),
                 Column(
@@ -530,18 +665,18 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                       'MakerQuest',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: isTiny ? 15 : 18,
+                        fontSize: isTiny ? 15 : 17,
                         color: AppColors.textMain,
-                        letterSpacing: -0.5,
+                        letterSpacing: -0.4,
                       ),
                     ),
-                    Text(
-                      'DIY STEM ODYSSEY',
+                    const Text(
+                      'ROBOT GUIDE • AGES 7–16',
                       style: TextStyle(
-                        fontSize: isTiny ? 8 : 9,
+                        fontSize: 9,
                         fontWeight: FontWeight.w800,
                         color: AppColors.amber,
-                        letterSpacing: isTiny ? 0.5 : 0.8,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ],
@@ -563,7 +698,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     style: OutlinedButton.styleFrom(
                       backgroundColor: const Color(0xFFF0FDF4),
                       side: const BorderSide(color: Color(0xFF86EFAC)),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                     onPressed: () {
@@ -582,7 +717,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                       backgroundColor: AppColors.bgSurface,
                       foregroundColor: AppColors.textMain,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: isTiny ? 10 : 14, vertical: isTiny ? 8 : 10),
+                      padding: EdgeInsets.symmetric(horizontal: isTiny ? 10 : 14, vertical: isTiny ? 8 : 9),
                       side: const BorderSide(color: AppColors.border),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
@@ -592,15 +727,14 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: isTiny ? 12 : 16, vertical: isTiny ? 8 : 10),
+                    padding: EdgeInsets.symmetric(horizontal: isTiny ? 12 : 16, vertical: isTiny ? 8 : 9),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    elevation: 0,
                   ),
-                  onPressed: () {
-                    _openCheckoutDialog();
-                  },
+                  onPressed: _openCheckoutDialog,
                   child: Text(
                     isTiny ? 'Pass ₹199' : 'Get Cadet Pass ₹199',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: isTiny ? 11 : 12),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: isTiny ? 11 : 12),
                   ),
                 ),
               ],
@@ -611,2857 +745,833 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     );
   }
 
-  // 2. HERO SECTION
-  Widget _buildHeroSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-    final isTiny = screenW < 420;
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 60 : (isTiny ? 14 : 20),
-        vertical: isCompact ? 32 : 48,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.white, Color(0xFFF1F5F9)],
+  Widget _buildMinimalHeaderStrip(bool isTiny) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'Turn Cardboard into Real Robotics.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: isTiny ? 22 : 30,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textMain,
+            letterSpacing: -0.8,
+            height: 1.15,
+          ),
         ),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        const SizedBox(height: 10),
+        // Minimal Step Selector Tabs
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: List.generate(_stageTabs.length, (i) {
+            final tab = _stageTabs[i];
+            final active = i == _activeStage;
+            return InkWell(
+              onTap: () => _goToStage(i),
+              borderRadius: BorderRadius.circular(24),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTiny ? 10 : 14,
+                  vertical: isTiny ? 7 : 8,
                 ),
-                child: const Row(
+                decoration: BoxDecoration(
+                  color: active ? const Color(0xFF0F172A) : Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: active ? const Color(0xFF0F172A) : AppColors.border,
+                  ),
+                ),
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('🇮🇳', style: TextStyle(fontSize: 14)),
-                    SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        'Indian STEM Curriculum (CBSE • ICSE • NEP 2020) • Ages 7–16',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryLight),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                'Transform Cardboard into Real Robotics.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: isTiny ? 26 : (isDesktop ? 38 : 30),
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textMain,
-                  letterSpacing: -0.8,
-                  height: 1.15,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Step away from passive screens. MakerQuest turns everyday scrap boxes, wooden skewers, and rubber bands into 17+ working kinetic machines, pneumatic lifts, and speed racers — guided by interactive 3D blueprints and physics simulations.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: isCompact ? 14 : 16, color: AppColors.textMuted, height: 1.55),
-              ),
-              const SizedBox(height: 24),
-              Wrap(
-                spacing: 12,
-                runSpacing: 10,
-                alignment: WrapAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.analytics_rounded, size: 18),
-                    label: Text(
-                      'Free Student Capability Test 🚀',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: isCompact ? 13 : 14, fontWeight: FontWeight.w800),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24, vertical: isCompact ? 14 : 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: () {
-                      _scrollToKey(_assessmentKey);
-                    },
-                  ),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
-                    label: Text(
-                      'Watch 3D Schematics in Action',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: isCompact ? 13 : 14, fontWeight: FontWeight.w700, color: AppColors.textMain),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.border),
-                      padding: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 20, vertical: isCompact ? 14 : 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: _showSampleSchematicPreviewDialog,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Interactive Kid & Robot Live Workshop Animation
-              const KidRobotWorkshopHeroAnimation(),
-
-              const SizedBox(height: 16),
-              // Value stats bar (2x2 grid on narrow phones, 4-across row on wider screens)
-              Container(
-                padding: EdgeInsets.all(isCompact ? 14 : 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
-                  ],
-                ),
-                child: screenW < 640
-                    ? Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(child: _buildStatItem('17+ Builds', 'Kinetic Mechanisms', '🛠️')),
-                              Expanded(child: _buildStatItem('5 Realms', 'From Linkages to Rovers', '🗺️')),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(child: _buildStatItem('10 Badges', 'XP & Certifications', '🏅')),
-                              Expanded(child: _buildStatItem('₹0 Kit Cost', '100% Upcycled Scrap', '♻️')),
-                            ],
-                          ),
-                        ],
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildStatItem('17+ Builds', 'Kinetic Mechanisms', '🛠️'),
-                          _buildStatItem('5 Realms', 'From Linkages to Rovers', '🗺️'),
-                          _buildStatItem('10 Badges', 'XP & Certifications', '🏅'),
-                          _buildStatItem('₹0 Kit Cost', '100% Upcycled Scrap', '♻️'),
-                        ],
-                      ),
-              ),
-              const SizedBox(height: 18),
-              InkWell(
-                onTap: () => _scrollToKey(_assessmentKey),
-                borderRadius: BorderRadius.circular(20),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          'Scroll Down to Capability Diagnostic',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_downward_rounded, size: 16, color: AppColors.primary),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String val, String sub, String icon) {
-    return Column(
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 20)),
-        const SizedBox(height: 4),
-        Text(val, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.textMain)),
-        Text(sub, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-      ],
-    );
-  }
-
-  // TRUST RIBBON
-  Widget _buildTrustBadgeBar(bool isDesktop) {
-    final badges = [
-      (icon: '🇮🇳', title: 'Indian Curriculum Aligned', desc: 'CBSE, ICSE & NEP 2020 Standards'),
-      (icon: '🔬', title: 'Atal Tinkering Lab Ready', desc: 'Hands-on experiential prototypes'),
-      (icon: '♻️', title: '100% Scrap Guarantee', desc: 'Zero expensive plastic kit lock-in'),
-      (icon: '🛡️', title: 'Child Safety Verified', desc: 'Step-by-step adult guidance flags'),
-      (icon: '🏆', title: 'Official STEM Diploma', desc: 'Printable Graduation Certifications'),
-    ];
-
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 16, vertical: 16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Wrap(
-            spacing: 16,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: badges.map((b) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(b.icon, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(b.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMain)),
-                        Text(b.desc, style: const TextStyle(fontSize: 9, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            )).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 1B. LIVE CADET ACTIVITY TICKER
-  Widget _buildLiveActivityTicker() {
-    return const AnimatedCadetMarqueeTicker(
-      items: [
-        (who: '🇮🇳 Aarav S. (Class 5, Bengaluru)', action: 'Enrolled 4 mins ago'),
-        (who: '🏆 Rohan M. (Class 7, Pune)', action: 'Mastered Scissor Lift (+120 XP)'),
-        (who: '⚡ Ananya P. (Class 4, Delhi)', action: 'Unlocked Level 2 Stored Energy'),
-        (who: '🔬 Kendriya Vidyalaya Club', action: 'Activated 15 Cadet Passes'),
-        (who: '🤖 Dev K. (Class 8, Hyderabad)', action: 'Built Dual-Pulley Crane (+180 XP)'),
-      ],
-    );
-  }
-
-  // 1C. SCREEN TIME DETOX CONTRAST SECTION
-  Widget _buildScreenTimeContrastSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isTiny = screenW < 420;
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (isTiny ? 14 : 20), vertical: isTiny ? 40 : 56),
-      color: const Color(0xFFF1F5F9),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1060),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text('THE PARENT\'S SCREEN-TIME DILEMMA', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Replace Screen Fatigue with Real Engineering Pride',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Children don\'t lack focus — they lack physical challenges worth their focus. Channel their screen energy into real machines.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
-              ),
-              const SizedBox(height: 32),
-              isDesktop
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: _buildContrastCard(isPositive: false)),
-                        const SizedBox(width: 24),
-                        Expanded(child: _buildContrastCard(isPositive: true)),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        _buildContrastCard(isPositive: false),
-                        const SizedBox(height: 16),
-                        _buildContrastCard(isPositive: true),
-                      ],
-                    ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContrastCard({required bool isPositive}) {
-    final isTiny = MediaQuery.sizeOf(context).width < 420;
-    return Container(
-      padding: EdgeInsets.all(isTiny ? 16 : 24),
-      decoration: BoxDecoration(
-        color: isPositive ? Colors.white : const Color(0xFFFFF1F2),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isPositive ? AppColors.emerald.withValues(alpha: 0.4) : AppColors.rose.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: isPositive
-            ? [BoxShadow(color: AppColors.emerald.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6))]
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(isPositive ? '⚡' : '📱', style: const TextStyle(fontSize: 24)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                    Text(tab.icon, style: const TextStyle(fontSize: 13)),
+                    const SizedBox(width: 5),
                     Text(
-                      isPositive ? 'MakerQuest Cadet Odyssey' : 'Typical Screen Consumption',
+                      tab.label,
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: isPositive ? AppColors.emerald : AppColors.rose,
-                      ),
-                    ),
-                    Text(
-                      isPositive ? 'Active Creator & Problem Solver' : 'Passive Gaming & Video Binging',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const Divider(),
-          const SizedBox(height: 14),
-          if (!isPositive) ...[
-            _buildContrastBullet('❌ 3-5 hours daily lost to YouTube shorts and video game dopamine loops'),
-            _buildContrastBullet('❌ Eye strain, irritability, and shortened academic attention span'),
-            _buildContrastBullet('❌ Zero tangible physical creations or mechanical intuitions gained'),
-            _buildContrastBullet('❌ Boredom and tantrums whenever phones or tablets are confiscated'),
-          ] else ...[
-            _buildContrastBullet('✅ 17 physical working machines built with their own hands by Sunday'),
-            _buildContrastBullet('✅ Intuitive mastery of CBSE & ICSE physics laws (levers, torque, kinematics)'),
-            _buildContrastBullet('✅ 10 collectible badges, milestone XP, and official junior STEM diploma'),
-            _buildContrastBullet('✅ Genuine self-esteem showing their functional robots to friends & family'),
-          ],
-          const SizedBox(height: 12),
-          AnimatedParentImpactMeters(isPositive: isPositive),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContrastBullet(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(text, style: const TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textMain, fontWeight: FontWeight.w600)),
-    );
-  }
-
-  // 1D. WEEKEND PHYSICAL OUTCOMES SHOWCASE
-  Widget _buildWeekendOutcomesSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-    final cols = isDesktop ? (screenW >= 1100 ? 4 : 2) : (screenW >= 600 ? 2 : 1);
-
-    final outcomes = [
-      (
-        title: 'Cardboard Scissor Hoist',
-        icon: '✂️',
-        stat: 'Lifts 250g 4x Height',
-        mechanic: '3-Tier Pantograph Linkage',
-        science: 'Class 1 Levers & Force Multiplication',
-        desc: 'Transforms horizontal sliding motion into vertical lift. Students lift pencil cases, toys, and phone stands.',
-        type: 'scissor_lift',
-      ),
-      (
-        title: 'Stored Elastic Torque Racer',
-        icon: '🏎️',
-        stat: 'Races 5+ Meters',
-        mechanic: 'Rear-Axle Rubber Band Winch',
-        science: 'Elastic Potential to Kinetic Energy',
-        desc: 'Cardboard chassis with drinking-straw bushings and centered wheels for zero-wobble sprint speed.',
-        type: 'speed_racer',
-      ),
-      (
-        title: 'Dual-Banked Gravity Coaster',
-        icon: '🎢',
-        stat: 'Zero-Derailment Curves',
-        mechanic: 'Corrugated Banked Rails',
-        science: 'Centripetal Force & Gravitational Acceleration',
-        desc: 'Multi-tiered marble coaster with calibrated velocity curves and catch-funnels constructed from delivery boxes.',
-        type: 'marble_coaster',
-      ),
-      (
-        title: 'Articulated Mechanical Gripper',
-        icon: '🦾',
-        stat: 'Grabs Everyday Objects',
-        mechanic: 'Dual Trigger-Pull Linkage',
-        science: 'Friction Coefficients & Normal Force',
-        desc: 'Operated by hand-held finger triggers to securely pinch and lift bottles, stationery, and small fruit.',
-        type: 'robot_gripper',
-      ),
-    ];
-
-    Widget buildOutcomeCard(
-      ({String desc, String icon, String mechanic, String science, String stat, String title, String type}) o, {
-      required bool expandDesc,
-    }) {
-      return Container(
-        padding: EdgeInsets.all(isCompact ? 16 : 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(o.icon, style: const TextStyle(fontSize: 28)),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      o.stat,
-                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.primary),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            AnimatedMechanismMiniPreview(
-              mechanicType: o.type,
-              height: 74,
-            ),
-            const SizedBox(height: 10),
-            Text(o.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textMain)),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: AppColors.emeraldSoft, borderRadius: BorderRadius.circular(6)),
-              child: Text(o.science, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.emerald)),
-            ),
-            const SizedBox(height: 6),
-            if (expandDesc)
-              Expanded(
-                child: Text(o.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4)),
-              )
-            else
-              Text(o.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4)),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 40 : 56),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.emeraldSoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text('TANGIBLE TINKERING OUTCOMES', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'What Your Child Will Build by Sunday Evening',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: isCompact ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'No useless theoretical models. Authentic, functioning kinetic robotics they can play with, demonstrate, and take to school.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
-              ),
-              const SizedBox(height: 32),
-              if (cols == 1)
-                Column(
-                  children: outcomes
-                      .map((o) => Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: buildOutcomeCard(o, expandDesc: false),
-                          ))
-                      .toList(),
-                )
-              else
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: cols,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    mainAxisExtent: 410,
-                  ),
-                  itemCount: outcomes.length,
-                  itemBuilder: (ctx, i) => buildOutcomeCard(outcomes[i], expandDesc: true),
-                ),
-              const SizedBox(height: 32),
-              const AnimatedScrapToRobotShowcase(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 1E. 60-SECOND ZERO-EXPENSE SCRAP AUDIT
-  Widget _buildScrapAuditWidget(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompactPad = screenW < 420;
-    final items = [
-      ('box', '📦 Clean Delivery Box', 'Amazon, Flipkart, or cereal cardboard'),
-      ('skewers', '🍢 Wooden Skewers or Toothpicks', 'Standard 15cm wooden food skewers'),
-      ('straws', '🥤 Drinking Straws or Pen Refills', 'Low-friction rotational bearing sleeves'),
-      ('bands', '🪢 Standard Rubber Bands', 'Stored elastic potential energy engines'),
-      ('scissors', '✂️ Scissors & School Glue', 'Child-safe scissors & PVA/Fevicol glue'),
-    ];
-
-    final readyCount = _checkedScrapItems.length;
-    final pct = (readyCount / 5.0 * 100).toInt();
-
-    return Container(
-      color: const Color(0xFFF8FAFC),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (isCompactPad ? 14 : 20), vertical: 56),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 860),
-          child: Container(
-            padding: EdgeInsets.all(isDesktop ? 36 : (isCompactPad ? 16 : 24)),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('ZERO HIDDEN HARDWARE EXPENSES', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
-                          const SizedBox(height: 4),
-                          Text(
-                            'The 60-Second Household Scrap Audit',
-                            style: TextStyle(fontSize: screenW < 600 ? 19 : 22, fontWeight: FontWeight.w900, color: AppColors.textMain),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: pct == 100 ? AppColors.emeraldSoft : AppColors.amberSoft,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '$pct% Ready',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: pct == 100 ? AppColors.emerald : AppColors.amberGlow,
-                        ),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: active ? Colors.white : AppColors.textMuted,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Tick the common household items you already have at home right now:',
-                  style: TextStyle(fontSize: 13, color: AppColors.textMuted),
-                ),
-                const SizedBox(height: 20),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: readyCount / 5.0,
-                    minHeight: 8,
-                    backgroundColor: const Color(0xFFE2E8F0),
-                    valueColor: AlwaysStoppedAnimation(pct == 100 ? AppColors.emerald : AppColors.primary),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Column(
-                  children: items.map((item) {
-                    final isChecked = _checkedScrapItems.contains(item.$1);
-                    return InkWell(
-                      onTap: () {
-                        setState(() {
-                          if (isChecked) {
-                            _checkedScrapItems.remove(item.$1);
-                          } else {
-                            _checkedScrapItems.add(item.$1);
-                          }
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: isChecked,
-                              activeColor: AppColors.emerald,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                              onChanged: (val) {
-                                setState(() {
-                                  if (val == true) {
-                                    _checkedScrapItems.add(item.$1);
-                                  } else {
-                                    _checkedScrapItems.remove(item.$1);
-                                  }
-                                });
-                              },
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item.$2, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: isChecked ? AppColors.textMain : AppColors.textMuted)),
-                                  Text(item.$3, style: const TextStyle(fontSize: 11, color: AppColors.textDim)),
-                                ],
-                              ),
-                            ),
-                            if (isChecked)
-                              const Icon(Icons.check_circle_rounded, color: AppColors.emerald, size: 18),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: pct == 100 ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: pct == 100 ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A)),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(pct == 100 ? '🎉' : '💡', style: const TextStyle(fontSize: 22)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          pct == 100
-                              ? '100% Supplies Ready! You will spend ₹0 extra on materials to build all 17 robotics blueprints!'
-                              : 'Almost ready! Even if you only have scrap boxes and skewers, you can build the first 6 chapters today.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: pct == 100 ? const Color(0xFF065F46) : const Color(0xFF92400E),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          }),
         ),
-      ),
+      ],
     );
   }
 
-  // 1F. CBSE & SCIENCE EXHIBITION ADVANTAGE
-  Widget _buildScienceExhibitionSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final benefits = [
-      (
-        icon: '📋',
-        title: 'Printable 1:1 Science Fair Display Boards',
-        desc: 'Pre-formatted A3/A4 display placard with Title, Hypothesis, Apparatus, Circuit Diagram & Working Principles ready to print for school stalls.',
-        color: AppColors.primary,
-      ),
-      (
-        icon: '🗣️',
-        title: 'Examiner Viva Voce Cheat Sheet',
-        desc: 'Empowers cadets to explain physics concepts (Class 1 levers, Hooke\'s law, Pascal\'s hydraulic principle) to judges with absolute confidence.',
-        color: AppColors.emerald,
-      ),
-      (
-        icon: '🎖️',
-        title: 'CBSE & ICSE Practical Homework Ready',
-        desc: 'Directly fulfills NEP 2020 hands-on portfolio requirements and Atal Tinkering Lab experiential science assignments.',
-        color: AppColors.amber,
-      ),
-    ];
-
+  Widget _buildGuidedRobotStage({
+    required bool isWideStage,
+    required bool isTiny,
+  }) {
     return Container(
-      color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 56),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text('SCHOOL & ACADEMIC ADVANTAGE', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Win 1st Prize at the School Science Exhibition',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: screenW < 600 ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Never scramble the night before a school science submission again. Every MakerQuest machine comes with ready-to-present exhibition materials.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
-              ),
-              const SizedBox(height: 36),
-              isDesktop
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: benefits.map((b) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _buildScienceBenefitCard(b)))).toList(),
-                    )
-                  : Column(
-                      children: benefits.map((b) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _buildScienceBenefitCard(b))).toList(),
-                    ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScienceBenefitCard(({String icon, String title, String desc, Color color}) b) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: b.color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(child: Text(b.icon, style: const TextStyle(fontSize: 22))),
-          ),
-          const SizedBox(height: 14),
-          Text(b.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textMain, height: 1.3)),
-          const SizedBox(height: 8),
-          Text(b.desc, style: const TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.5)),
-        ],
-      ),
-    );
-  }
-
-  // HOW IT WORKS IN 3 STEPS
-  Widget _buildHowItWorksSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final steps = [
-      (
-        step: '01',
-        icon: '📐',
-        color: AppColors.primary,
-        title: 'Inspect Interactive 3D Blueprints',
-        desc: 'Before cutting, cadets rotate exploded 3D models, inspect millimeter dimensions, and study corrugation flute grain angles (90° for 300% strength).',
-      ),
-      (
-        step: '02',
-        icon: '📦',
-        color: const Color(0xFF10B981),
-        title: 'Upcycle Household Scrap Materials',
-        desc: 'Zero ₹2,500 plastic sets required. Grab clean cereal boxes, Amazon/Flipkart delivery cardboard, drinking straws, wooden skewers, and rubber bands from home.',
-      ),
-      (
-        step: '03',
-        icon: '🚀',
-        color: const Color(0xFFF59E0B),
-        title: 'Simulate Physics & Earn Certifications',
-        desc: 'Test real-world mechanical advantage, calculate velocity ratios, pass checkpoint quizzes, submit proof photos, and graduate with official STEM diplomas.',
-      ),
-    ];
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 56),
-      color: const Color(0xFFF8FAFC),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text('HOW IT WORKS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'From Delivery Box to Dynamic Robotics in 3 Steps',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: screenW < 600 ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.6),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'A systematic engineering methodology designed by educators to replace passive gaming with active invention.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
-              ),
-              const SizedBox(height: 36),
-              isDesktop
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: steps.asMap().entries.map((entry) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: _buildStepCard(entry.value, entry.key)))).toList(),
-                    )
-                  : Column(
-                      children: steps.asMap().entries.map((entry) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _buildStepCard(entry.value, entry.key))).toList(),
-                    ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStepCard(({String step, String icon, Color color, String title, String desc}) s, int index) {
-    return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isTiny ? 12 : 22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppColors.border, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: isWideStage
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _buildRobotHostPane(isWideStage: true, isTiny: false),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  flex: 7,
+                  child: _buildStageRightPane(isTiny: false),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildRobotHostPane(isWideStage: false, isTiny: isTiny),
+                const SizedBox(height: 14),
+                _buildStageRightPane(isTiny: isTiny),
+                const SizedBox(height: 14),
+                _buildQuickReplyChips(),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildRobotHostPane({
+    required bool isWideStage,
+    required bool isTiny,
+  }) {
+    final bubble = RobotSpeechBubble(
+      message: _botMessage,
+      speakerTag: 'BOLTS',
+      accentColor: _activeStage == 3 ? AppColors.emerald : AppColors.primary,
+      onTalkingChanged: (talking) {
+        if (mounted && _isRobotTalking != talking) {
+          setState(() => _isRobotTalking = talking);
+        }
+      },
+    );
+
+    if (isWideStage) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              AnimatedStepIconBadge(
-                emoji: s.icon,
-                color: s.color,
-                staggerIndex: index,
-              ),
-              Text(s.step, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: s.color.withValues(alpha: 0.3))),
-            ],
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                TalkingRobotCharacter(
+                  mood: _robotMood,
+                  isTalking: _isRobotTalking,
+                  entranceKey: _robotEntranceKey,
+                  height: 174,
+                  onTap: _onTapRobot,
+                ),
+                const Text(
+                  'Tap Bolts to say hi!',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDim,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 18),
-          Text(s.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textMain, height: 1.3)),
-          const SizedBox(height: 8),
-          Text(s.desc, style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5)),
+          const SizedBox(height: 14),
+          bubble,
+          const SizedBox(height: 14),
+          _buildQuickReplyChips(),
         ],
+      );
+    }
+
+    // Compact mobile top host row: Bolts next to his speech bubble!
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: TalkingRobotCharacter(
+            mood: _robotMood,
+            isTalking: _isRobotTalking,
+            entranceKey: _robotEntranceKey,
+            height: isTiny ? 84 : 102,
+            onTap: _onTapRobot,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(child: bubble),
+      ],
+    );
+  }
+
+  Widget _buildQuickReplyChips() {
+    switch (_activeStage) {
+      case 0:
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.play_arrow_rounded, size: 16),
+              label: const Text('Try Live Examples', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => _goToStage(1),
+            ),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.view_in_ar_rounded, size: 15),
+              label: const Text('Preview 3D CAD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textMain,
+                side: const BorderSide(color: AppColors.border),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: _showSampleSchematicPreviewDialog,
+            ),
+            TextButton(
+              onPressed: () => _goToStage(2),
+              child: const Text('Make My Plan 🎯', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+            ),
+          ],
+        );
+
+      case 1:
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+              label: const Text('Pick Builds For Me', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => _goToStage(2),
+            ),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.swap_horiz_rounded, size: 15),
+              label: const Text('Next Machine', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textMain,
+                side: const BorderSide(color: AppColors.border),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => _onSelectMachineExample((_exampleIdx + 1) % 4),
+            ),
+            TextButton(
+              onPressed: _showSampleSchematicPreviewDialog,
+              child: const Text('3D CAD 📐', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+            ),
+          ],
+        );
+
+      case 2:
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.rocket_launch_rounded, size: 16),
+              label: const Text('Unlock All 17 Builds (₹199)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.emerald,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => _goToStage(3),
+            ),
+            OutlinedButton(
+              onPressed: () => _goToStage(1),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textMain,
+                side: const BorderSide(color: AppColors.border),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('← Back to Examples', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        );
+
+      default:
+        // Interactive "Ask Bolts" Parent & Kid Question Chips!
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'ASK BOLTS ANYTHING:',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textDim,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _askChip(
+                  '📦 Do we need kits?',
+                  'Zero kits! Every build uses clean Amazon/Flipkart boxes, straws, wooden skewers, rubber bands & glue.',
+                ),
+                _askChip(
+                  '💳 Is ₹199 monthly?',
+                  'Never monthly! ₹199 one-time unlocks all 12 chapters & 17 builds forever — backed by a 30-day refund.',
+                ),
+                _askChip(
+                  '🎓 Good for school?',
+                  'Yes! Each machine matches CBSE/ICSE physics (levers, torque, energy) and includes science fair display tips.',
+                ),
+                _askChip(
+                  '💬 What if stuck?',
+                  'Send a quick photo to our real human mentors on WhatsApp +918075971988 — we reply fast with alignment help!',
+                ),
+              ],
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _askChip(String label, String answer) {
+    return ActionChip(
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMain),
+      ),
+      backgroundColor: const Color(0xFFF1F5F9),
+      side: const BorderSide(color: Color(0xFFE2E8F0)),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      onPressed: () {
+        SoundEffects.playPop();
+        setState(() {
+          _robotMood = RobotMood.explaining;
+          _botMessage = answer;
+        });
+      },
+    );
+  }
+
+  Widget _buildStageRightPane({required bool isTiny}) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      child: KeyedSubtree(
+        key: ValueKey('stage_$_activeStage'),
+        child: _activeStage == 0
+            ? ScrapToRobotWorkbench(
+                onReaction: (msg, {bool complete = false}) {
+                  setState(() {
+                    _robotMood = complete ? RobotMood.excited : RobotMood.explaining;
+                    _botMessage = msg;
+                  });
+                },
+              )
+            : _activeStage == 1
+                ? InteractiveMachinePlayground(
+                    activeIndex: _exampleIdx,
+                    onSelectMachine: _onSelectMachineExample,
+                    onBoltsComment: (msg) {
+                      setState(() {
+                        _robotMood = RobotMood.excited;
+                        _botMessage = msg;
+                      });
+                    },
+                  )
+                : _activeStage == 2
+                    ? _buildInteractivePlanCard(isTiny)
+                    : _buildMinimalPassCard(isTiny),
       ),
     );
   }
 
-  // COMPLETE 12-CHAPTER CURRICULUM SYLLABUS
-  Widget _buildCurriculumRoadmapSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-    final cols = screenW >= 960 ? 3 : (screenW >= 600 ? 2 : 1);
+  Widget _buildInteractivePlanCard(bool isTiny) {
+    if (_isDraftingPlan) {
+      return RobotPlanDraftingAnimation(
+        studentName: _safeName,
+        onComplete: _onDraftingComplete,
+      );
+    }
 
-    final chapters = [
-      (
-        num: '01',
-        title: 'Flute Mechanics & Scissor Hoists',
-        principle: 'Corrugation Grain & 300% Bending Resistance',
-        build: 'Cardboard Scissor Pantograph',
-        icon: '✂️',
-      ),
-      (
-        num: '02',
-        title: 'Straw Bearings & Low-Friction Axles',
-        principle: 'Sliding Friction Reduction & Concentric Hubs',
-        build: 'Smooth-Rolling Test Cart',
-        icon: '🛒',
-      ),
-      (
-        num: '03',
-        title: 'Gravitational Potential & Banked Chutes',
-        principle: 'Threshold Velocity & Centripetal Curve Physics',
-        build: 'Gravity-Fed Marble Coaster Run',
-        icon: '🎢',
-      ),
-      (
-        num: '04',
-        title: 'Elastic Potential & Axle Torque',
-        principle: 'Hooke\'s Law & Stored Strain Energy Release',
-        build: 'Rubber-Band Wind-Up Drive Racer',
-        icon: '🏎️',
-      ),
-      (
-        num: '05',
-        title: 'Compound Pulleys & Mechanical Advantage',
-        principle: 'Force Multiplication & Block-and-Tackle Rigging',
-        build: 'Compound Pulley Cargo Crane',
-        icon: '🏗️',
-      ),
-      (
-        num: '06',
-        title: 'Rotary Cams & Eccentric Automata',
-        principle: 'Rotary-to-Linear Motion & Follower Phasing',
-        build: 'Cardboard Cam & Gear Automaton',
-        icon: '🎡',
-      ),
-      (
-        num: '07',
-        title: 'Bio-Mechanics & String Tendons',
-        principle: 'Tendon Routing & Antagonist Spring Returns',
-        build: 'Articulated Bionic Tendon Hand',
-        icon: '🦾',
-      ),
-      (
-        num: '08',
-        title: 'Fluid Power & Hydraulic Pistons',
-        principle: 'Pascal\'s Law of Enclosed Fluid Pressure',
-        build: 'Hydraulic Syringe Excavator Arm',
-        icon: '💧',
-      ),
-      (
-        num: '09',
-        title: 'Gear Pitch Ratios & Transmissions',
-        principle: 'Pitch Diameters & Torque vs Speed Trades',
-        build: '2-Speed Cardboard Gearbox',
-        icon: '⚙️',
-      ),
-      (
-        num: '10',
-        title: 'Four-Bar Walkers & Linkage Robots',
-        principle: 'Planar Pivot Ellipses & Crank Synchronization',
-        build: 'Walking-Style Leg Linkage Rover',
-        icon: '🤖',
-      ),
-      (
-        num: '11',
-        title: 'Solar Sensors & Clean Circuits',
-        principle: 'Optical Tracking & LED Polarity Logic',
-        build: 'Bio-Mimetic Solar Sunflower Tracker',
-        icon: '🌻',
-      ),
-      (
-        num: '12',
-        title: 'Autonomous Obstacle Sensing & Robotics',
-        principle: 'Tactile Micro-Switches & Auto-Reverse',
-        build: 'Smart Autonomous Reverse-Rover',
-        icon: '🤖',
-      ),
-    ];
-
-    Widget buildChapterCard(
-      ({String build, String icon, String num, String principle, String title}) ch, {
-      required bool useSpacer,
-    }) {
+    if (_planReady) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isTiny ? 14 : 18),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.5),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.primarySoft,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text('CHAPTER ${ch.num}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10, color: AppColors.primary)),
-                ),
-                Text(ch.icon, style: const TextStyle(fontSize: 20)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(ch.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textMain, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 4),
-            Text('🔬 ${ch.principle}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted), maxLines: 2, overflow: TextOverflow.ellipsis),
-            if (useSpacer) const Spacer() else const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFCBD5E1)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.build_circle_rounded, size: 14, color: AppColors.emerald),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text('Build: ${ch.build}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMain), overflow: TextOverflow.ellipsis),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      key: _curriculumKey,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 42 : 60),
-      color: Colors.white,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.emeraldSoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text('NEP 2020 & ATL COMPLIANT SYLLABUS', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Structured Indian STEM Curriculum (Classes 3 to 10)',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: isCompact ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Each progressive chapter maps directly to CBSE & ICSE physics competencies: levers, linkages, friction, kinetic energy, hydraulic pressure, and gear ratios.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
-              ),
-              const SizedBox(height: 32),
-
-              // 12 Chapter Grid
-              if (cols == 1)
-                Column(
-                  children: chapters
-                      .map((ch) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: buildChapterCard(ch, useSpacer: false),
-                          ))
-                      .toList(),
-                )
-              else
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: cols,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    mainAxisExtent: cols == 2 ? 196 : 186,
-                  ),
-                  itemCount: chapters.length,
-                  itemBuilder: (context, idx) => buildChapterCard(chapters[idx], useSpacer: true),
-                ),
-
-              const SizedBox(height: 28),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.rocket_launch_rounded, size: 18),
-                label: Text(
-                  'Enroll to Unlock All 12 Chapters (₹199) 🚀',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: isCompact ? 13 : 14),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 28, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 4,
-                ),
-                onPressed: _openCheckoutDialog,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 2B. JUNIOR ROBOTICS DIPLOMA & PORTFOLIO ACCREDITATION
-  Widget _buildCertificatePreviewSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-    final isTiny = screenW < 400;
-    final cadetName = _nameController.text.trim().isEmpty ? 'Aarav Sharma' : _nameController.text.trim();
-
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (isTiny ? 14 : 20), vertical: isCompact ? 40 : 56),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 880),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.amberSoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text('TANGIBLE RECOGNITION FOR SCHOOL', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.amberGlow, letterSpacing: 1.2)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Recognized Junior Robotics Engineering Diploma',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: isCompact ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Printable, high-resolution certificate recognized for CBSE/ICSE practical portfolios, Atal Tinkering Labs & School Science Exhibitions.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
-              ),
-              const SizedBox(height: 28),
-              // Realistic Diploma Frame
-              Container(
-                padding: EdgeInsets.all(isDesktop ? 36 : (isTiny ? 14 : 20)),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFFDF7),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFD4AF37), width: 3),
-                  boxShadow: [
-                    BoxShadow(color: const Color(0xFFD4AF37).withValues(alpha: 0.25), blurRadius: 25, offset: const Offset(0, 8)),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('🇮🇳', style: TextStyle(fontSize: isTiny ? 20 : 24)),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'MAKERQUEST ACADEMY OF JUNIOR ROBOTICS',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 9.5 : 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF92400E),
-                                    letterSpacing: isCompact ? 0.5 : 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'NATIONAL STEM EXPERIENTIAL FRAMEWORK • NEP 2020',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 8 : 9,
-                                    color: const Color(0xFFB45309),
-                                    letterSpacing: isCompact ? 0.3 : 1.0,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const AnimatedGoldShimmerDiplomaSeal(),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'OFFICIAL DIPLOMA OF CERTIFICATION',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: isCompact ? 15 : 18, fontWeight: FontWeight.w900, color: const Color(0xFF1E293B), letterSpacing: isCompact ? 0.6 : 1.2),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text('This credential is proudly awarded to', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFF64748B))),
-                    const SizedBox(height: 10),
-                    Text(
-                      cadetName,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: isCompact ? 22 : 26,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF0F172A),
-                        letterSpacing: 0.5,
-                        decoration: TextDecoration.underline,
-                        decorationColor: const Color(0xFFD4AF37),
-                        decorationThickness: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'for demonstrating verified mastery in 17+ hands-on mechanical builds, 3D kinematic blueprint CAD, linkage kinematics, and stored potential energy systems.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Color(0xFF334155), height: 1.5),
-                    ),
-                    const SizedBox(height: 24),
-                    const Divider(color: Color(0xFFE2E8F0)),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 12,
-                        runSpacing: 10,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text('VERIFIED CREDENTIAL ID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
-                              Text('MQ-CADET-2026-IND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), fontFamily: 'monospace')),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFF59E0B)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.verified_rounded, size: 14, color: Color(0xFFD97706)),
-                                SizedBox(width: 4),
-                                Text('Official STEM Diploma', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 3. WHAT WE OFFER & WHAT WE DO
-  Widget _buildWhatWeOfferSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-    final useGrid = screenW >= 680;
-
-    final features = [
-      (
-        icon: '📐',
-        title: 'Interactive 3D CAD & Blueprint Visualizer',
-        desc: 'Before cutting cardboard, students inspect exact millimeter dimensions, internal corrugation flute grain (0°), exploded assemblies, and physics force vectors.',
-        color: AppColors.cyan,
-      ),
-      (
-        icon: '📚',
-        title: '12 Chapters of Cardboard Robotics',
-        desc: 'Based on authentic maker engineering: Scissor lifts, straw-bearing rolling carts, rubber-band torque racers, double-banked marble runs, and mechanical grippers.',
-        color: AppColors.primary,
-      ),
-      (
-        icon: '♻️',
-        title: 'Zero Waste, Low-Cost Upcycled Materials',
-        desc: 'No ₹2,500+ plastic electronics kits that break. Everything is built with upcycled boxes, wooden skewers, drinking straws, and rubber bands.',
-        color: AppColors.emerald,
-      ),
-      (
-        icon: '🎮',
-        title: 'Gamified Quest Path & Certifications',
-        desc: 'Earn XP, level up from Cardboard Apprentice to Master Maker, pass interactive checkpoint quizzes, and graduate with printable STEM certificates.',
-        color: AppColors.amber,
-      ),
-    ];
-
-    Widget buildFeatureCard(({Color color, String desc, String icon, String title}) f) {
-      return Container(
-        padding: EdgeInsets.all(isCompact ? 16 : 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: isCompact ? 42 : 48,
-              height: isCompact ? 42 : 48,
-              decoration: BoxDecoration(
-                color: f.color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(child: Text(f.icon, style: TextStyle(fontSize: isCompact ? 20 : 24))),
-            ),
-            SizedBox(width: isCompact ? 12 : 16),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(f.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textMain)),
-                  const SizedBox(height: 6),
-                  Text(f.desc, style: const TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.45)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 40 : 50),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: Column(
-            children: [
-              const Text('WHAT WE OFFER & WHAT WE DO', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary, letterSpacing: 1.2)),
-              const SizedBox(height: 8),
-              Text('The Complete Hands-On STEM Learning Journey', textAlign: TextAlign.center, style: TextStyle(fontSize: isCompact ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain)),
-              const SizedBox(height: 12),
-              const Text(
-                'We turn engineering theory into tactile problem-solving that students can hold, test, and celebrate.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted),
-              ),
-              const SizedBox(height: 32),
-              if (!useGrid)
-                Column(
-                  children: features
-                      .map((f) => Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: buildFeatureCard(f),
-                          ))
-                      .toList(),
-                )
-              else
-                Column(
-                  children: [
-                    for (int rowStart = 0; rowStart < features.length; rowStart += 2) ...[
-                      if (rowStart > 0) const SizedBox(height: 20),
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(_archetypeIcon, style: const TextStyle(fontSize: 24)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: buildFeatureCard(features[rowStart])),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: rowStart + 1 < features.length
-                                  ? buildFeatureCard(features[rowStart + 1])
-                                  : const SizedBox.shrink(),
+                            Text(
+                              '$_safeName • Age $_selectedAge',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primary),
+                            ),
+                            Text(
+                              _archetype,
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textMain),
                             ),
                           ],
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 3B. SMART PARENT'S SAVINGS CALCULATOR
-  Widget _buildParentRoiCalculator(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-
-    return Container(
-      color: const Color(0xFFF1F5F9),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 40 : 56),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 880),
-          child: Container(
-            padding: EdgeInsets.all(isDesktop ? 36 : (screenW < 420 ? 16 : 24)),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 12,
-                  runSpacing: 10,
-                  children: [
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: isCompact ? screenW - 60 : 560),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('THE SMART PARENT\'S ARITHMETIC', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
-                          const SizedBox(height: 4),
-                          Text('Annual Extracurricular STEM Cost Comparison', style: TextStyle(fontSize: isCompact ? 18 : 22, fontWeight: FontWeight.w900, color: AppColors.textMain)),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.emeraldSoft,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text('Save ₹15,000+', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.emerald)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Divider(),
-                const SizedBox(height: 16),
-                _buildRoiRow('Weekend Robotics Coaching (1 Year)', '₹6,000 – ₹15,000', isPositive: false),
-                _buildRoiRow('3 Commercial Plastic Robot Kits (Break easily)', '₹7,500', isPositive: false),
-                _buildRoiRow('Video Games & Mobile App Microtransactions', '₹2,400', isPositive: false),
-                const SizedBox(height: 8),
-                const Divider(),
-                const SizedBox(height: 8),
-                _buildRoiRow('MakerQuest All-Access Lifetime Pass (17 Builds)', '₹199 One-Time', isPositive: true),
-                _buildRoiRow('Materials Cost (Clean Household Scrap Delivery Boxes)', '₹0.00', isPositive: true),
-                const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                    color: AppColors.emerald,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Row(
-                    children: const [
-                      Text('💡', style: TextStyle(fontSize: 20)),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'For less than the price of a single movie ticket or Domino\'s pizza (₹199), your child gains a permanent, reusable engineering playground.',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF065F46), height: 1.45),
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    '$_aptitudeScore% Fit',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white),
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoiRow(String title, String cost, {required bool isPositive}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              '${isPositive ? "✅" : "❌"} $title',
-              style: TextStyle(fontSize: 12.5, fontWeight: isPositive ? FontWeight.w800 : FontWeight.w600, color: isPositive ? AppColors.textMain : AppColors.textMuted),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Flexible(
-            flex: 0,
-            child: Text(
-              cost,
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w900,
-                color: isPositive ? AppColors.emerald : AppColors.rose,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 4. STUDENT CAPABILITY & READINESS ASSESSMENT
-  Widget _buildAssessmentSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-
-    return Container(
-      key: _assessmentKey,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 38 : 50),
-      color: Colors.white,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.amberSoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text('FREE 60-SECOND MAKER DIAGNOSTIC', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.amberGlow)),
-              ),
-              const SizedBox(height: 10),
-              Text('Discover What Your Student is Capable of Building', textAlign: TextAlign.center, style: TextStyle(fontSize: isCompact ? 22 : 26, fontWeight: FontWeight.w900, color: AppColors.textMain)),
-              const SizedBox(height: 8),
-              const Text(
-                'Enter your student\'s details below. Our pedagogical diagnostic engine will analyze their spatial, mechanical, and motor readiness, and recommend their customized robotics curriculum.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
-              ),
-              const SizedBox(height: 26),
-              Container(
-                padding: EdgeInsets.all(isCompact ? 16 : 28),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 6)),
-                  ],
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Name & Email
-                      isDesktop
-                          ? Row(
-                              children: [
-                                Expanded(child: _buildNameField()),
-                                const SizedBox(width: 16),
-                                Expanded(child: _buildEmailField()),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                _buildNameField(),
-                                const SizedBox(height: 16),
-                                _buildEmailField(),
-                              ],
-                            ),
-                      const SizedBox(height: 20),
-
-                      // Age Selector with Grade Badges
-                      const Text('Student Age & Stage:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((age) {
-                          final isSelected = _selectedAge == age;
-                          return ChoiceChip(
-                            label: Text('Age $age', style: TextStyle(fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600, fontSize: 12)),
-                            selected: isSelected,
-                            selectedColor: AppColors.primary,
-                            labelStyle: TextStyle(color: isSelected ? Colors.white : AppColors.textMain),
-                            onSelected: (val) {
-                              if (val) setState(() => _selectedAge = age);
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Prior Experience
-                      const Text('Current Building Experience:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        itemHeight: null,
-                        initialValue: _experienceLevel,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'Beginner (Crafting, paper & scissors)', child: Text('🌱 Beginner: Enjoys crafting, scissors & paper')),
-                          DropdownMenuItem(value: 'Intermediate (Lego, crafting & kits)', child: Text('⚙️ Intermediate: Has built Lego models & simple kits')),
-                          DropdownMenuItem(value: 'Advanced (Mechanics, coding & gears)', child: Text('🚀 Advanced: Loves robotics, mechanical gears & coding')),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) setState(() => _experienceLevel = val);
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Dream Interest
-                      const Text('What mechanism excites them most?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        itemHeight: null,
-                        initialValue: _favoriteInterest,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'Speed Racers & Drive Systems', child: Text('🏎️ Speed Racers & Wheels (Elastic Potential Torque)')),
-                          DropdownMenuItem(value: 'Scissor Lifts & Lifting Linkages', child: Text('🏗️ Scissor Lifts & Cranes (Mechanical Advantage)')),
-                          DropdownMenuItem(value: 'Roller Coasters & Gravity Chutes', child: Text('🎢 Roller Coasters (Gravitational Physics & Banked Turns)')),
-                          DropdownMenuItem(value: 'Articulated Robot Grippers & Jaws', child: Text('🦾 Articulated Robot Grippers (Dual-Lever Mechanics)')),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) setState(() => _favoriteInterest = val);
-                        },
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Submit button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          icon: _isAnalyzing
-                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : const Icon(Icons.psychology_rounded, size: 20),
-                          label: Text(
-                            _isAnalyzing ? 'Bot "Bolts" is Drafting Blueprint...' : 'Analyze Maker Capability & Generate Plan 🚀',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: isCompact ? 13 : 14),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: _isAnalyzing ? null : _runAnalysis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Animated Robot Architect Drafting Blueprint Screen
-              if (_isAnalyzing) ...[
-                const SizedBox(height: 24),
-                RobotPlanDraftingAnimation(
-                  studentName: _nameController.text.trim().isEmpty ? 'Young Cadet' : _nameController.text.trim(),
-                  onComplete: _onRobotDraftingComplete,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNameField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Student\'s Full Name *', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            hintText: 'e.g. Aarav Sharma',
-            prefixIcon: const Icon(Icons.person_outline_rounded, size: 18),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          ),
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter student name' : null,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmailField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Parent / Student Email *', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: _emailController,
-          decoration: InputDecoration(
-            hintText: 'e.g. parent@example.com',
-            prefixIcon: const Icon(Icons.email_outlined, size: 18),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          ),
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Please enter an email';
-            if (!v.contains('@')) return 'Enter a valid email address';
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  // 5. DIAGNOSTIC RESULTS: WHAT THE STUDENT IS CAPABLE OF BUILDING
-  Widget _buildAnalysisResultsSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 650;
-    final studentName = _nameController.text.trim().isEmpty ? 'Student' : _nameController.text.trim();
-
-    Widget buildProjectPreviewCard(({String desc, String diff, String icon, String name, String time}) p) {
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(p.icon, style: const TextStyle(fontSize: 28)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textMain)),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: AppColors.emeraldSoft, borderRadius: BorderRadius.circular(6)),
-                        child: Text(p.diff, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.emerald)),
-                      ),
-                      Text('⏱️ ${p.time}', style: const TextStyle(fontSize: 10, color: AppColors.textDim)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(p.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted), maxLines: 2, overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      key: _resultsKey,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 38 : 50),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Badge & Archetype Header
-              Container(
-                padding: EdgeInsets.all(isCompact ? 16 : 20),
+            const SizedBox(height: 12),
+            ..._recommendedProjects.map(
+              (p) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF93C5FD)),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: isCompact ? 48 : 56,
-                      height: isCompact ? 48 : 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Center(child: Text(_archetypeIcon, style: TextStyle(fontSize: isCompact ? 26 : 32))),
-                    ),
-                    const SizedBox(width: 14),
+                    Text(p.icon, style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Wrap(
-                            spacing: 8,
+                            spacing: 6,
                             runSpacing: 4,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              Text('$studentName\'s Maker Profile:', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                              Text(p.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textMain)),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.emeraldSoft,
-                                  borderRadius: BorderRadius.circular(10),
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: Text('$_aptitudeScore% Mechanical Aptitude', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.emerald)),
+                                child: Text(p.time, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(_archetype, style: TextStyle(fontSize: isCompact ? 17 : 20, fontWeight: FontWeight.w900, color: AppColors.textMain)),
                           const SizedBox(height: 2),
-                          Text('Recommended Curriculum: $_recommendedTrack', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                          Text(p.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-
-              Text('What $studentName is Capable of Building Right Now:', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textMain)),
-              const SizedBox(height: 6),
-              Text('Based on age $_selectedAge and aptitude for $_favoriteInterest, $studentName can master these 4 projects in their first 2 weeks:', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-              const SizedBox(height: 16),
-
-              // 4 Recommended Projects Cards
-              if (isCompact)
-                Column(
-                  children: _recommendedProjects
-                      .map((p) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: buildProjectPreviewCard(p),
-                          ))
-                      .toList(),
-                )
-              else
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 14,
-                    mainAxisSpacing: 14,
-                    mainAxisExtent: isDesktop ? 136 : 150,
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                TextButton.icon(
+                  icon: const Icon(Icons.refresh_rounded, size: 15),
+                  label: const Text('Change Picks', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  onPressed: () {
+                    setState(() {
+                      _planReady = false;
+                      _robotMood = RobotMood.thinking;
+                      _botMessage = 'Sure! Pick another age or favorite machine and I will redraft it!';
+                    });
+                  },
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.bolt_rounded, size: 16),
+                  label: const Text('Enroll Now (₹199) 💳', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.emerald,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  itemCount: _recommendedProjects.length,
-                  itemBuilder: (context, idx) => buildProjectPreviewCard(_recommendedProjects[idx]),
+                  onPressed: _openCheckoutDialog,
                 ),
-              const SizedBox(height: 24),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
 
-              // CALL TO ACTION / PURCHASE BOX
-              Container(
-                padding: EdgeInsets.all(isCompact ? 18 : 24),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF1E293B), Color(0xFF0F172A)]),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 8)),
-                  ],
-                ),
-                child: isCompact
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text('SPECIAL CADET ENROLLMENT OFFER', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF38BDF8))),
-                          const SizedBox(height: 4),
-                          Text('Unlock $studentName\'s All-Access MakerQuest Odyssey', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Colors.white)),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'One-time software license. Includes full 12-chapter interactive 3D blueprints, CAD simulator, gamified quest map, and engineering certificates.',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), height: 1.4),
-                          ),
-                          const SizedBox(height: 16),
-                          Wrap(
-                            alignment: WrapAlignment.spaceBetween,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(_currencySymbol, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                                      Text(_planPrice.toStringAsFixed(0), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
-                                    ],
-                                  ),
-                                  const Text('Lifetime Access', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10)),
-                                ],
-                              ),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.payment_rounded, size: 16),
-                                label: const Text('Enroll Now 💳', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF38BDF8),
-                                  foregroundColor: const Color(0xFF0F172A),
-                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                                onPressed: _openCheckoutDialog,
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
-                    : Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('SPECIAL CADET ENROLLMENT OFFER', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF38BDF8))),
-                                const SizedBox(height: 4),
-                                Text('Unlock $studentName\'s All-Access MakerQuest Odyssey', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
-                                const SizedBox(height: 6),
-                                const Text(
-                                  'One-time software license. Includes full 12-chapter interactive 3D blueprints, CAD simulator, gamified quest map, and engineering certificates.',
-                                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), height: 1.4),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Column(
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(_currencySymbol, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-                                  Text(_planPrice.toStringAsFixed(0), style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
-                                ],
-                              ),
-                              const Text('Lifetime Access', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10)),
-                              const SizedBox(height: 10),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.payment_rounded, size: 16),
-                                label: const Text('Enroll Now 💳', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF38BDF8),
-                                  foregroundColor: const Color(0xFF0F172A),
-                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                                onPressed: _openCheckoutDialog,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+    // Minimal 3-input interactive picker form
+    final vibeOptions = [
+      (icon: '🏎️', short: 'Racers', value: 'Speed Racers & Drive Systems'),
+      (icon: '✂️', short: 'Lifts', value: 'Scissor Lifts & Lifting Linkages'),
+      (icon: '🦾', short: 'Claws', value: 'Articulated Robot Grippers'),
+      (icon: '🎢', short: 'Coasters', value: 'Roller Coasters & Gravity'),
+    ];
+
+    return Form(
+      key: _planFormKey,
+      child: Container(
+        padding: EdgeInsets.all(isTiny ? 14 : 18),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border, width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '10-SECOND STARTER PLANNER',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: AppColors.primary,
+                letterSpacing: 1.0,
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // STANDALONE PRICING & LIFETIME CADET PASS VALUE STACK
-  Widget _buildPricingSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-    final isTiny = screenW < 420;
-
-    return Container(
-      key: _pricingKey,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (isTiny ? 14 : 20), vertical: isCompact ? 42 : 60),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-        ),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 880),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFEF4444)]),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('⚡', style: TextStyle(fontSize: 14)),
-                    SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        'LIMITED LAUNCH OFFER • OVER 90% OFF',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Cadet First Name',
+                hintText: 'e.g. Aarav',
+                isDense: true,
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.face_rounded, size: 18, color: AppColors.primary),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+              ),
+              validator: (val) => (val == null || val.trim().isEmpty) ? 'Enter a name' : null,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Age: $_selectedAge yrs',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textMain),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [7, 8, 9, 10, 11, 12, 13, 14].map((age) {
+                final selected = age == _selectedAge;
+                return ChoiceChip(
+                  label: Text(age == 14 ? '14+' : '$age', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: selected ? Colors.white : AppColors.textMain)),
+                  selected: selected,
+                  selectedColor: AppColors.primary,
+                  backgroundColor: Colors.white,
+                  showCheckmark: false,
+                  onSelected: (_) {
+                    SoundEffects.playPop();
+                    setState(() => _selectedAge = age);
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Pick what sounds coolest:',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textMain),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: vibeOptions.map((v) {
+                final selected = _favoriteInterest == v.value;
+                return InkWell(
+                  onTap: () {
+                    SoundEffects.playPop();
+                    setState(() => _favoriteInterest = v.value);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: selected ? AppColors.primarySoft : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selected ? AppColors.primary : AppColors.border,
+                        width: selected ? 1.8 : 1,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Cadet All-Access Lifetime Pass',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: isCompact ? 26 : 34, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.8),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'One single payment. Lifetime access. No recurring subscriptions. Everything your young engineer needs to master mechanical robotics.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8), height: 1.5),
-              ),
-              const SizedBox(height: 30),
-
-              // Pricing Card Box
-              Container(
-                padding: EdgeInsets.all(isDesktop ? 36 : (isTiny ? 16 : 24)),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 30, offset: const Offset(0, 15)),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // Urgency progress bar
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      margin: const EdgeInsets.only(bottom: 24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFFBEB),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFFDE68A)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '🔥 Inaugural Cohort: 462 of 500 Passes Claimed',
-                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF92400E)),
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text('92% Claimed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFFD97706))),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.all(Radius.circular(6)),
-                            child: LinearProgressIndicator(
-                              value: 0.92,
-                              minHeight: 6,
-                              backgroundColor: Color(0xFFFDE68A),
-                              valueColor: AlwaysStoppedAnimation(Color(0xFFD97706)),
-                            ),
-                          ),
-                          SizedBox(height: 6),
-                          Text('Next 500 batch will be priced at ₹499. Lock in ₹199 lifetime rate today.', style: TextStyle(fontSize: 10, color: Color(0xFFB45309), fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-
-                    // Price Row
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 10,
-                      runSpacing: 6,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text('₹', style: TextStyle(fontSize: isTiny ? 24 : 28, fontWeight: FontWeight.w800, color: AppColors.textMain)),
-                            Text('199', style: TextStyle(fontSize: isTiny ? 44 : 54, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -1.5)),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('One-Time Payment', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.emerald)),
-                            Text('Normally ₹2,999 for toy kits', style: TextStyle(fontSize: 11, color: AppColors.textMuted, decoration: TextDecoration.lineThrough)),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const Divider(),
-                    const SizedBox(height: 24),
-
-                    // Feature Value Stack
-                    _buildPricingFeatureItem('All 12 Progressive Indian STEM Engineering Chapters (Lifetime Access)', '₹800 value'),
-                    _buildPricingFeatureItem('17+ Interactive 3D CAD Blueprint Visualizers with Kinematic Physics', '₹600 value'),
-                    _buildPricingFeatureItem('10 Collectible Engineering Badges & Official STEM Graduation Diploma', '₹350 value'),
-                    _buildPricingFeatureItem('Printable 1:1 Scale Dimension Cut Sheets & Scoring Guides', '₹250 value'),
-                    _buildPricingFeatureItem('Parent & Educator Discussion Guides with NEP 2020 Science Lessons', '₹300 value'),
-                    _buildPricingFeatureItem('Zero Scrap Kit Dependencies (Uses everyday household delivery boxes)', 'Priceless'),
-                    _buildPricingFeatureItem('Free Access to All Future Seasonal DIY Project Drops & Updates', 'Included'),
-
-                    const SizedBox(height: 24),
-
-                    // No-Brainer Cost Comparison
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('THE NO-BRAINER COMPARISON', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.primary, letterSpacing: 1.0)),
-                          SizedBox(height: 8),
-                          Text('❌ Robotics Coaching Class in India: ₹5,000 to ₹12,000 / month', style: TextStyle(fontSize: 11.5, color: AppColors.rose, fontWeight: FontWeight.w600)),
-                          SizedBox(height: 4),
-                          Text('❌ Plastic Robot Toy Kit on Amazon: ₹2,499 - ₹4,999 (breaks once)', style: TextStyle(fontSize: 11.5, color: AppColors.rose, fontWeight: FontWeight.w600)),
-                          SizedBox(height: 4),
-                          Text('❌ One Family Movie / Domino\'s Order: ₹800+', style: TextStyle(fontSize: 11.5, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
-                          SizedBox(height: 6),
-                          Divider(),
-                          SizedBox(height: 6),
-                          Text('✅ MakerQuest All-Access Pass: ₹199 One-Time (Lifetime)', style: TextStyle(fontSize: 13, color: AppColors.emerald, fontWeight: FontWeight.w900)),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // CTA Button
-                    SizedBox(
-                      width: isCompact ? double.infinity : null,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 36, vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          elevation: 4,
-                        ),
-                        onPressed: _openCheckoutDialog,
-                        child: Row(
-                          mainAxisSize: isCompact ? MainAxisSize.max : MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.lock_open_rounded, size: 20),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                'Claim Cadet Lifetime Pass for ₹199 🚀',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: isCompact ? 14 : 16),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Instant UPI / Cards Payment Strip
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        '⚡ Instant Activation via UPI (GPay • PhonePe • Paytm • BHIM) & Cards',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // 100% UPI refund reassurance banner
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
-                      ),
-                      child: const Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('🛡️', style: TextStyle(fontSize: 20)),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '30-Day Risk-Free Guarantee: If your child doesn\'t build their first working kinetic machine in 30 days, simply message us for an immediate 100% refund of ₹199 directly to your UPI ID.',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF065F46), height: 1.4),
-                            ),
+                        Text(v.icon, style: const TextStyle(fontSize: 15)),
+                        const SizedBox(width: 5),
+                        Text(
+                          v.short,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: selected ? AppColors.primary : AppColors.textMain,
                           ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Guarantee & Security Strip
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: const [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.verified_user_rounded, size: 16, color: AppColors.emerald),
-                            SizedBox(width: 6),
-                            Flexible(child: Text('30-Day 100% Money-Back Guarantee', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain))),
-                          ],
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.shield_rounded, size: 16, color: AppColors.primary),
-                            SizedBox(width: 6),
-                            Flexible(child: Text('256-bit Encrypted Checkout', style: TextStyle(fontSize: 12, color: AppColors.textMuted))),
-                          ],
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.flash_on_rounded, size: 16, color: AppColors.amber),
-                            SizedBox(width: 6),
-                            Flexible(child: Text('Instant Digital Workshop Unlock', style: TextStyle(fontSize: 12, color: AppColors.textMuted))),
-                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.auto_awesome_rounded, size: 17),
+              label: const Text(
+                'Let Bolts Draft My Plan 🤖✨',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
               ),
-            ],
-          ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+              onPressed: _startPlanDrafting,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildPricingFeatureItem(String title, String tag) {
+  Widget _buildMinimalPassCard(bool isTiny) {
+    return Container(
+      padding: EdgeInsets.all(isTiny ? 14 : 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.45), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'CADET ALL-ACCESS PASS',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF93C5FD), letterSpacing: 1.0),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Lifetime DIY Robotics Workshop',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.emerald.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.emerald.withValues(alpha: 0.5)),
+                ),
+                child: const Text(
+                  '₹199 once',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _passBullet('17 real cardboard machines & 12 guided chapters'),
+          _passBullet('Interactive 3D CAD blueprints & physics simulators'),
+          _passBullet('Zero extra kit cost • 30-day money-back guarantee'),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.rocket_launch_rounded, size: 17),
+            label: const Text(
+              'Unlock Workshop Now (₹199) 🚀',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.emerald,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            onPressed: _openCheckoutDialog,
+          ),
+          const SizedBox(height: 14),
+          // Clean WhatsApp Mentor Row inside Finale Card
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.35)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  '💬 Questions? Real Maker Mentors on WhatsApp:',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFA7F3D0)),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.chat_rounded, size: 15),
+                      label: const Text(
+                        'Chat on WhatsApp (${ExternalLauncher.whatsAppPhoneDisplay})',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () {
+                        SoundEffects.playPop();
+                        ExternalLauncher.openWhatsApp();
+                      },
+                    ),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.copy_rounded, size: 14),
+                      label: const Text('Copy Number', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: _copyWhatsAppNumber,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _passBullet(String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(bottom: 7),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(color: AppColors.emeraldSoft, shape: BoxShape.circle),
-            child: const Icon(Icons.check_rounded, color: AppColors.emerald, size: 16),
-          ),
-          const SizedBox(width: 12),
+          const Text('✓ ', style: TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w900, fontSize: 13)),
           Expanded(
-            child: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textMain)),
+            child: Text(
+              text,
+              style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
-          const SizedBox(width: 8),
-          Text(tag, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
         ],
       ),
     );
   }
 
-  // 6. CURRICULUM COMPARISON TABLE
-  Widget _buildCurriculumComparison(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final useStackedCards = screenW < 650;
-    const rows = [
-      (feature: 'Materials Cost', mq: '₹0 (Scrap cardboard & rubber bands)', toy: '₹2,000 - ₹5,000+ per single kit'),
-      (feature: 'Mechanisms Taught', mq: '17+ physical kinematic machines', toy: '1 static proprietary toy'),
-      (feature: 'Interactive 3D CAD', mq: 'Full exploded 3D & physics vectors', toy: 'Static paper manual or none'),
-      (feature: 'Skill Longevity', mq: 'Lifelong engineering intuition', toy: 'Assembled once, abandoned in drawer'),
-      (feature: 'Curriculum Progression', mq: '5 Levels, NEP 2020 & CBSE/ICSE Physics Labs', toy: 'No curriculum alignment'),
-    ];
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 44),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Column(
-            children: [
-              const Text('TRANSPARENT VALUE', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary, letterSpacing: 1.2)),
-              const SizedBox(height: 8),
-              Text(
-                'Why Families Choose MakerQuest over Plastic Kits',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: screenW < 600 ? 22 : 26, fontWeight: FontWeight.w900, color: AppColors.textMain),
-              ),
-              const SizedBox(height: 24),
-              if (useStackedCards)
-                Column(
-                  children: rows.map((r) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
-                            ),
-                            child: Text(r.feature, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textMain)),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('MakerQuest Software:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.primary)),
-                                const SizedBox(height: 2),
-                                Text('✅ ${r.mq}', style: const TextStyle(fontSize: 12.5, color: AppColors.emerald, fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 10),
-                                const Text('Traditional Toy Robot Kits:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
-                                const SizedBox(height: 2),
-                                Text('❌ ${r.toy}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                )
-              else
-                Table(
-                  border: TableBorder.all(color: AppColors.border, borderRadius: BorderRadius.circular(12)),
-                  children: [
-                    TableRow(
-                      decoration: const BoxDecoration(color: Color(0xFFF1F5F9)),
-                      children: const [
-                        Padding(padding: EdgeInsets.all(12), child: Text('Feature', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
-                        Padding(padding: EdgeInsets.all(12), child: Text('MakerQuest Software', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary))),
-                        Padding(padding: EdgeInsets.all(12), child: Text('Traditional Toy Robot Kits', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.textMuted))),
-                      ],
-                    ),
-                    ...rows.map((r) => _buildTableRow(r.feature, r.mq, r.toy)),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  TableRow _buildTableRow(String feature, String mqVal, String toyVal) {
-    return TableRow(
+  Widget _buildMinimalFooter(bool isTiny) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 12,
+      runSpacing: 6,
       children: [
-        Padding(padding: const EdgeInsets.all(12), child: Text(feature, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
-        Padding(padding: const EdgeInsets.all(12), child: Text('✅ $mqVal', style: const TextStyle(fontSize: 12, color: AppColors.emerald, fontWeight: FontWeight.w600))),
-        Padding(padding: const EdgeInsets.all(12), child: Text('❌ $toyVal', style: const TextStyle(fontSize: 12, color: AppColors.textMuted))),
+        const Text(
+          '© 2026 MakerQuest • Zero-Waste Cardboard Robotics',
+          style: TextStyle(fontSize: 11, color: AppColors.textDim, fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+        ),
+        InkWell(
+          onTap: () {
+            SoundEffects.playPop();
+            ExternalLauncher.openWhatsApp();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            child: Text(
+              'WhatsApp: ${ExternalLauncher.whatsAppPhoneDisplay}',
+              style: TextStyle(fontSize: 11, color: Color(0xFF15803D), fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
       ],
-    );
-  }
-
-  // 6B. WHATSAPP MENTOR SUPPORT
-  Widget _buildWhatsAppSupportSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 600;
-
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 40 : 56),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 880),
-          child: Container(
-            padding: EdgeInsets.all(isDesktop ? 36 : (screenW < 420 ? 16 : 24)),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E293B)]),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.35), width: 1.5),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 8)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('1-ON-1 MAKER MENTORSHIP', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF34D399), letterSpacing: 1.2)),
-                      const SizedBox(height: 6),
-                      Text('Never Get Stuck: Dedicated WhatsApp Support', style: TextStyle(fontSize: isCompact ? 19 : 22, fontWeight: FontWeight.w900, color: Colors.white)),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Is a linkage sticking? Straw bearing wobbling? Send a 10-second video or photo to our dedicated engineering WhatsApp helpline. Our maker mentors respond with personalized alignment tips within 15 minutes during build hours.',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8), height: 1.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF25D366).withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.45)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Text('📞', style: TextStyle(fontSize: 14)),
-                            SizedBox(width: 8),
-                            Flexible(
-                              child: SelectableText(
-                                'Official WhatsApp Helpline: ${ExternalLauncher.whatsAppPhoneDisplay}',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7), letterSpacing: 0.3),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.chat_rounded, size: 17),
-                            label: Text(
-                              'Chat on WhatsApp (${ExternalLauncher.whatsAppPhoneDisplay})',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: isCompact ? 12 : 13),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF25D366),
-                              foregroundColor: const Color(0xFF052E16),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            onPressed: () {
-                              SoundEffects.playPop();
-                              ExternalLauncher.openWhatsApp();
-                            },
-                          ),
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.copy_rounded, size: 15, color: Color(0xFFCBD5E1)),
-                            label: const Text(
-                              'Copy Number',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Colors.white),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            onPressed: () {
-                              Clipboard.setData(const ClipboardData(text: ExternalLauncher.whatsAppPhoneDisplay));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Copied WhatsApp number ${ExternalLauncher.whatsAppPhoneDisplay} to clipboard!'),
-                                  backgroundColor: Color(0xFF15803D),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (isDesktop) ...[
-                  const SizedBox(width: 32),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      SoundEffects.playPop();
-                      ExternalLauncher.openWhatsApp();
-                    },
-                    child: Container(
-                      width: 104,
-                      height: 104,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF25D366).withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.55), width: 1.5),
-                      ),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('💬', style: TextStyle(fontSize: 40)),
-                          SizedBox(height: 4),
-                          Text('OPEN CHAT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7), letterSpacing: 0.8)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // FREQUENTLY ASKED QUESTIONS ACCORDION
-  Widget _buildFaqSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final faqs = [
-      (
-        q: 'Do I need to buy expensive robotics kits, electronics, or specialized tools?',
-        a: 'No, absolutely not! The core mission of MakerQuest is 100% zero-waste scrap engineering. All you need are clean cardboard boxes (like Amazon, Flipkart, or cereal cartons), drinking straws, wooden skewers, rubber bands, household scissors, and glue. Everything is built from scratch.',
-      ),
-      (
-        q: 'What age group is MakerQuest suitable for?',
-        a: 'MakerQuest is designed for Indian students from Class 3 to Class 10 (ages 7 to 16). Younger inventors (ages 7–9) enjoy building with parental or elder sibling guidance, while older cadets (ages 10–16) work independently through the interactive 3D CAD blueprints, kinematic formulas, and checkpoint challenges.',
-      ),
-      (
-        q: 'Is this a monthly subscription or a one-time purchase?',
-        a: 'MakerQuest is a single one-time payment of ₹199. You receive permanent lifetime access to all 12 chapters, all 17+ interactive 3D blueprints, CAD simulator tools, and all future updates with zero recurring fees.',
-      ),
-      (
-        q: 'How is this different from watching free YouTube videos?',
-        a: 'YouTube videos are passive, unstructured, and often leave students frustrated with missing dimensions or unverified mechanics. MakerQuest provides interactive 3D CAD models you can rotate and zoom, step-by-step progress tracking, real physics formulas, error-prevention cards, and verifiable STEM certifications.',
-      ),
-      (
-        q: 'What if my child doesn\'t enjoy it? Do you offer a guarantee?',
-        a: 'We offer an unconditional 30-day 100% money-back guarantee. If your student doesn\'t build their first working machine or isn\'t completely captivated, simply let us know and we will issue an immediate full refund of ₹199 — no questions asked.',
-      ),
-      (
-        q: 'Can Indian schools, Atal Tinkering Labs (ATL), or homeschoolers use MakerQuest?',
-        a: 'Yes! MakerQuest is fully aligned with the Indian National Education Policy (NEP 2020) experiential learning mandate and CBSE/ICSE practical physics standards. It is perfect for Atal Tinkering Labs (ATL) and school science clubs, including educator lesson summaries and zero-cost material guides.',
-      ),
-    ];
-
-    return Container(
-      key: _faqKey,
-      color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 56),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 860),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text('FREQUENTLY ASKED QUESTIONS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Everything You Need to Know',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: screenW < 600 ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.6),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Got questions about MakerQuest? Here are answers to the most common questions from parents and teachers.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted),
-              ),
-              const SizedBox(height: 32),
-
-              Column(
-                children: List.generate(faqs.length, (idx) {
-                  final faq = faqs[idx];
-                  final isExpanded = _expandedFaqs.contains(idx);
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: isExpanded ? const Color(0xFFF8FAFC) : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: isExpanded ? AppColors.primary.withValues(alpha: 0.4) : const Color(0xFFE2E8F0)),
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () {
-                        setState(() {
-                          if (isExpanded) {
-                            _expandedFaqs.remove(idx);
-                          } else {
-                            _expandedFaqs.add(idx);
-                          }
-                        });
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.all(screenW < 420 ? 14 : 18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    faq.q,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: isExpanded ? AppColors.primary : AppColors.textMain,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Icon(
-                                  isExpanded ? Icons.remove_circle_outline_rounded : Icons.add_circle_outline_rounded,
-                                  color: isExpanded ? AppColors.primary : AppColors.textMuted,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                            if (isExpanded) ...[
-                              const SizedBox(height: 10),
-                              Text(
-                                faq.a,
-                                style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.55),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 7. TESTIMONIALS
-  Widget _buildTestimonialsSection(bool isDesktop) {
-    final screenW = MediaQuery.sizeOf(context).width;
-    final testimonials = [
-      (
-        quote: 'My 10-year-old built the scissor lift and rubber-band racer in two days using Amazon delivery boxes! He actually understands mechanical advantage and levers now.',
-        author: 'Ananya Sharma, Parent (Bengaluru)',
-        stars: '⭐⭐⭐⭐⭐'
-      ),
-      (
-        quote: 'As an Atal Tinkering Lab (ATL) coordinator, MakerQuest is the most accessible, high-engagement STEM platform we have introduced. Zero costly imported kits needed.',
-        author: 'Rajesh K., Science & ATL In-Charge (New Delhi)',
-        stars: '⭐⭐⭐⭐⭐'
-      ),
-    ];
-
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 50),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Column(
-            children: [
-              const Text('TRUSTED BY FAMILIES & EDUCATORS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary, letterSpacing: 1.2)),
-              const SizedBox(height: 8),
-              const Text('What Young Makers & Parents Say', textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.textMain)),
-              const SizedBox(height: 24),
-              isDesktop
-                  ? Row(
-                      children: testimonials.map((t) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: _buildTestimonialCard(t)))).toList(),
-                    )
-                  : Column(
-                      children: testimonials.map((t) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _buildTestimonialCard(t))).toList(),
-                    ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTestimonialCard(({String quote, String author, String stars}) t) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(t.stars, style: const TextStyle(fontSize: 14)),
-          const SizedBox(height: 10),
-          Text('"${t.quote}"', style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: AppColors.textMain, height: 1.5)),
-          const SizedBox(height: 12),
-          Text(t.author, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary)),
-        ],
-      ),
-    );
-  }
-
-  // 8. FOOTER
-  Widget _buildFooter() {
-    return Container(
-      color: const Color(0xFF0F172A),
-      padding: const EdgeInsets.fromLTRB(20, 36, 20, 96),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFFEC4899)]),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(child: Text('⚡', style: TextStyle(fontSize: 18))),
-                  ),
-                  const SizedBox(width: 10),
-                  const Flexible(
-                    child: Text(
-                      'MakerQuest Academy',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Inspiring the next generation of engineers through hands-on cardboard robotics and kinematic design.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-              ),
-              const SizedBox(height: 14),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () {
-                  SoundEffects.playPop();
-                  ExternalLauncher.openWhatsApp();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF25D366).withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.4)),
-                  ),
-                  child: const Text(
-                    '💬 WhatsApp Helpline: ${ExternalLauncher.whatsAppPhoneDisplay} • Chat Now',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF6EE7B7)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                '© 2026 MakerQuest. All rights reserved. Kid-Safe Solo DIY Platform.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -3547,7 +1657,6 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
     setState(() => _isProcessing = true);
     SoundEffects.playPop();
 
-    // Simulated sandbox gateway latency
     await Future.delayed(const Duration(milliseconds: 1400));
 
     if (!mounted) return;
@@ -3574,7 +1683,6 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Modal header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -3611,7 +1719,6 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                 ),
                 const Divider(height: 24),
 
-                // Order summary banner
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -3669,7 +1776,6 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                 ),
                 const SizedBox(height: 18),
 
-                // Promo code row
                 Row(
                   children: [
                     Expanded(
@@ -3706,7 +1812,6 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                 ],
                 const SizedBox(height: 16),
 
-                // Simulated Express Checkout
                 const Text('Instant UPI / Express Checkout:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.textMuted)),
                 const SizedBox(height: 6),
                 if (isTiny)
@@ -3772,7 +1877,6 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                   ),
                 const SizedBox(height: 16),
 
-                // Card details form
                 const Text('Or Pay with Card:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.textMuted)),
                 const SizedBox(height: 6),
 
@@ -3834,7 +1938,6 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                // Pay button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

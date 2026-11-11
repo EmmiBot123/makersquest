@@ -34,11 +34,14 @@ void main() {
       await tester.pumpWidget(const MakerQuestApp());
       await tester.pumpAndSettle();
 
-      // Top navigation & floating button / footer / WhatsApp section expose +918075971988
+      // Top navigation, FAB tooltip, and minimal footer expose +918075971988
       expect(find.textContaining('+918075971988'), findsWidgets);
       expect(find.byTooltip('WhatsApp Mentor Helpline: +918075971988'), findsOneWidget);
 
-      // Scroll to dedicated WhatsApp support card & verify interactive CTA + Copy Number
+      // Navigate to Step 4 (Pass & Mentor Help) & verify WhatsApp CTA + Copy Number
+      await tester.tap(find.text('4. Pass ₹199'));
+      await tester.pumpAndSettle();
+
       final chatBtn = find.text('Chat on WhatsApp (+918075971988)');
       await tester.ensureVisible(chatBtn);
       await tester.pumpAndSettle();
@@ -65,4 +68,3 @@ void main() {
     });
   });
 }
-
