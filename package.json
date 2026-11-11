@@ -1,0 +1,21 @@
+{
+  "name": "makerquest",
+  "version": "1.0.0",
+  "description": "MakerQuest - Gamified DIY Project Learning Platform for Students",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node test/test_api.js && node test/test_http_dispatch.js"
+  },
+  "keywords": [
+    "diy",
+    "gamification",
+    "stem",
+    "education",
+    "maker",
+    "learning"
+  ],
+  "author": "MakerQuest Team",
+  "license": "MIT"
+}

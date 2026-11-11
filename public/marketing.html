@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MakerQuest — Gamified DIY STEM Odyssey & Cardboard Robotics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --mq-primary: #6366F1;
+      --mq-primary-dark: #4F46E5;
+      --mq-primary-soft: #EEF2FF;
+      --mq-emerald: #10B981;
+      --mq-emerald-soft: #ECFDF5;
+      --mq-amber: #F59E0B;
+      --mq-amber-soft: #FFFBEB;
+      --mq-rose: #EF4444;
+      --mq-slate-900: #0F172A;
+      --mq-slate-800: #1E293B;
+      --mq-slate-700: #334155;
+      --mq-slate-600: #475569;
+      --mq-slate-500: #64748B;
+      --mq-slate-200: #E2E8F0;
+      --mq-slate-100: #F1F5F9;
+      --mq-slate-50: #F8FAFC;
+    }
+    html { scroll-behavior: smooth; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    body { background-color: #FFFFFF; color: var(--mq-slate-800); line-height: 1.6; }
+
+    /* Header Nav */
+    .m-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--mq-slate-200);
+      padding: 14px 24px;
+    }
+    .m-header-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .m-brand {
+      display: flex; align-items: center; gap: 10px; text-decoration: none;
+    }
+    .m-brand-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--mq-primary), #EC4899);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800;
+    }
+    .m-brand-text h1 { font-size: 19px; font-weight: 900; color: var(--mq-slate-900); letter-spacing: -0.5px; }
+    .m-brand-text p { font-size: 11px; font-weight: 700; color: #EA580C; letter-spacing: 1px; text-transform: uppercase; }
+    .m-nav-links { display: flex; align-items: center; gap: 24px; }
+    .m-nav-links a { text-decoration: none; font-size: 14px; font-weight: 600; color: var(--mq-slate-600); transition: color 0.2s; }
+    .m-nav-links a:hover { color: var(--mq-primary); }
+    .m-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px;
+      cursor: pointer; text-decoration: none; transition: all 0.2s; border: none;
+    }
+    .m-btn-primary {
+      background: linear-gradient(135deg, var(--mq-primary), var(--mq-primary-dark));
+      color: white; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+    .m-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45); }
+    .m-btn-success {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .m-btn-outline {
+      background: white; border: 1px solid var(--mq-slate-200); color: var(--mq-slate-700);
+    }
+    .m-btn-outline:hover { background: var(--mq-slate-50); }
+
+    /* Hero */
+    .m-hero {
+      padding: 64px 24px 50px;
+      background: radial-gradient(ellipse at top, #EEF2FF 0%, #FFFFFF 70%);
+      text-align: center;
+    }
+    .m-hero-inner { max-width: 900px; margin: 0 auto; }
+    .m-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--mq-primary-soft); color: var(--mq-primary-dark);
+      border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 30px;
+      padding: 6px 16px; font-size: 13px; font-weight: 700; margin-bottom: 24px;
+    }
+    .m-hero h2 {
+      font-size: 48px; font-weight: 900; color: var(--mq-slate-900);
+      letter-spacing: -1.2px; line-height: 1.15; margin-bottom: 20px;
+    }
+    .m-hero-highlight {
+      background: linear-gradient(135deg, var(--mq-primary), #EC4899);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .m-hero p {
+      font-size: 18px; color: var(--mq-slate-600); max-width: 720px; margin: 0 auto 32px;
+    }
+    .m-stats-bar {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;
+      max-width: 820px; margin: 36px auto 0;
+      padding: 20px; background: white; border-radius: 16px;
+      border: 1px solid var(--mq-slate-200); box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .m-stat-item { flex: 1; min-width: 160px; text-align: center; }
+    .m-stat-val { font-size: 24px; font-weight: 900; color: var(--mq-slate-900); }
+    .m-stat-lbl { font-size: 12px; font-weight: 600; color: var(--mq-slate-500); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Section Containers */
+    .m-section { padding: 70px 24px; max-width: 1200px; margin: 0 auto; }
+    .m-section-header { text-align: center; max-width: 700px; margin: 0 auto 48px; }
+    .m-section-subtitle {
+      font-size: 12px; font-weight: 800; color: var(--mq-primary);
+      letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .m-section-title { font-size: 32px; font-weight: 900; color: var(--mq-slate-900); letter-spacing: -0.8px; }
+    .m-section-desc { font-size: 16px; color: var(--mq-slate-600); margin-top: 10px; }
+
+    /* Features Grid */
+    .m-features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px; margin-bottom: 30px;
+    }
+    .m-feature-card {
+      background: white; border: 1px solid var(--mq-slate-200); border-radius: 16px;
+      padding: 28px; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .m-feature-card:hover {
+      transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+    .m-feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 18px;
+    }
+    .m-feature-card h3 { font-size: 18px; font-weight: 800; color: var(--mq-slate-900); margin-bottom: 8px; }
+    .m-feature-card p { font-size: 14px; color: var(--mq-slate-600); line-height: 1.55; }
+
+    /* Diagnostic Quiz Container */
+    .m-quiz-card {
+      background: var(--mq-slate-50); border: 2px solid var(--mq-slate-200);
+      border-radius: 24px; padding: 40px; max-width: 840px; margin: 0 auto;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.05);
+    }
+    .m-form-group { margin-bottom: 24px; }
+    .m-form-group label {
+      display: block; font-size: 14px; font-weight: 700; color: var(--mq-slate-800); margin-bottom: 8px;
+    }
+    .m-input {
+      width: 100%; padding: 14px 16px; border-radius: 10px;
+      border: 1px solid var(--mq-slate-200); background: white;
+      font-size: 15px; font-weight: 500; color: var(--mq-slate-800); outline: none;
+      transition: border-color 0.2s;
+    }
+    .m-input:focus { border-color: var(--mq-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+    .m-age-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .m-age-pill {
+      padding: 10px 18px; border-radius: 10px; background: white;
+      border: 1px solid var(--mq-slate-200); cursor: pointer; font-weight: 700; font-size: 14px;
+      color: var(--mq-slate-700); transition: all 0.2s;
+    }
+    .m-age-pill.active {
+      background: var(--mq-primary); color: white; border-color: var(--mq-primary);
+    }
+
+    /* Results Card */
+    #resultsSection { display: none; margin-top: 40px; }
+    .m-results-box {
+      background: linear-gradient(135deg, #EFF6FF, #F5F3FF);
+      border: 2px solid #BFDBFE; border-radius: 20px; padding: 32px;
+      margin-bottom: 30px;
+    }
+    .m-results-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px; margin-bottom: 24px;
+      background: white; border-radius: 16px; padding: 20px; border: 1px solid #93C5FD;
+    }
+    .m-archetype-tag {
+      display: inline-block; padding: 4px 12px; background: var(--mq-emerald-soft);
+      color: #065F46; font-size: 12px; font-weight: 800; border-radius: 20px; margin-bottom: 6px;
+    }
+    .m-score-badge {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 90px; height: 90px; border-radius: 50%;
+      background: linear-gradient(135deg, #10B981, #059669); color: white;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+    .m-score-val { font-size: 26px; font-weight: 900; line-height: 1; }
+    .m-score-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+
+    /* Projects Tailored Grid */
+    .m-rec-projects {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px; margin: 24px 0;
+    }
+    .m-rec-card {
+      background: white; border-radius: 12px; padding: 18px;
+      border: 1px solid var(--mq-slate-200); box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .m-rec-card h4 { font-size: 15px; font-weight: 800; color: var(--mq-slate-900); margin-bottom: 6px; }
+    .m-rec-meta { display: flex; gap: 8px; margin-bottom: 8px; }
+    .m-badge-diff {
+      font-size: 11px; font-weight: 700; background: var(--mq-emerald-soft);
+      color: #047857; padding: 2px 8px; border-radius: 6px;
+    }
+    .m-badge-time {
+      font-size: 11px; font-weight: 600; background: var(--mq-slate-100);
+      color: var(--mq-slate-600); padding: 2px 8px; border-radius: 6px;
+    }
+    .m-rec-card p { font-size: 13px; color: var(--mq-slate-600); }
+
+    /* Comparison Table */
+    .m-table-wrap { overflow-x: auto; margin-top: 24px; }
+    .m-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      background: white; border-radius: 16px; border: 1px solid var(--mq-slate-200);
+    }
+    .m-table th, .m-table td {
+      padding: 16px 20px; text-align: left; font-size: 14px;
+      border-bottom: 1px solid var(--mq-slate-200);
+    }
+    .m-table th { background: var(--mq-slate-100); font-weight: 800; color: var(--mq-slate-700); }
+    .m-table tr:last-child td { border-bottom: none; }
+    .m-td-highlight { background: rgba(99, 102, 241, 0.04); font-weight: 700; color: var(--mq-primary-dark); }
+
+    /* Testimonials */
+    .m-testimonials-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px; margin-top: 24px;
+    }
+    .m-testi-card {
+      background: var(--mq-slate-50); border: 1px solid var(--mq-slate-200);
+      border-radius: 16px; padding: 24px;
+    }
+    .m-testi-quote { font-size: 15px; font-style: italic; color: var(--mq-slate-700); margin-bottom: 16px; }
+    .m-testi-author { font-size: 13px; font-weight: 700; color: var(--mq-slate-900); }
+
+    /* Modal Checkout */
+    .m-modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px);
+      z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+    }
+    .m-modal {
+      background: white; border-radius: 20px; max-width: 520px; width: 100%;
+      padding: 32px; max-height: 90vh; overflow-y: auto; position: relative;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+    .m-modal-close {
+      position: absolute; top: 20px; right: 20px; font-size: 24px;
+      background: none; border: none; cursor: pointer; color: var(--mq-slate-400);
+    }
+    .m-modal-close:hover { color: var(--mq-slate-800); }
+    .m-order-summary {
+      background: var(--mq-slate-100); border-radius: 12px; padding: 16px; margin: 20px 0;
+      border: 1px solid var(--mq-slate-200);
+    }
+    .m-summary-row {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    }
+    .m-summary-row.total {
+      font-size: 18px; font-weight: 900; color: var(--mq-primary-dark);
+      border-top: 1px solid var(--mq-slate-200); padding-top: 10px; margin-top: 10px;
+    }
+
+    /* Animations */
+    @keyframes floatBob {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    @keyframes spinGear {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes laserSweep {
+      0% { left: -20%; }
+      100% { left: 120%; }
+    }
+    @keyframes scissorAnim {
+      0%, 100% { transform: scaleY(0.72); }
+      50% { transform: scaleY(1.22); }
+    }
+    .anim-scissor {
+      animation: scissorAnim 2.2s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    @keyframes spinWheel {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .anim-spin-wheel {
+      animation: spinWheel 0.8s linear infinite;
+    }
+    @keyframes speedLinePulse {
+      0%, 100% { opacity: 0.3; transform: translateX(0); }
+      50% { opacity: 1; transform: translateX(-6px); }
+    }
+    .anim-speed-line {
+      animation: speedLinePulse 0.8s ease-in-out infinite;
+    }
+    @keyframes gripperLeft {
+      0%, 100% { transform: rotate(-18deg); }
+      50% { transform: rotate(4deg); }
+    }
+    @keyframes gripperRight {
+      0%, 100% { transform: rotate(18deg); }
+      50% { transform: rotate(-4deg); }
+    }
+    .anim-gripper-left { animation: gripperLeft 2s ease-in-out infinite; }
+    .anim-gripper-right { animation: gripperRight 2s ease-in-out infinite; }
+    @keyframes sealSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .anim-seal-star {
+      animation: sealSpin 8s linear infinite;
+    }
+    @keyframes sealPulse {
+      0%, 100% { box-shadow: 0 4px 14px rgba(212,175,55,0.4); transform: scale(1); }
+      50% { box-shadow: 0 6px 22px rgba(212,175,55,0.7); transform: scale(1.05); }
+    }
+    .anim-gold-seal {
+      animation: sealPulse 2.5s ease-in-out infinite;
+    }
+
+    /* Supercharged Student & Parent Animations */
+    @keyframes pulseRadar {
+      0%, 100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(251, 113, 133, 0.7); }
+      70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(251, 113, 133, 0); }
+    }
+    .anim-radar-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #FB7185; display: inline-block;
+      animation: pulseRadar 1.5s infinite;
+    }
+
+    @keyframes marqueeScroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .m-marquee-wrap { overflow: hidden; flex: 1; position: relative; mask-image: linear-gradient(90deg, transparent, black 4%, black 96%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 4%, black 96%, transparent); }
+    .m-marquee-track { display: inline-flex; align-items: center; gap: 18px; white-space: nowrap; animation: marqueeScroll 28s linear infinite; }
+    .m-marquee-track:hover { animation-play-state: paused; }
+
+    @keyframes ctaShimmer {
+      0% { transform: translateX(-140%) skewX(-20deg); }
+      45%, 100% { transform: translateX(240%) skewX(-20deg); }
+    }
+    .m-btn-shimmer { position: relative; overflow: hidden; }
+    .m-btn-shimmer::after {
+      content: ""; position: absolute; top: 0; left: 0; width: 45%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.38), transparent);
+      animation: ctaShimmer 3.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes floatOrbit {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(6px, -12px) rotate(12deg); }
+    }
+    .m-hero { position: relative; overflow: hidden; }
+    .m-hero-particle {
+      position: absolute; pointer-events: none; opacity: 0.14; font-size: 28px;
+      animation: floatOrbit 5.5s ease-in-out infinite;
+      user-select: none;
+    }
+
+    @keyframes emeraldBreath {
+      0%, 100% { box-shadow: 0 10px 25px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.45); }
+      50% { box-shadow: 0 14px 36px rgba(16,185,129,0.22); border-color: rgba(16,185,129,0.85); }
+    }
+    .anim-emerald-card { animation: emeraldBreath 3.5s ease-in-out infinite; }
+
+    @keyframes metricShimmer {
+      0% { filter: brightness(1); }
+      50% { filter: brightness(1.18); }
+      100% { filter: brightness(1); }
+    }
+    .m-meter-fill { height: 7px; border-radius: 6px; transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); animation: metricShimmer 2.4s ease-in-out infinite; }
+
+    @keyframes arrowSlide {
+      0%, 100% { transform: translateX(0); opacity: 0.55; }
+      50% { transform: translateX(6px); opacity: 1; }
+    }
+    .anim-arrow-flow { animation: arrowSlide 1.4s ease-in-out infinite; display: inline-block; }
+
+    @keyframes rocketBounce {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-4px) rotate(4deg); }
+    }
+    .anim-rocket-icon { display: inline-block; animation: rocketBounce 1.2s ease-in-out infinite; }
+
+    .m-step-card {
+      background: white; border: 1px solid #E2E8F0; border-radius: 18px; padding: 24px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .m-step-card:hover {
+      transform: translateY(-6px); box-shadow: 0 16px 34px rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.4);
+    }
+
+    .m-badge-chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 12px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16);
+      color: #CBD5E1; font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.22s ease;
+    }
+    .m-badge-chip:hover { transform: translateY(-2px); background: rgba(255,255,255,0.14); color: white; }
+    .m-badge-chip.active {
+      background: rgba(99,102,241,0.28); border-color: #38BDF8; color: white;
+      box-shadow: 0 4px 14px rgba(56,189,248,0.28); transform: scale(1.04);
+    }
+
+    /* Scroll Reveal */
+    .m-reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.65s ease-out, transform 0.65s ease-out; }
+    .m-reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Modal Confetti */
+    .confetti-piece {
+      position: absolute; width: 9px; height: 9px; border-radius: 2px; top: -10px;
+      animation: confettiDrop 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      pointer-events: none;
+    }
+    @keyframes confettiDrop {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(340px) rotate(540deg); opacity: 0; }
+    }
+
+    /* WhatsApp Connection & Floating Support */
+    .m-wa-nav-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #F0FDF4;
+      border: 1px solid #86EFAC;
+      color: #15803D !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      text-decoration: none;
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .m-wa-nav-pill:hover {
+      background: #DCFCE7;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.16);
+    }
+    .m-wa-btn {
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #052E16;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(37, 211, 102, 0.32);
+    }
+    .m-wa-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(37, 211, 102, 0.42);
+    }
+    @keyframes waPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55); }
+      70% { box-shadow: 0 0 0 12px rgba(37, 211, 102, 0); }
+    }
+    .m-wa-fab {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 950;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #25D366, #16A34A);
+      color: white;
+      font-weight: 800;
+      font-size: 13px;
+      text-decoration: none;
+      box-shadow: 0 12px 30px rgba(22, 163, 74, 0.38);
+      animation: waPulse 2.4s infinite;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .m-wa-fab:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 16px 34px rgba(22, 163, 74, 0.48);
+    }
+    .m-wa-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%) translateY(16px);
+      z-index: 1200;
+      background: #15803D;
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 10px 18px;
+      border-radius: 12px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .m-wa-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 760px) {
+      .m-nav-links { gap: 10px; }
+      .m-wa-nav-pill { display: none; }
+      .m-wa-fab { right: 14px; bottom: 14px; padding: 11px 14px; font-size: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+
+    /* Footer */
+    .m-footer {
+      background: var(--mq-slate-900); color: white; padding: 50px 24px 30px;
+      text-align: center;
+    }
+    .m-footer-inner { max-width: 800px; margin: 0 auto; }
+    .m-footer p { color: var(--mq-slate-400); font-size: 14px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="m-header">
+    <div class="m-header-inner">
+      <a href="/" class="m-brand">
+        <div class="m-brand-icon">⚡</div>
+        <div class="m-brand-text">
+          <h1>MakerQuest</h1>
+          <p>DIY STEM ODYSSEY</p>
+        </div>
+      </a>
+      <nav class="m-nav-links">
+        <a href="#offer">What We Offer</a>
+        <a href="#analyzer">Student Analyzer</a>
+        <a href="#compare">Compare</a>
+        <a href="https://wa.me/918075971988?text=Hi%20MakerQuest!%20I%20would%20like%20to%20connect%20regarding%20the%20Cardboard%20Robotics%20Cadet%20Pass%20(%E2%82%B9199)." target="_blank" rel="noopener noreferrer" class="m-wa-nav-pill" title="Chat on WhatsApp +918075971988">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.81 14.01c-.25.7-1.44 1.34-2 1.42-.52.08-1.18.11-1.91-.12-.44-.14-1-.33-1.72-.64-3.03-1.31-5-4.38-5.15-4.58-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.61-.38.81-.38h.58c.19 0 .44-.07.69.53.25.61.86 2.1.94 2.25.08.15.13.33.03.53-.1.2-.15.33-.3.5-.15.18-.32.4-.45.53-.15.15-.3.31-.13.61.18.3.78 1.29 1.68 2.09 1.16 1.03 2.14 1.35 2.44 1.5.3.15.48.13.66-.08.18-.2.75-.88.95-1.18.2-.3.4-.25.68-.15.28.1 1.77.83 2.07.98.3.15.5.23.58.36.08.13.08.76-.17 1.46z"/></svg>
+          <span>+918075971988</span>
+        </a>
+        <a href="/" class="m-btn m-btn-outline">Open Workshop</a>
+        <button onclick="openCheckoutModal()" class="m-btn m-btn-primary m-btn-shimmer">Enroll Cadet (₹199) 🚀</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="m-hero">
+    <!-- Subtle Floating Ambient Shapes -->
+    <div class="m-hero-particle" style="top: 12%; left: 6%; animation-delay: 0s;">⚙️</div>
+    <div class="m-hero-particle" style="top: 24%; right: 8%; animation-delay: 1.2s;">📐</div>
+    <div class="m-hero-particle" style="bottom: 18%; left: 10%; animation-delay: 2.3s;">🚀</div>
+    <div class="m-hero-particle" style="bottom: 22%; right: 10%; animation-delay: 0.7s;">🤖</div>
+
+    <div class="m-hero-inner">
+      <div class="m-pill">🇮🇳 Indian STEM Curriculum (CBSE • ICSE • NEP 2020) • Ages 7–16</div>
+      <h2>Transform Cardboard into <span class="m-hero-highlight">Real Robotics</span>.</h2>
+      <p>MakerQuest teaches genuine mechanical engineering, kinematic linkages, and circuit automation using 100% upcycled household materials. Zero ₹2,500 plastic robot kits.</p>
+      
+      <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+        <a href="#analyzer" class="m-btn m-btn-primary m-btn-shimmer" style="padding: 14px 28px; font-size: 16px;">
+          Take Free Maker Diagnostic (60s) 🔍
+        </a>
+        <button onclick="openCheckoutModal()" class="m-btn m-btn-success m-btn-shimmer" style="padding: 14px 28px; font-size: 16px;">
+          Get Lifetime Access (₹199) 💳
+        </button>
+      </div>
+
+      <!-- Interactive Canvas Kid & Robot Live Workshop Animation -->
+      <div style="max-width: 860px; margin: 32px auto 0; background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 20px; overflow: hidden; box-shadow: 0 14px 36px rgba(99,102,241,0.12);">
+        <div style="background: #0F172A; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1E293B; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="background: rgba(16,185,129,0.2); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.5); border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 900; letter-spacing: 0.8px;">🛠️ LIVE CADET & BOT LAB</span>
+            <span id="workshopBuildingTitle" style="color: white; font-size: 12px; font-weight: 800;">Building: Kinetic Scissor Lift</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" onclick="switchWorkshopProject()" class="m-btn m-btn-outline" style="padding: 5px 12px; font-size: 11px; background: #1E293B; color: white; border-color: #334155;">
+              Switch Machine 🔄
+            </button>
+            <button type="button" onclick="testRunWorkshop()" class="m-btn m-btn-primary m-btn-shimmer" style="padding: 5px 14px; font-size: 11px;">
+              Test Run ⚡
+            </button>
+          </div>
+        </div>
+
+        <!-- Animated High-FPS Canvas Scene (Kid + Active Machine + Robot "Bolts") -->
+        <div style="position: relative; background: #EFF6FF; height: 225px; width: 100%;">
+          <canvas id="heroWorkshopCanvas" onclick="tapRobot()" style="width: 100%; height: 100%; display: block; cursor: pointer;" title="Tap Robot Architect Bolts!"></canvas>
+          <div id="workbenchStatusBadge" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.92); border: 1px solid #CBD5E1; border-radius: 20px; padding: 3px 12px; font-size: 11px; font-weight: 800; color: #059669; box-shadow: 0 2px 8px rgba(0,0,0,0.06); pointer-events: none;">
+            ⚡ Elevating 4x Vertical Stroke! (Tap Robot "Bolts"!)
+          </div>
+        </div>
+
+        <div style="background: white; border-top: 1px solid #E2E8F0; padding: 10px 16px; display: flex; gap: 10px; font-size: 11px; font-weight: 700; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 240px; background: #EFF6FF; color: #1E3A8A; border: 1px solid #BFDBFE; border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 6px; text-align: left;">
+            <span>🧑‍🔧</span>
+            <span id="kidSpeechText">"Aligning 0° flutes for 300% cardboard strength! 📦"</span>
+          </div>
+          <div style="flex: 1; min-width: 240px; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 6px; text-align: left;">
+            <span>🤖</span>
+            <span id="robotSpeechText">"Beep-boop! Mechanical Advantage = 3.0x! ⚡"</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="m-stats-bar">
+        <div class="m-stat-item">
+          <div class="m-stat-val"><span class="anim-count" data-target="12">12</span></div>
+          <div class="m-stat-lbl">STEM Chapters</div>
+        </div>
+        <div class="m-stat-item">
+          <div class="m-stat-val">₹0</div>
+          <div class="m-stat-lbl">Expensive Kits Required</div>
+        </div>
+        <div class="m-stat-item">
+          <div class="m-stat-val"><span class="anim-count" data-target="100">100</span>%</div>
+          <div class="m-stat-lbl">Upcycled Cardboard</div>
+        </div>
+        <div class="m-stat-item">
+          <div class="m-stat-val"><span class="anim-count" data-target="450">450</span>+</div>
+          <div class="m-stat-lbl">Classrooms & Clubs</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Smooth Continuous Live Cadet Activity Ticker -->
+  <div style="background: #0F172A; color: white; padding: 10px 20px; font-size: 12px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #1E293B;">
+    <span style="flex-shrink: 0; background: rgba(244,63,94,0.2); color: #FDA4AF; border: 1px solid rgba(244,63,94,0.45); border-radius: 14px; padding: 3px 11px; font-weight: 800; font-size: 10px; letter-spacing: 0.8px; display: inline-flex; align-items: center; gap: 6px;">
+      <span class="anim-radar-dot"></span> LIVE CADET ACTIVITY
+    </span>
+    <div class="m-marquee-wrap">
+      <div class="m-marquee-track">
+        <span><strong>🇮🇳 Aarav S. (Class 5, Bengaluru)</strong> enrolled 4 mins ago</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🏆 Rohan M. (Class 7, Pune)</strong> mastered Scissor Lift (+120 XP)</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>⚡ Ananya P. (Class 4, Delhi)</strong> unlocked Level 2 Stored Energy</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🔬 Kendriya Vidyalaya Club</strong> activated 15 Cadet Passes</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🤖 Ishaan K. (Class 6, Mumbai)</strong> built Elastic Torque Racer</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🏅 Diya V. (Class 8, Hyderabad)</strong> earned Grand Inventor Badge</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🇮🇳 Aarav S. (Class 5, Bengaluru)</strong> enrolled 4 mins ago</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🏆 Rohan M. (Class 7, Pune)</strong> mastered Scissor Lift (+120 XP)</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>⚡ Ananya P. (Class 4, Delhi)</strong> unlocked Level 2 Stored Energy</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🔬 Kendriya Vidyalaya Club</strong> activated 15 Cadet Passes</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🤖 Ishaan K. (Class 6, Mumbai)</strong> built Elastic Torque Racer</span>
+        <span style="color: #475569;">•</span>
+        <span><strong>🏅 Diya V. (Class 8, Hyderabad)</strong> earned Grand Inventor Badge</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen Time Detox Section -->
+  <section class="m-section m-reveal" style="background: #F1F5F9; border-radius: 28px; margin: 40px auto; max-width: 1100px; padding: 48px 24px;">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">THE PARENT'S SCREEN-TIME DILEMMA</div>
+      <h2 class="m-section-title">Replace Screen Fatigue with Real Engineering Pride</h2>
+      <p class="m-section-desc">Children don't lack focus — they lack physical challenges worth their focus. Channel their screen energy into real machines.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+      <div style="background: #FFF1F2; border: 1.5px solid rgba(239,68,68,0.3); border-radius: 20px; padding: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <span style="font-size: 24px;">📱</span>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 900; color: #E11D48;">Typical Screen Consumption</h3>
+            <p style="font-size: 11px; color: #64748B;">Passive Gaming & Video Binging</p>
+          </div>
+        </div>
+        <hr style="border: 0; border-top: 1px solid rgba(239,68,68,0.2); margin-bottom: 14px;">
+        <!-- Animated Negative Impact Meter -->
+        <div style="background: rgba(255,228,230,0.6); border: 1px solid rgba(239,68,68,0.25); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #1E293B; margin-bottom: 4px;">
+            <span>Active Brain Engagement</span><span style="color: #E11D48;">14% Low</span>
+          </div>
+          <div style="background: white; border-radius: 6px; height: 7px; overflow: hidden; margin-bottom: 8px;">
+            <div class="m-meter-fill" style="width: 14%; background: #EF4444;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #1E293B; margin-bottom: 4px;">
+            <span>Eye Fatigue & Restlessness</span><span style="color: #E11D48;">88% High</span>
+          </div>
+          <div style="background: white; border-radius: 6px; height: 7px; overflow: hidden;">
+            <div class="m-meter-fill" style="width: 88%; background: #E11D48;"></div>
+          </div>
+        </div>
+        <p style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 8px;">❌ 3-5 hours daily lost to YouTube shorts and video game dopamine loops</p>
+        <p style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 8px;">❌ Eye strain, irritability, and shortened academic attention span</p>
+        <p style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 8px;">❌ Zero tangible physical creations or mechanical intuitions gained</p>
+        <p style="font-size: 13px; font-weight: 600; color: #1E293B;">❌ Boredom and tantrums whenever phones or tablets are confiscated</p>
+      </div>
+
+      <div class="anim-emerald-card" style="background: white; border: 1.5px solid rgba(16,185,129,0.45); border-radius: 20px; padding: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <span style="font-size: 24px;">⚡</span>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 900; color: #059669;">MakerQuest Cadet Odyssey</h3>
+            <p style="font-size: 11px; color: #64748B;">Active Creator & Physical Problem Solver</p>
+          </div>
+        </div>
+        <hr style="border: 0; border-top: 1px solid rgba(16,185,129,0.2); margin-bottom: 14px;">
+        <!-- Animated Positive Transformation Meter -->
+        <div style="background: #F0FDF4; border: 1px solid rgba(16,185,129,0.35); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #1E293B; margin-bottom: 4px;">
+            <span>Spatial & Creative Focus</span><span style="color: #059669;">+310% Boost</span>
+          </div>
+          <div style="background: white; border-radius: 6px; height: 7px; overflow: hidden; margin-bottom: 8px;">
+            <div class="m-meter-fill" style="width: 94%; background: linear-gradient(90deg, #10B981, #059669);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #1E293B; margin-bottom: 4px;">
+            <span>CBSE / ICSE Physics Intuition</span><span style="color: #4F46E5;">97% Mastery</span>
+          </div>
+          <div style="background: white; border-radius: 6px; height: 7px; overflow: hidden;">
+            <div class="m-meter-fill" style="width: 97%; background: linear-gradient(90deg, #6366F1, #4F46E5);"></div>
+          </div>
+        </div>
+        <p style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 8px;">✅ 17 physical working machines built with their own hands by Sunday</p>
+        <p style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 8px;">✅ Intuitive mastery of CBSE & ICSE physics laws (levers, torque, kinematics)</p>
+        <p style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 8px;">✅ 10 collectible badges, milestone XP, and official junior STEM diploma</p>
+        <p style="font-size: 13px; font-weight: 600; color: #1E293B;">✅ Genuine self-esteem showing their functional robots to friends & family</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tangible Weekend Outcomes Section -->
+  <section class="m-section" style="max-width: 1100px; margin: 0 auto 50px;">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">TANGIBLE TINKERING OUTCOMES</div>
+      <h2 class="m-section-title">What Your Child Will Build by Sunday Evening</h2>
+      <p class="m-section-desc">No useless theoretical models. Authentic, functioning kinetic robotics they can play with, demonstrate, and take to school.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 32px;">✂️</span>
+          <span style="background: #EEF2FF; color: #4338CA; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px;">Lifts 250g 4x Height</span>
+        </div>
+        <!-- Animated Scissor Hoist Micro-Preview -->
+        <div style="height: 72px; width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 12px; position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px;">
+          <div style="position: absolute; inset: 0; background-image: linear-gradient(to right, #F1F5F9 1px, transparent 1px), linear-gradient(to bottom, #F1F5F9 1px, transparent 1px); background-size: 14px 14px; opacity: 0.7;"></div>
+          <div class="anim-scissor" style="position: relative; z-index: 2; width: 64px; height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
+            <div style="width: 52px; height: 5px; background: #6366F1; border-radius: 3px; margin-bottom: 2px;"></div>
+            <svg width="44" height="26" viewBox="0 0 44 26" style="overflow: visible;">
+              <line x1="4" y1="24" x2="40" y2="2" stroke="#D97706" stroke-width="3" stroke-linecap="round" />
+              <line x1="40" y1="24" x2="4" y2="2" stroke="#D97706" stroke-width="3" stroke-linecap="round" />
+              <circle cx="22" cy="13" r="2.5" fill="#FDE68A" />
+            </svg>
+            <div style="width: 60px; height: 5px; background: #78350F; border-radius: 2px; margin-top: 2px;"></div>
+          </div>
+        </div>
+        <h4 style="font-size: 15px; font-weight: 900; color: #0F172A; margin-bottom: 6px;">Cardboard Scissor Hoist</h4>
+        <div style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">Class 1 Levers & Linkages</div>
+        <p style="font-size: 12px; color: #475569; line-height: 1.45;">Transforms horizontal sliding motion into vertical lift. Students lift pencil cases, toys, and phone stands.</p>
+      </div>
+
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 32px;">🏎️</span>
+          <span style="background: #EEF2FF; color: #4338CA; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px;">Races 5+ Meters</span>
+        </div>
+        <!-- Animated Torque Racer Micro-Preview -->
+        <div style="height: 72px; width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; inset: 0; background-image: linear-gradient(to right, #F1F5F9 1px, transparent 1px), linear-gradient(to bottom, #F1F5F9 1px, transparent 1px); background-size: 14px 14px; opacity: 0.7;"></div>
+          <div style="position: absolute; left: 14px; display: flex; flex-direction: column; gap: 6px;">
+            <div class="anim-speed-line" style="width: 22px; height: 2px; background: #38BDF8; border-radius: 2px;"></div>
+            <div class="anim-speed-line" style="width: 34px; height: 2px; background: #38BDF8; border-radius: 2px; animation-delay: 0.3s;"></div>
+          </div>
+          <div style="position: relative; z-index: 2; width: 72px; height: 34px;">
+            <div style="width: 60px; height: 16px; background: #B45309; border-radius: 4px; position: absolute; top: 6px; left: 6px;">
+              <div style="position: absolute; left: 4px; top: -6px; width: 10px; height: 7px; background: #E11D48; border-radius: 2px;"></div>
+              <div style="position: absolute; left: 18px; top: 5px; width: 22px; height: 3px; background: #F59E0B; border-radius: 2px;"></div>
+            </div>
+            <div class="anim-spin-wheel" style="position: absolute; bottom: 2px; left: 10px; width: 16px; height: 16px; background: #1E293B; border-radius: 50%; border: 2px dashed #FDE68A;"></div>
+            <div class="anim-spin-wheel" style="position: absolute; bottom: 2px; right: 12px; width: 16px; height: 16px; background: #1E293B; border-radius: 50%; border: 2px dashed #FDE68A;"></div>
+          </div>
+        </div>
+        <h4 style="font-size: 15px; font-weight: 900; color: #0F172A; margin-bottom: 6px;">Stored Elastic Torque Racer</h4>
+        <div style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">Potential to Kinetic Energy</div>
+        <p style="font-size: 12px; color: #475569; line-height: 1.45;">Cardboard chassis with drinking-straw bushings and centered wheels for zero-wobble sprint speed.</p>
+      </div>
+
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 32px;">🎢</span>
+          <span style="background: #EEF2FF; color: #4338CA; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px;">Zero-Derailment Curves</span>
+        </div>
+        <!-- Animated Gravity Coaster Micro-Preview -->
+        <div style="height: 72px; width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; inset: 0; background-image: linear-gradient(to right, #F1F5F9 1px, transparent 1px), linear-gradient(to bottom, #F1F5F9 1px, transparent 1px); background-size: 14px 14px; opacity: 0.7;"></div>
+          <svg width="140" height="46" viewBox="0 0 140 46" style="position: relative; z-index: 2;">
+            <path id="coasterTrack" d="M 8 12 Q 40 42, 75 18 T 132 32" fill="none" stroke="#64748B" stroke-width="3.5" stroke-linecap="round" />
+            <circle r="4.5" fill="#EC4899">
+              <animateMotion path="M 8 12 Q 40 42, 75 18 T 132 32" dur="2.2s" repeatCount="indefinite" />
+            </circle>
+          </svg>
+        </div>
+        <h4 style="font-size: 15px; font-weight: 900; color: #0F172A; margin-bottom: 6px;">Dual-Banked Gravity Coaster</h4>
+        <div style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">Centripetal Force & Gravity</div>
+        <p style="font-size: 12px; color: #475569; line-height: 1.45;">Multi-tiered marble coaster with calibrated velocity curves and catch-funnels from delivery boxes.</p>
+      </div>
+
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 32px;">🦾</span>
+          <span style="background: #EEF2FF; color: #4338CA; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px;">Grabs Everyday Objects</span>
+        </div>
+        <!-- Animated Mechanical Gripper Micro-Preview -->
+        <div style="height: 72px; width: 100%; background: white; border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; inset: 0; background-image: linear-gradient(to right, #F1F5F9 1px, transparent 1px), linear-gradient(to bottom, #F1F5F9 1px, transparent 1px); background-size: 14px 14px; opacity: 0.7;"></div>
+          <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center;">
+            <div style="position: relative; width: 60px; height: 32px; display: flex; justify-content: center; align-items: center;">
+              <div style="width: 12px; height: 12px; background: #10B981; border-radius: 3px; position: absolute; z-index: 1;"></div>
+              <div class="anim-gripper-left" style="position: absolute; left: 16px; top: 2px; width: 5px; height: 26px; background: #D97706; border-radius: 3px;"></div>
+              <div class="anim-gripper-right" style="position: absolute; right: 16px; top: 2px; width: 5px; height: 26px; background: #D97706; border-radius: 3px;"></div>
+            </div>
+            <div style="width: 12px; height: 14px; background: #78350F; border-radius: 2px;"></div>
+          </div>
+        </div>
+        <h4 style="font-size: 15px; font-weight: 900; color: #0F172A; margin-bottom: 6px;">Articulated Mechanical Gripper</h4>
+        <div style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">Friction & Normal Force</div>
+        <p style="font-size: 12px; color: #475569; line-height: 1.45;">Operated by finger triggers to securely pinch and lift bottles, stationery, and small fruit.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Kid-Powered Gamified Lab & Transformation Pipeline -->
+  <section class="m-section m-reveal" style="max-width: 1060px; margin: 0 auto 50px; padding: 0 20px;">
+    <div style="background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); border: 2px solid rgba(99,102,241,0.5); border-radius: 24px; padding: 30px 26px; box-shadow: 0 18px 46px rgba(99,102,241,0.22); color: white;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+        <div>
+          <span style="background: rgba(56,189,248,0.16); color: #7DD3FC; border: 1px solid rgba(56,189,248,0.45); border-radius: 12px; padding: 3px 11px; font-size: 10px; font-weight: 900; letter-spacing: 0.8px; display: inline-block; margin-bottom: 8px;">
+            ✨ KID-POWERED GAMIFIED LAB • TAP BADGES BELOW!
+          </span>
+          <h3 style="font-size: 22px; font-weight: 900; color: white;">From Delivery Box to Animated Robot Inventor</h3>
+        </div>
+        <div style="background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.5); border-radius: 14px; padding: 8px 16px; display: flex; align-items: center; gap: 8px;">
+          <span class="anim-rocket-icon" style="font-size: 18px;">🚀</span>
+          <span id="xpCounterLabel" style="font-weight: 900; font-size: 14px; color: #6EE7B7;">Cadet XP: 240</span>
+        </div>
+      </div>
+
+      <!-- High-FPS Assembly Canvas -->
+      <div style="background: #020617; border: 1px solid #1E293B; border-radius: 16px; height: 156px; overflow: hidden; margin-bottom: 18px; position: relative;">
+        <canvas id="pipelineCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+      </div>
+
+      <!-- Interactive Badge & XP Rocket Launcher -->
+      <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; margin-bottom: 8px;">
+          <span id="rankLabel" style="color: white;">Rank Lv.1: Cardboard Pioneer</span>
+          <span id="masteryLabel" style="color: #FDE047; font-weight: 900;">20% Mastery Streak</span>
+        </div>
+        <div style="background: #1E293B; height: 12px; border-radius: 10px; overflow: hidden; margin-bottom: 14px; position: relative;">
+          <div id="rocketXpBar" style="width: 20%; height: 100%; background: linear-gradient(90deg, #38BDF8, #10B981, #FACC15); border-radius: 10px; transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 12px rgba(56,189,248,0.6);"></div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="badgeButtonGroup">
+          <button type="button" class="m-badge-chip active" onclick="selectBadge(0, 'Cardboard Pioneer', 200, 20, this)">📦 Cardboard Pioneer</button>
+          <button type="button" class="m-badge-chip" onclick="selectBadge(1, 'Mechanism Maestro', 400, 40, this)">⚙️ Mechanism Maestro</button>
+          <button type="button" class="m-badge-chip" onclick="selectBadge(2, 'Torque Architect', 600, 60, this)">🏎️ Torque Architect</button>
+          <button type="button" class="m-badge-chip" onclick="selectBadge(3, 'CAD Genius', 800, 80, this)">📐 CAD Genius</button>
+          <button type="button" class="m-badge-chip" onclick="selectBadge(4, 'Grand Inventor', 1000, 100, this)">🏆 Grand Inventor</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 60-Second Household Scrap Audit -->
+  <section class="m-section" style="max-width: 860px; margin: 0 auto 50px; background: white; border-radius: 24px; border: 1px solid #E2E8F0; padding: 36px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <div style="font-size: 11px; font-weight: 800; color: #059669; letter-spacing: 1.2px;">ZERO HIDDEN HARDWARE EXPENSES</div>
+        <h3 style="font-size: 22px; font-weight: 900; color: #0F172A;">The 60-Second Household Scrap Audit</h3>
+      </div>
+      <div style="background: #D1FAE5; color: #059669; font-size: 16px; font-weight: 900; padding: 6px 14px; border-radius: 12px;">
+        100% Ready
+      </div>
+    </div>
+    <p style="font-size: 13px; color: #64748B; margin-bottom: 18px;">Tick the common household items you already have at home right now:</p>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+      <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: #1E293B; cursor: pointer;">
+        <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #059669;">
+        <span>📦 Clean Delivery Box <span style="font-weight: 400; color: #64748B;">— Amazon, Flipkart, or cereal cardboard</span></span>
+      </label>
+      <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: #1E293B; cursor: pointer;">
+        <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #059669;">
+        <span>🍢 Wooden Skewers or Toothpicks <span style="font-weight: 400; color: #64748B;">— Standard 15cm wooden food skewers</span></span>
+      </label>
+      <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: #1E293B; cursor: pointer;">
+        <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #059669;">
+        <span>🥤 Drinking Straws or Pen Refills <span style="font-weight: 400; color: #64748B;">— Low-friction rotational bearing sleeves</span></span>
+      </label>
+      <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: #1E293B; cursor: pointer;">
+        <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #059669;">
+        <span>🪢 Standard Rubber Bands <span style="font-weight: 400; color: #64748B;">— Stored elastic potential energy engines</span></span>
+      </label>
+      <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: #1E293B; cursor: pointer;">
+        <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #059669;">
+        <span>✂️ Child-Safe Scissors & School Glue <span style="font-weight: 400; color: #64748B;">— PVA / Fevicol glue</span></span>
+      </label>
+    </div>
+
+    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 22px;">🎉</span>
+      <span style="font-size: 12px; font-weight: 700; color: #065F46;">
+        100% Supplies Ready! You will spend ₹0 extra on materials to build all 17 robotics blueprints!
+      </span>
+    </div>
+  </section>
+
+  <!-- Science Fair Exhibition Advantage -->
+  <section class="m-section" style="max-width: 1100px; margin: 0 auto 50px; background: white;">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">SCHOOL & ACADEMIC ADVANTAGE</div>
+      <h2 class="m-section-title">Win 1st Prize at the School Science Exhibition</h2>
+      <p class="m-section-desc">Never scramble the night before a school science submission again. Every MakerQuest machine comes with ready-to-present exhibition materials.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99,102,241,0.12); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px;">📋</div>
+        <h3 style="font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">Printable 1:1 Science Fair Display Boards</h3>
+        <p style="font-size: 13px; color: #475569; line-height: 1.5;">Pre-formatted A3/A4 display placard with Title, Hypothesis, Apparatus, Circuit Diagram & Working Principles ready to print for school stalls.</p>
+      </div>
+
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16,185,129,0.12); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px;">🗣️</div>
+        <h3 style="font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">Examiner Viva Voce Cheat Sheet</h3>
+        <p style="font-size: 13px; color: #475569; line-height: 1.5;">Empowers cadets to explain physics concepts (Class 1 levers, Hooke's law, Pascal's hydraulic principle) to judges with absolute confidence.</p>
+      </div>
+
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245,158,11,0.12); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px;">🎖️</div>
+        <h3 style="font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">CBSE & ICSE Practical Homework Ready</h3>
+        <p style="font-size: 13px; color: #475569; line-height: 1.5;">Directly fulfills NEP 2020 hands-on portfolio requirements and Atal Tinkering Lab experiential science assignments.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Animated How It Works in 3 Steps -->
+  <section class="m-section m-reveal" style="background: #F8FAFC; border-radius: 28px; margin: 0 auto 50px; max-width: 1100px; padding: 48px 24px; border: 1px solid #E2E8F0;">
+    <div class="m-section-header" style="margin-bottom: 36px;">
+      <div class="m-section-subtitle">HOW IT WORKS</div>
+      <h2 class="m-section-title">From Delivery Box to Dynamic Robotics in 3 Steps</h2>
+      <p class="m-section-desc">A systematic engineering methodology designed by educators to replace passive gaming with active invention.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; align-items: stretch;">
+      <div class="m-step-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(99,102,241,0.12); display: flex; align-items: center; justify-content: center; font-size: 26px; animation: floatBob 2.4s ease-in-out infinite;">📐</div>
+          <span style="font-size: 26px; font-weight: 900; color: rgba(99,102,241,0.28);">01 <span class="anim-arrow-flow">➔</span></span>
+        </div>
+        <h3 style="font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">Inspect Interactive 3D Blueprints</h3>
+        <p style="font-size: 13px; color: #475569; line-height: 1.5;">Before cutting, cadets rotate exploded 3D models, inspect millimeter dimensions, and align flute grain (90° for 300% strength).</p>
+      </div>
+
+      <div class="m-step-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(16,185,129,0.12); display: flex; align-items: center; justify-content: center; font-size: 26px; animation: floatBob 2.8s ease-in-out infinite;">📦</div>
+          <span style="font-size: 26px; font-weight: 900; color: rgba(16,185,129,0.32);">02 <span class="anim-arrow-flow">➔</span></span>
+        </div>
+        <h3 style="font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">Upcycle Household Scrap Materials</h3>
+        <p style="font-size: 13px; color: #475569; line-height: 1.5;">Zero ₹2,500 plastic kits needed. Grab Amazon/Flipkart delivery cardboard, straws, skewers, and rubber bands from home.</p>
+      </div>
+
+      <div class="m-step-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(245,158,11,0.12); display: flex; align-items: center; justify-content: center; font-size: 26px; animation: floatBob 2.2s ease-in-out infinite;">🚀</div>
+          <span style="font-size: 26px; font-weight: 900; color: rgba(245,158,11,0.35);">03 ⭐</span>
+        </div>
+        <h3 style="font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">Simulate Physics & Earn Certifications</h3>
+        <p style="font-size: 13px; color: #475569; line-height: 1.5;">Test mechanical advantage, pass interactive checkpoint quizzes, submit builds, and graduate with official STEM diplomas.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Junior Robotics Diploma Preview Frame -->
+  <section class="m-section" style="max-width: 880px; margin: 0 auto 50px;">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">TANGIBLE RECOGNITION FOR SCHOOL</div>
+      <h2 class="m-section-title">Recognized Junior Robotics Engineering Diploma</h2>
+      <p class="m-section-desc">Printable, high-resolution certificate recognized for CBSE/ICSE practical portfolios, Atal Tinkering Labs & School Science Exhibitions.</p>
+    </div>
+
+    <div style="background: #FFFDF7; border: 3px solid #D4AF37; border-radius: 20px; padding: 36px 28px; box-shadow: 0 12px 36px rgba(212,175,55,0.2); text-align: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <span style="font-size: 26px;">🇮🇳</span>
+        <div>
+          <div style="font-size: 11px; font-weight: 900; color: #92400E; letter-spacing: 1.5px;">MAKERQUEST ACADEMY OF JUNIOR ROBOTICS</div>
+          <div style="font-size: 9px; font-weight: 700; color: #B45309; letter-spacing: 1.0px;">NATIONAL STEM EXPERIENTIAL FRAMEWORK • NEP 2020</div>
+        </div>
+        <div class="anim-gold-seal" style="width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle, #FDE68A 0%, #D4AF37 60%, #92400E 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(212,175,55,0.45);">
+          <span class="anim-seal-star" style="font-size: 22px; display: inline-block;">⭐</span>
+        </div>
+      </div>
+
+      <h3 style="font-size: 20px; font-weight: 900; color: #1E293B; letter-spacing: 1px; margin: 16px 0 6px;">OFFICIAL DIPLOMA OF CERTIFICATION</h3>
+      <p style="font-size: 12px; font-style: italic; color: #64748B;">This credential is proudly awarded to</p>
+      
+      <div id="diplomaStudentName" style="font-size: 26px; font-weight: 900; color: #0F172A; text-decoration: underline; text-decoration-color: #D4AF37; margin: 10px 0 14px;">
+        Leo Parker
+      </div>
+
+      <p style="font-size: 12px; color: #334155; line-height: 1.6; max-width: 620px; margin: 0 auto 20px;">
+        for demonstrating verified mastery in 17+ hands-on mechanical builds, 3D kinematic blueprint CAD, linkage kinematics, and stored potential energy systems.
+      </p>
+
+      <hr style="border: 0; border-top: 1px solid #E2E8F0; margin-bottom: 16px;">
+
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="text-align: left;">
+          <div style="font-size: 9px; font-weight: 800; color: #64748B;">VERIFIED CREDENTIAL ID</div>
+          <div style="font-size: 11px; font-weight: 900; color: #0F172A; font-family: monospace;">MQ-CADET-2026-IND</div>
+        </div>
+        <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 4px 10px; font-size: 10px; font-weight: 800; color: #92400E; display: flex; align-items: center; gap: 4px;">
+          ✓ Official STEM Diploma
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What We Offer & What We Do -->
+  <section id="offer" class="m-section">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">WHAT WE OFFER & WHAT WE DO</div>
+      <h2 class="m-section-title">The Complete Cardboard STEM Curriculum</h2>
+      <p class="m-section-desc">Designed by Indian engineers and educators aligned with NEP 2020 to turn curious young minds into capable mechanical inventors.</p>
+    </div>
+
+    <div class="m-features-grid">
+      <div class="m-feature-card">
+        <div class="m-feature-icon" style="background: rgba(99,102,241,0.12); color: var(--mq-primary);">🛠️</div>
+        <h3>12 Progressive STEM Chapters</h3>
+        <p>From foundational scissor linkages and friction straw bearings to motorized dual-speed gearboxes and autonomous smart sensor rovers.</p>
+      </div>
+
+      <div class="m-feature-card">
+        <div class="m-feature-icon" style="background: rgba(16,185,129,0.12); color: var(--mq-emerald);">♻️</div>
+        <h3>100% Upcycled Materials</h3>
+        <p>No ₹2,500 plastic robot kit lock-in! Every machine is built with cardboard boxes, skewers, straws, rubber bands, and household scissors.</p>
+      </div>
+
+      <div class="m-feature-card">
+        <div class="m-feature-icon" style="background: rgba(245,158,11,0.12); color: var(--mq-amber);">📐</div>
+        <h3>Interactive 3D CAD & Physics</h3>
+        <p>Inspect structural corrugated flutes, dynamic motion kinematics, normal force, and mechanical advantage before trimming a single strut.</p>
+      </div>
+
+      <div class="m-feature-card">
+        <div class="m-feature-icon" style="background: rgba(236,72,153,0.12); color: #EC4899;">🏆</div>
+        <h3>Gamified Cadet Odyssey</h3>
+        <p>10 collectible badges, milestone XP, checkpoint engineering quizzes, and portfolio proof submissions keep students intrinsically motivated.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Smart Parent's ROI Calculator -->
+  <section class="m-section" style="max-width: 880px; margin: 0 auto 50px; background: white; border-radius: 24px; border: 1px solid #E2E8F0; padding: 36px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <div style="font-size: 11px; font-weight: 800; color: var(--mq-primary); letter-spacing: 1.2px;">THE SMART PARENT'S ARITHMETIC</div>
+        <h3 style="font-size: 22px; font-weight: 900; color: #0F172A;">Annual Extracurricular STEM Cost Comparison</h3>
+      </div>
+      <div style="background: #D1FAE5; color: #059669; font-size: 13px; font-weight: 900; padding: 6px 14px; border-radius: 12px;">
+        Save ₹15,000+
+      </div>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #E2E8F0; margin-bottom: 16px;">
+
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #64748B;">
+        <span>❌ Weekend Robotics Coaching (1 Year)</span>
+        <strong style="color: #E11D48;">₹6,000 – ₹15,000</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #64748B;">
+        <span>❌ 3 Commercial Plastic Robot Kits (Break easily)</span>
+        <strong style="color: #E11D48;">₹7,500</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #64748B;">
+        <span>❌ Video Games & Mobile App Microtransactions</span>
+        <strong style="color: #E11D48;">₹2,400</strong>
+      </div>
+      <hr style="border: 0; border-top: 1px solid #E2E8F0;">
+      <div style="display: flex; justify-content: space-between; font-size: 14px; color: #0F172A; font-weight: 800;">
+        <span>✅ MakerQuest All-Access Lifetime Pass (17 Builds)</span>
+        <strong style="color: #059669;">₹199 One-Time</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #0F172A; font-weight: 700;">
+        <span>✅ Materials Cost (Clean Household Scrap Delivery Boxes)</span>
+        <strong style="color: #059669;">₹0.00</strong>
+      </div>
+    </div>
+
+    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 20px;">💡</span>
+      <span style="font-size: 12px; font-weight: 700; color: #065F46; line-height: 1.45;">
+        For less than the price of a single movie ticket or Domino's pizza (₹199), your child gains a permanent, reusable engineering playground.
+      </span>
+    </div>
+  </section>
+
+  <!-- Student Capability Diagnostic Quiz -->
+  <section id="analyzer" class="m-section" style="background: var(--mq-slate-50); border-radius: 32px; border: 1px solid var(--mq-slate-200);">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">STEM CAPABILITY ANALYZER</div>
+      <h2 class="m-section-title">Discover What Your Student is Capable of Building</h2>
+      <p class="m-section-desc">Fill in your young inventor's details below to compute their mechanical archetype, aptitude score, and personalized build roadmap.</p>
+    </div>
+
+    <div class="m-quiz-card">
+      <form id="diagnosticForm" onsubmit="handleAnalyze(event)">
+        <div class="m-form-group">
+          <label>Student's Full Name *</label>
+          <input type="text" id="studentName" class="m-input" placeholder="e.g. Leo Parker" required value="Leo Parker">
+        </div>
+
+        <div class="m-form-group">
+          <label>Student Age: <span id="ageDisplay" style="color: var(--mq-primary); font-weight: 800;">10 Years Old</span></label>
+          <div class="m-age-pills" id="agePills">
+            <div class="m-age-pill" data-age="7" onclick="setAge(7)">7</div>
+            <div class="m-age-pill" data-age="8" onclick="setAge(8)">8</div>
+            <div class="m-age-pill" data-age="9" onclick="setAge(9)">9</div>
+            <div class="m-age-pill active" data-age="10" onclick="setAge(10)">10</div>
+            <div class="m-age-pill" data-age="11" onclick="setAge(11)">11</div>
+            <div class="m-age-pill" data-age="12" onclick="setAge(12)">12</div>
+            <div class="m-age-pill" data-age="13" onclick="setAge(13)">13</div>
+            <div class="m-age-pill" data-age="14" onclick="setAge(14)">14+</div>
+          </div>
+        </div>
+
+        <div class="m-form-group">
+          <label>Parent / Student Email *</label>
+          <input type="email" id="studentEmail" class="m-input" placeholder="parent@example.co.uk" required value="parent@makerquest.edu">
+        </div>
+
+        <div class="m-form-group">
+          <label>Current Building Experience</label>
+          <select id="experienceLevel" class="m-input">
+            <option value="Beginner (Crafting, paper & scissors)">🌱 Beginner: Enjoys crafting, scissors & paper</option>
+            <option value="Intermediate (Lego, crafting & kits)" selected>⚙️ Intermediate: Has built Lego models & simple kits</option>
+            <option value="Advanced (Mechanics, coding & gears)">🚀 Advanced: Loves robotics, mechanical gears & coding</option>
+          </select>
+        </div>
+
+        <div class="m-form-group">
+          <label>What mechanism excites them most?</label>
+          <select id="favoriteInterest" class="m-input">
+            <option value="Speed Racers & Drive Systems" selected>🏎️ Speed Racers & Wheels (Elastic Potential Torque)</option>
+            <option value="Scissor Lifts & Lifting Linkages">🏗️ Scissor Lifts & Cranes (Mechanical Advantage)</option>
+            <option value="Roller Coasters & Gravity Chutes">🎢 Roller Coasters (Gravitational Energy & Banked Turns)</option>
+            <option value="Articulated Robot Grippers & Jaws">🦾 Articulated Robot Grippers (Dual-Lever Mechanics)</option>
+          </select>
+        </div>
+
+        <button type="submit" id="analyzeBtn" class="m-btn m-btn-primary m-btn-shimmer" style="width: 100%; padding: 16px; font-size: 16px;">
+          Analyze Maker Capability & Generate Plan 🚀
+        </button>
+      </form>
+
+      <!-- Animated Robot Architect Drafting Screen -->
+      <div id="robotDraftingScreen" style="display: none; margin-top: 28px; background: #0F172A; border: 2px solid var(--mq-primary); border-radius: 20px; padding: 28px 24px; text-align: center; box-shadow: 0 16px 40px rgba(99,102,241,0.25);">
+        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.5); border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 900; color: #93C5FD; letter-spacing: 1px; margin-bottom: 12px;">
+          ⚡ ROBOT ARCHITECT AT WORK
+        </div>
+        <h3 style="font-size: 20px; font-weight: 900; color: white; margin-bottom: 6px;">Synthesizing Cadet Capability Blueprint</h3>
+        <p id="draftingCadetSubtitle" style="font-size: 12px; color: #94A3B8; margin-bottom: 20px;">Chief Architect Bot "Bolts" is generating personalized STEM trajectory...</p>
+
+        <!-- High-FPS Canvas Robot Architect Holographic Blueprint Drafting -->
+        <div style="position: relative; height: 155px; background: #020617; border-radius: 14px; border: 1px solid #1E293B; overflow: hidden; margin-bottom: 20px;">
+          <canvas id="draftingBotCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+          <div style="position: absolute; bottom: 8px; right: 12px; font-family: monospace; font-size: 10px; font-weight: 800; color: #34D399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); border-radius: 6px; padding: 2px 8px;">
+            CAD MODEL v2.6 • 300% FLUTE STRENGTH
+          </div>
+        </div>
+
+        <!-- Terminal Step Progress -->
+        <div style="background: #1E293B; border: 1px solid #334155; border-radius: 12px; padding: 14px 18px; text-align: left; display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <div id="draftingStepIcon" style="font-size: 24px;">🤖</div>
+          <div style="flex: 1;">
+            <div id="draftingStepTitle" style="font-size: 13px; font-weight: 800; color: white;">Bot "Bolts" Scanning Aptitude Profile...</div>
+            <div id="draftingStepDetail" style="font-size: 11px; color: #94A3B8;">Analyzing spatial cognition & motor readiness</div>
+          </div>
+          <div id="draftingStepNumber" style="font-size: 11px; font-weight: 800; color: #38BDF8;">Step 1 of 5</div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div style="background: #1E293B; height: 8px; border-radius: 8px; overflow: hidden;">
+          <div id="draftingProgressBar" style="background: #38BDF8; width: 20%; height: 100%; transition: width 0.5s ease;"></div>
+        </div>
+      </div>
+
+      <!-- Live Results Section -->
+      <div id="resultsSection">
+        <div class="m-results-box">
+          <div class="m-results-header">
+            <div>
+              <span class="m-archetype-tag" id="resStemRank">Top 4% Indian STEM Engineering Aptitude</span>
+              <h3 id="resArchetypeTitle" style="font-size: 22px; font-weight: 900; color: var(--mq-slate-900);">
+                🏎️ Kinetic Drive Pioneer
+              </h3>
+              <p id="resFocusTrack" style="font-size: 13px; color: var(--mq-slate-600); margin-top: 4px;">
+                Focus Track: Cardboard Chassis & Elastic Torque Mechanics
+              </p>
+            </div>
+            <div class="m-score-badge">
+              <div class="m-score-val" id="resScore">94%</div>
+              <div class="m-score-lbl">Aptitude</div>
+            </div>
+          </div>
+
+          <h4 id="recProjectsTitle" style="font-size: 16px; font-weight: 800; color: var(--mq-slate-900); margin-bottom: 12px;">
+            What Leo is Capable of Building Right Now:
+          </h4>
+          <div class="m-rec-projects" id="recProjectsGrid">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div style="background: white; border-radius: 12px; padding: 16px; margin: 20px 0; border: 1px solid #BFDBFE;">
+            <div style="font-size: 13px; font-weight: 700; color: var(--mq-primary-dark); margin-bottom: 4px;">
+              🎯 Recommended Personalized Learning Path:
+            </div>
+            <div id="resRecommendedPath" style="font-size: 14px; color: var(--mq-slate-700); font-weight: 600;">
+              Level 1 Foundation ➔ Elastic Potential Torque ➔ Level 3 Micro-Circuits
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 24px;">
+            <button onclick="openCheckoutModal()" class="m-btn m-btn-success" style="padding: 16px 32px; font-size: 16px;">
+              Enroll Now with Cadet Lifetime Pass (₹199) 💳
+            </button>
+            <p style="font-size: 12px; color: var(--mq-slate-500); margin-top: 8px;">
+              🔒 One-time payment • Lifetime access to all 12 chapters • 30-day money back guarantee
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Section -->
+  <section id="compare" class="m-section">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">THE MAKERQUEST ADVANTAGE</div>
+      <h2 class="m-section-title">Why Cardboard Beats ₹2,500 Plastic Kits</h2>
+      <p class="m-section-desc">Real engineering intuition comes from understanding raw materials, structural forces, and linkage mechanics.</p>
+    </div>
+
+    <div class="m-table-wrap">
+      <table class="m-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="m-td-highlight">⚡ MakerQuest Software</th>
+            <th>Plastic Robotics Kits</th>
+            <th>Generic YouTube Videos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Hardware Cost</strong></td>
+            <td class="m-td-highlight"><strong>₹0 (100% Upcycled Cardboard)</strong></td>
+            <td>₹2,000 – ₹5,000+</td>
+            <td>₹0 – ₹500</td>
+          </tr>
+          <tr>
+            <td><strong>Material Adaptability</strong></td>
+            <td class="m-td-highlight"><strong>Infinite iterations & redesigns</strong></td>
+            <td>Locked to proprietary pegs</td>
+            <td>Unstructured trial & error</td>
+          </tr>
+          <tr>
+            <td><strong>Interactive 3D Blueprint CAD</strong></td>
+            <td class="m-td-highlight"><strong>Yes (Stress flutes, forces & joints)</strong></td>
+            <td>No (Static paper manual)</td>
+            <td>No (Passive video)</td>
+          </tr>
+          <tr>
+            <td><strong>Physics & Kinematic Sims</strong></td>
+            <td class="m-td-highlight"><strong>Live mechanical advantage calculations</strong></td>
+            <td>None</td>
+            <td>None</td>
+          </tr>
+          <tr>
+            <td><strong>Gamification & Progress</strong></td>
+            <td class="m-td-highlight"><strong>10 Badges, XP & Checkpoint Quizzes</strong></td>
+            <td>None</td>
+            <td>None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Standalone Pricing Section -->
+  <section id="pricing" class="m-section" style="background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%); color: white; border-radius: 32px; padding: 60px 24px; margin-bottom: 50px;">
+    <div style="text-align: center; max-width: 700px; margin: 0 auto 36px;">
+      <div style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #F59E0B, #EF4444); color: white; border-radius: 20px; padding: 6px 14px; font-size: 11px; font-weight: 900; letter-spacing: 1px; margin-bottom: 16px;">
+        ⚡ LIMITED LAUNCH OFFER • OVER 90% OFF
+      </div>
+      <h2 style="font-size: 34px; font-weight: 900; color: white; letter-spacing: -0.8px;">Cadet All-Access Lifetime Pass</h2>
+      <p style="font-size: 14px; color: #94A3B8; margin-top: 10px;">One single payment. Lifetime access. No recurring subscriptions. Everything your young engineer needs to master mechanical robotics.</p>
+    </div>
+
+    <div style="max-width: 820px; margin: 0 auto; background: white; color: #1E293B; border-radius: 24px; padding: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+      
+      <!-- Urgency Cohort Progress Bar -->
+      <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 14px; padding: 14px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #92400E; margin-bottom: 6px;">
+          <span>🔥 Inaugural Cohort: 462 of 500 Passes Claimed</span>
+          <span style="color: #D97706; font-weight: 900;">92% Claimed</span>
+        </div>
+        <div style="background: #FDE68A; height: 6px; border-radius: 6px; overflow: hidden; margin-bottom: 6px;">
+          <div style="background: #D97706; width: 92%; height: 100%;"></div>
+        </div>
+        <div style="font-size: 10px; color: #B45309; font-weight: 600;">
+          Next 500 batch will be priced at ₹499. Lock in ₹199 lifetime rate today.
+        </div>
+      </div>
+
+      <!-- Price Header -->
+      <div style="display: flex; justify-content: center; align-items: baseline; gap: 8px; margin-bottom: 20px;">
+        <span style="font-size: 28px; font-weight: 800; color: #0F172A;">₹</span>
+        <span style="font-size: 54px; font-weight: 900; color: #0F172A; letter-spacing: -1.5px;">199</span>
+        <div style="text-align: left; margin-left: 6px;">
+          <div style="font-size: 12px; font-weight: 700; color: #059669;">One-Time Payment</div>
+          <div style="font-size: 11px; color: #94A3B8; text-decoration: line-through;">Normally ₹2,999 for toy kits</div>
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #E2E8F0; margin-bottom: 20px;">
+
+      <!-- Feature Stack -->
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+          <span>✓ All 12 Progressive Indian STEM Engineering Chapters (Lifetime Access)</span>
+          <strong style="color: var(--mq-primary);">₹800 value</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+          <span>✓ 17+ Interactive 3D CAD Blueprint Visualizers with Kinematic Physics</span>
+          <strong style="color: var(--mq-primary);">₹600 value</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+          <span>✓ 10 Collectible Engineering Badges & Official STEM Graduation Diploma</span>
+          <strong style="color: var(--mq-primary);">₹350 value</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+          <span>✓ Printable 1:1 Scale Dimension Cut Sheets & Scoring Guides</span>
+          <strong style="color: var(--mq-primary);">₹250 value</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+          <span>✓ Parent & Educator Discussion Guides with NEP 2020 Science Lessons</span>
+          <strong style="color: var(--mq-primary);">₹300 value</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+          <span>✓ Zero Scrap Kit Dependencies (Uses everyday household delivery boxes)</span>
+          <strong style="color: #059669;">Priceless</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+          <span>✓ Free Access to All Future Seasonal DIY Project Drops & Updates</span>
+          <strong style="color: #059669;">Included</strong>
+        </div>
+      </div>
+
+      <!-- No-Brainer Cost Comparison Box -->
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; margin-bottom: 20px; text-align: left;">
+        <div style="font-size: 10px; font-weight: 800; color: var(--mq-primary); letter-spacing: 1px; margin-bottom: 8px;">THE NO-BRAINER COMPARISON</div>
+        <div style="font-size: 12px; color: #E11D48; font-weight: 600; margin-bottom: 4px;">❌ Robotics Coaching Class in India: ₹5,000 to ₹12,000 / month</div>
+        <div style="font-size: 12px; color: #E11D48; font-weight: 600; margin-bottom: 4px;">❌ Plastic Robot Toy Kit on Amazon: ₹2,499 - ₹4,999 (breaks once)</div>
+        <div style="font-size: 12px; color: #64748B; font-weight: 600; margin-bottom: 6px;">❌ One Family Movie / Domino's Order: ₹800+</div>
+        <hr style="border: 0; border-top: 1px solid #E2E8F0; margin: 6px 0;">
+        <div style="font-size: 13px; color: #059669; font-weight: 900;">✅ MakerQuest All-Access Pass: ₹199 One-Time (Lifetime)</div>
+      </div>
+
+      <!-- Checkout Button -->
+      <button onclick="openCheckoutModal()" class="m-btn m-btn-primary m-btn-shimmer" style="width: 100%; padding: 18px; font-size: 16px; border-radius: 14px; margin-bottom: 12px;">
+        Claim Cadet Lifetime Pass for ₹199 🚀
+      </button>
+
+      <!-- Instant UPI Stripe -->
+      <div style="background: #F1F5F9; border-radius: 10px; padding: 8px 14px; text-align: center; font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 12px;">
+        ⚡ Instant Activation via UPI (GPay • PhonePe • Paytm • BHIM) & Cards
+      </div>
+
+      <!-- 30-Day 100% UPI Guarantee -->
+      <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 8px; text-align: left; font-size: 11px; font-weight: 700; color: #065F46; line-height: 1.4;">
+        <span style="font-size: 20px;">🛡️</span>
+        <span>30-Day Risk-Free Guarantee: If your child doesn't build their first working kinetic machine in 30 days, simply message us for an immediate 100% refund of ₹199 directly to your UPI ID.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- WhatsApp Mentor Support -->
+  <section id="whatsapp-support" class="m-section" style="max-width: 880px; margin: 0 auto 50px;">
+    <div style="background: linear-gradient(135deg, #0F172A, #1E293B); border-radius: 24px; padding: 36px 28px; color: white; border: 1.5px solid rgba(37,211,102,0.35); display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 280px;">
+        <div style="font-size: 11px; font-weight: 800; color: #34D399; letter-spacing: 1.2px; margin-bottom: 6px;">1-ON-1 MAKER MENTORSHIP</div>
+        <h3 style="font-size: 22px; font-weight: 900; color: white; margin-bottom: 8px;">Never Get Stuck: Dedicated WhatsApp Support</h3>
+        <p style="font-size: 13px; color: #94A3B8; line-height: 1.5; margin-bottom: 16px;">Is a linkage sticking? Straw bearing wobbling? Send a 10-second video or photo to our dedicated engineering WhatsApp helpline. Our maker mentors respond with personalized alignment tips within 15 minutes during build hours.</p>
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; background: rgba(37,211,102,0.14); border: 1px solid rgba(37,211,102,0.45); font-size: 13px; font-weight: 900; color: #6EE7B7; margin-bottom: 16px;">
+          <span>📞 Official WhatsApp Helpline:</span>
+          <span>+918075971988</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <a href="https://wa.me/918075971988?text=Hi%20MakerQuest!%20I%20would%20like%20to%20connect%20regarding%20the%20Cardboard%20Robotics%20Cadet%20Pass%20(%E2%82%B9199)." target="_blank" rel="noopener noreferrer" class="m-btn m-wa-btn m-btn-shimmer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.81 14.01c-.25.7-1.44 1.34-2 1.42-.52.08-1.18.11-1.91-.12-.44-.14-1-.33-1.72-.64-3.03-1.31-5-4.38-5.15-4.58-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.61-.38.81-.38h.58c.19 0 .44-.07.69.53.25.61.86 2.1.94 2.25.08.15.13.33.03.53-.1.2-.15.33-.3.5-.15.18-.32.4-.45.53-.15.15-.3.31-.13.61.18.3.78 1.29 1.68 2.09 1.16 1.03 2.14 1.35 2.44 1.5.3.15.48.13.66-.08.18-.2.75-.88.95-1.18.2-.3.4-.25.68-.15.28.1 1.77.83 2.07.98.3.15.5.23.58.36.08.13.08.76-.17 1.46z"/></svg>
+            <span>Chat on WhatsApp (+918075971988)</span>
+          </a>
+          <button type="button" onclick="copyWhatsAppNumber()" class="m-btn" style="background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.22);">
+            📋 Copy Number
+          </button>
+          <a href="tel:+918075971988" class="m-btn" style="background: rgba(255,255,255,0.06); color: #A7F3D0; border: 1px solid rgba(52,211,153,0.35);">
+            📞 Call +918075971988
+          </a>
+        </div>
+      </div>
+      <a href="https://wa.me/918075971988?text=Hi%20MakerQuest!%20I%20would%20like%20to%20connect%20regarding%20the%20Cardboard%20Robotics%20Cadet%20Pass%20(%E2%82%B9199)." target="_blank" rel="noopener noreferrer" style="width: 100px; height: 100px; border-radius: 20px; background: rgba(37,211,102,0.18); border: 1.5px solid rgba(37,211,102,0.55); display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; gap: 4px;">
+        <span style="font-size: 38px; line-height: 1;">💬</span>
+        <span style="font-size: 10px; font-weight: 900; color: #6EE7B7; letter-spacing: 0.8px;">OPEN CHAT</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- FAQ Accordion -->
+  <section class="m-section" style="max-width: 860px; margin: 0 auto 50px;">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">FREQUENTLY ASKED QUESTIONS</div>
+      <h2 class="m-section-title">Everything You Need to Know</h2>
+      <p class="m-section-desc">Got questions about MakerQuest? Here are answers to the most common questions from parents and teachers.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <details style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; cursor: pointer;">
+        <summary style="font-weight: 800; font-size: 14px; color: #0F172A;">Do I need to buy expensive robotics kits, electronics, or specialized tools?</summary>
+        <p style="font-size: 13px; color: #64748B; margin-top: 10px; line-height: 1.55;">No, absolutely not! The core mission of MakerQuest is 100% zero-waste scrap engineering. All you need are clean cardboard boxes (like Amazon, Flipkart, or cereal cartons), drinking straws, wooden skewers, rubber bands, household scissors, and glue. Everything is built from scratch.</p>
+      </details>
+
+      <details style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; cursor: pointer;">
+        <summary style="font-weight: 800; font-size: 14px; color: #0F172A;">What age group is MakerQuest suitable for?</summary>
+        <p style="font-size: 13px; color: #64748B; margin-top: 10px; line-height: 1.55;">MakerQuest is designed for Indian students from Class 3 to Class 10 (ages 7 to 16). Younger inventors (ages 7–9) enjoy building with parental or elder sibling guidance, while older cadets (ages 10–16) work independently through the interactive 3D CAD blueprints, kinematic formulas, and checkpoint challenges.</p>
+      </details>
+
+      <details style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; cursor: pointer;">
+        <summary style="font-weight: 800; font-size: 14px; color: #0F172A;">Is this a monthly subscription or a one-time purchase?</summary>
+        <p style="font-size: 13px; color: #64748B; margin-top: 10px; line-height: 1.55;">MakerQuest is a single one-time payment of ₹199. You receive permanent lifetime access to all 12 chapters, all 17+ interactive 3D blueprints, CAD simulator tools, and all future updates with zero recurring fees.</p>
+      </details>
+
+      <details style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; cursor: pointer;">
+        <summary style="font-weight: 800; font-size: 14px; color: #0F172A;">How is this different from watching free YouTube videos?</summary>
+        <p style="font-size: 13px; color: #64748B; margin-top: 10px; line-height: 1.55;">YouTube videos are passive, unstructured, and often leave students frustrated with missing dimensions or unverified mechanics. MakerQuest provides interactive 3D CAD models you can rotate and zoom, step-by-step progress tracking, real physics formulas, error-prevention cards, and verifiable STEM certifications.</p>
+      </details>
+
+      <details style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; cursor: pointer;">
+        <summary style="font-weight: 800; font-size: 14px; color: #0F172A;">What if my child doesn't enjoy it? Do you offer a guarantee?</summary>
+        <p style="font-size: 13px; color: #64748B; margin-top: 10px; line-height: 1.55;">We offer an unconditional 30-day 100% money-back guarantee. If your student doesn't build their first working machine or isn't completely captivated, simply let us know and we will issue an immediate full refund of ₹199 to your UPI ID — no questions asked.</p>
+      </details>
+
+      <details style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; cursor: pointer;">
+        <summary style="font-weight: 800; font-size: 14px; color: #0F172A;">Can Indian schools, Atal Tinkering Labs (ATL), or homeschoolers use MakerQuest?</summary>
+        <p style="font-size: 13px; color: #64748B; margin-top: 10px; line-height: 1.55;">Yes! MakerQuest is fully aligned with the Indian National Education Policy (NEP 2020) experiential learning mandate and CBSE/ICSE practical physics standards. It is perfect for Atal Tinkering Labs (ATL) and school science clubs, including educator lesson summaries and zero-cost material guides.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="m-section" style="background: var(--mq-slate-50); border-radius: 32px; margin-bottom: 50px;">
+    <div class="m-section-header">
+      <div class="m-section-subtitle">LOVED BY INDIAN TEACHERS & PARENTS</div>
+      <h2 class="m-section-title">Real Stories from Indian Classrooms & Homes</h2>
+    </div>
+
+    <div class="m-testimonials-grid">
+      <div class="m-testi-card">
+        <div style="color: var(--mq-amber); margin-bottom: 8px;">★★★★★</div>
+        <p class="m-testi-quote">"My 9-year-old was glued to screen games until MakerQuest. In three days, she turned cereal boxes into a fully working scissor lift and rubber-band racer!"</p>
+        <div class="m-testi-author">— Ananya Sharma, Parent in Bengaluru</div>
+      </div>
+
+      <div class="m-testi-card">
+        <div style="color: var(--mq-amber); margin-bottom: 8px;">★★★★★</div>
+        <p class="m-testi-quote">"As an Atal Tinkering Lab (ATL) coordinator, finding hands-on engineering that doesn't cost thousands for imported kits was impossible until MakerQuest. Brilliant blueprints."</p>
+        <div class="m-testi-author">— Rajesh K., Science & ATL In-Charge, New Delhi</div>
+      </div>
+
+      <div class="m-testi-card">
+        <div style="color: var(--mq-amber); margin-bottom: 8px;">★★★★★</div>
+        <p class="m-testi-quote">"The 3D interactive physics view helped my son finally understand gear pitch and mechanical advantage. Best educational investment we've made."</p>
+        <div class="m-testi-author">— Dr. Meera Iyer, STEM Educator, Pune</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dummy Payment Modal -->
+  <div class="m-modal-backdrop" id="checkoutModal">
+    <div class="m-modal">
+      <button class="m-modal-close" onclick="closeCheckoutModal()">&times;</button>
+      
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--mq-primary-soft); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+          💳
+        </div>
+        <div>
+          <h3 style="font-size: 18px; font-weight: 800; color: var(--mq-slate-900);">Secure Checkout</h3>
+          <p style="font-size: 12px; color: var(--mq-slate-500);">256-bit Encrypted Dummy Gateway</p>
+        </div>
+      </div>
+
+      <div class="m-order-summary">
+        <div class="m-summary-row">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="modalArchetypeIcon" style="font-size: 20px;">🚀</span>
+            <div>
+              <strong id="modalPlanTitle" style="font-size: 13px;">Cadet All-Access Pass</strong>
+              <div id="modalPlanSub" style="font-size: 11px; color: var(--mq-slate-500);">Age 10 • Kinetic Drive Pioneer</div>
+            </div>
+          </div>
+          <span style="font-weight: 800; font-size: 14px;">₹199</span>
+        </div>
+        <div class="m-summary-row" id="discountRow" style="display: none; color: var(--mq-emerald); font-weight: 700;">
+          <span>Promo Discount</span>
+          <span id="discountVal">-₹0.00</span>
+        </div>
+        <div class="m-summary-row total">
+          <span>Total Due Today:</span>
+          <span id="totalDueVal">₹199</span>
+        </div>
+      </div>
+
+      <!-- Promo Code Field -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <input type="text" id="promoInput" class="m-input" placeholder="Promo code (try 'MAKER100')" style="text-transform: uppercase;">
+        <button type="button" onclick="applyPromo()" class="m-btn m-btn-outline" style="white-space: nowrap;">Apply</button>
+      </div>
+      <div id="promoMessage" style="font-size: 12px; font-weight: 700; margin-top: -10px; margin-bottom: 14px; display: none;"></div>
+
+      <!-- Express Checkout -->
+      <div style="margin-bottom: 18px;">
+        <label style="font-size: 12px; font-weight: 700; color: var(--mq-slate-500); display: block; margin-bottom: 8px;">Instant UPI / Express Checkout</label>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" onclick="submitDummyPayment()" class="m-btn m-btn-outline" style="flex: 1; border-color: var(--mq-slate-300);">
+            ⚡ UPI / GPay
+          </button>
+          <button type="button" onclick="submitDummyPayment()" class="m-btn m-btn-outline" style="flex: 1; border-color: var(--mq-slate-300);">
+            📱 PhonePe / Paytm
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Details -->
+      <form id="dummyCardForm" onsubmit="event.preventDefault(); submitDummyPayment();">
+        <div class="m-form-group">
+          <label style="font-size: 12px;">Cardholder Name</label>
+          <input type="text" id="cardName" class="m-input" value="Parent Maker" required>
+        </div>
+        <div class="m-form-group">
+          <label style="font-size: 12px;">Card Number</label>
+          <input type="text" id="cardNumber" class="m-input" placeholder="•••• •••• •••• 4242" value="4242 •••• •••• 4242" required>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <div class="m-form-group" style="flex: 1;">
+            <label style="font-size: 12px;">Expires</label>
+            <input type="text" id="cardExp" class="m-input" placeholder="MM/YY" value="12/28" required>
+          </div>
+          <div class="m-form-group" style="flex: 1;">
+            <label style="font-size: 12px;">CVC</label>
+            <input type="text" id="cardCvc" class="m-input" placeholder="123" value="789" required>
+          </div>
+        </div>
+
+        <button type="submit" id="paySubmitBtn" class="m-btn m-btn-primary" style="width: 100%; padding: 14px; font-size: 15px; margin-top: 10px;">
+          🔒 Activate Cadet Journey (₹199)
+        </button>
+        <div style="margin-top: 12px; text-align: center; font-size: 12px;">
+          <a href="https://wa.me/918075971988?text=Hi%20MakerQuest!%20I%20need%20quick%20help%20with%20UPI%20or%20Cadet%20Pass%20enrollment%20(%E2%82%B9199)." target="_blank" rel="noopener noreferrer" style="color: #15803D; font-weight: 800; text-decoration: underline;">
+            💬 Need UPI or enrollment help? WhatsApp +918075971988
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Celebration Modal -->
+  <div class="m-modal-backdrop" id="celebrateModal">
+    <div class="m-modal" style="text-align: center; overflow: hidden;">
+      <div id="confettiContainer" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 10;"></div>
+      <div style="font-size: 60px; margin-bottom: 12px; animation: floatBob 2s ease-in-out infinite;">🏆</div>
+      <h2 style="font-size: 24px; font-weight: 900; color: var(--mq-slate-900); margin-bottom: 8px;">
+        Enrollment Successful!
+      </h2>
+      <p style="font-size: 14px; color: var(--mq-slate-600); margin-bottom: 20px;">
+        Official MakerQuest STEM Cadet Lifetime Pass has been activated.
+      </p>
+
+      <div style="background: var(--mq-slate-50); border: 1px dashed var(--mq-primary); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: left;">
+        <div style="font-size: 11px; font-weight: 800; color: var(--mq-primary); text-transform: uppercase;">Cadet Certificate ID</div>
+        <div id="certPassId" style="font-size: 18px; font-weight: 900; color: var(--mq-slate-900); font-family: monospace;">MQ-CADET-7A89BF</div>
+        <div style="margin-top: 10px; font-size: 13px; color: var(--mq-slate-700);">
+          Cadet: <strong id="certStudentName">Leo Parker</strong> • All 12 Chapters Unlocked
+        </div>
+      </div>
+
+      <a href="/" class="m-btn m-btn-primary m-btn-shimmer" style="width: 100%; padding: 14px; font-size: 15px;">
+        Launch Cadet Workshop Now 🚀
+      </a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="m-footer">
+    <div class="m-footer-inner">
+      <div style="font-size: 20px; font-weight: 900;">⚡ MakerQuest Indian STEM Academy</div>
+      <p>Empowering young Indian and global inventors through zero-waste cardboard mechanical engineering.</p>
+      <div style="margin-top: 16px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+        <a href="https://wa.me/918075971988?text=Hi%20MakerQuest!%20I%20would%20like%20to%20connect%20regarding%20the%20Cardboard%20Robotics%20Cadet%20Pass%20(%E2%82%B9199)." target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(37,211,102,0.14); border: 1px solid rgba(37,211,102,0.4); color: #6EE7B7; font-size: 12px; font-weight: 800; text-decoration: none;">
+          💬 WhatsApp Helpline: +918075971988 • Chat Now
+        </a>
+        <a href="tel:+918075971988" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); color: #CBD5E1; font-size: 12px; font-weight: 700; text-decoration: none;">
+          📞 Call +918075971988
+        </a>
+      </div>
+      <div style="margin-top: 20px; font-size: 12px; color: var(--mq-slate-500);">
+        © 2026 MakerQuest Education Ltd. All Rights Reserved. • NEP 2020 Aligned STEM Learning Standard
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating WhatsApp Connect Button -->
+  <a href="https://wa.me/918075971988?text=Hi%20MakerQuest!%20I%20would%20like%20to%20connect%20regarding%20the%20Cardboard%20Robotics%20Cadet%20Pass%20(%E2%82%B9199)." target="_blank" rel="noopener noreferrer" class="m-wa-fab" aria-label="Chat on WhatsApp +918075971988">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.81 14.01c-.25.7-1.44 1.34-2 1.42-.52.08-1.18.11-1.91-.12-.44-.14-1-.33-1.72-.64-3.03-1.31-5-4.38-5.15-4.58-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.61-.38.81-.38h.58c.19 0 .44-.07.69.53.25.61.86 2.1.94 2.25.08.15.13.33.03.53-.1.2-.15.33-.3.5-.15.18-.32.4-.45.53-.15.15-.3.31-.13.61.18.3.78 1.29 1.68 2.09 1.16 1.03 2.14 1.35 2.44 1.5.3.15.48.13.66-.08.18-.2.75-.88.95-1.18.2-.3.4-.25.68-.15.28.1 1.77.83 2.07.98.3.15.5.23.58.36.08.13.08.76-.17 1.46z"/></svg>
+    <span>WhatsApp • +918075971988</span>
+  </a>
+  <div id="waToast" class="m-wa-toast">Copied WhatsApp number +918075971988!</div>
+
+  <script>
+    if (window.CanvasRenderingContext2D && !CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        const radius = typeof r === 'number' ? Math.min(r, w / 2, h / 2) : 0;
+        this.moveTo(x + radius, y);
+        this.lineTo(x + w - radius, y);
+        this.quadraticCurveTo(x + w, y, x + w, y + radius);
+        this.lineTo(x + w, y + h - radius);
+        this.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+        this.lineTo(x + radius, y + h);
+        this.quadraticCurveTo(x, y + h, x, y + h - radius);
+        this.lineTo(x, y + radius);
+        this.quadraticCurveTo(x, y, x + radius, y);
+        this.closePath();
+      };
+    }
+
+    let selectedAge = 10;
+    let currentAnalysis = null;
+    let promoDiscount = 0;
+    const basePrice = 199;
+
+    document.getElementById('studentName').addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      document.getElementById('diplomaStudentName').textContent = val || 'Young Cadet';
+    });
+
+    function setAge(age) {
+      selectedAge = age;
+      document.getElementById('ageDisplay').textContent = age + (age >= 14 ? '+ Years Old' : ' Years Old');
+      document.querySelectorAll('.m-age-pill').forEach(pill => {
+        pill.classList.toggle('active', parseInt(pill.dataset.age) === age);
+      });
+    }
+
+    const workshopProjects = [
+      { id: 'scissor', name: 'Kinetic Scissor Lift', status: '⚡ Elevating 4x Vertical Stroke! (Tap Bolts!)', kid: '"Aligning 0° flutes for 300% cardboard strength! 📦"', bot: '"Beep-boop! Mechanical Advantage = 3.0x! ⚡"' },
+      { id: 'racer', name: 'Rubber-Band Speed Racer', status: '🏎️ Winding Direct-Axle Elastic Torque!', kid: '"Straw bearings reduce axle friction by 70%! 🥤"', bot: '"Kinetic Velocity Trajectory: 5.4 Meters! 🚀"' },
+      { id: 'gripper', name: 'Articulated Robot Gripper', status: '🦾 Clamping Precision Normal Force!', kid: '"Dual finger triggers pull both jaws together! 🎯"', bot: '"Pinch Sensor Locked! Holding 250g Payload! ⚙️"' },
+      { id: 'coaster', name: 'Gravity Marble Coaster', status: '🎢 Navigating Centripetal Banked Curves!', kid: '"Cardboard banking stops the marble flying off! 📦"', bot: '"Potential -> Kinetic Conservation Verified! ✨"' }
+    ];
+    let currentWorkshopIdx = 0;
+    let testBoost = 0;
+    let robotBounce = 0;
+    const sparks = [];
+
+    function emitSparks(cx, cy, count = 12) {
+      const palette = ['#FACC15', '#38BDF8', '#34D399', '#F472B6', '#A78BFA'];
+      for (let i = 0; i < count; i++) {
+        const ang = (Math.PI * 2 * i) / count + (Math.random() * 0.4);
+        const spd = 1.8 + Math.random() * 2.8;
+        sparks.push({
+          x: cx, y: cy,
+          vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 1.5,
+          life: 1.0,
+          color: palette[i % palette.length],
+          r: 2.5 + Math.random() * 2.5
+        });
+      }
+    }
+
+    function switchWorkshopProject() {
+      currentWorkshopIdx = (currentWorkshopIdx + 1) % workshopProjects.length;
+      const p = workshopProjects[currentWorkshopIdx];
+      document.getElementById('workshopBuildingTitle').textContent = `Building: ${p.name}`;
+      document.getElementById('workbenchStatusBadge').textContent = p.status;
+      document.getElementById('kidSpeechText').textContent = p.kid;
+      document.getElementById('robotSpeechText').textContent = p.bot;
+      const canvas = document.getElementById('heroWorkshopCanvas');
+      if (canvas) emitSparks(canvas.clientWidth * 0.5, canvas.clientHeight * 0.55, 16);
+    }
+
+    function testRunWorkshop() {
+      testBoost = 1.0;
+      robotBounce = 1.0;
+      document.getElementById('workbenchStatusBadge').textContent = '🔥 TURBO TEST RUN! 100% Physics Efficiency!';
+      const canvas = document.getElementById('heroWorkshopCanvas');
+      if (canvas) {
+        emitSparks(canvas.clientWidth * 0.5, canvas.clientHeight * 0.5, 22);
+      }
+      setTimeout(() => {
+        document.getElementById('workbenchStatusBadge').textContent = workshopProjects[currentWorkshopIdx].status;
+      }, 1500);
+    }
+
+    function tapRobot() {
+      robotBounce = 1.0;
+      const msgs = [
+        '"Beep-boop! Cadet Aptitude: 100%! Ready to Build! 🚀"',
+        '"Cardboard flutes + Geometry = Unstoppable Robotics! 🤖"',
+        '"Zero expensive plastic kits! Pure Inventor Power! ⭐"'
+      ];
+      document.getElementById('robotSpeechText').textContent = msgs[Math.floor(Math.random() * msgs.length)];
+      const canvas = document.getElementById('heroWorkshopCanvas');
+      if (canvas) emitSparks(canvas.clientWidth * 0.8, canvas.clientHeight * 0.45, 14);
+    }
+
+    function selectBadge(idx, title, xp, pct, btn) {
+      document.querySelectorAll('#badgeButtonGroup .m-badge-chip').forEach(el => el.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.getElementById('xpCounterLabel').textContent = `Cadet XP: ${xp}`;
+      document.getElementById('rankLabel').textContent = `Rank Lv.${idx + 1}: ${title}`;
+      document.getElementById('masteryLabel').textContent = `${pct}% Mastery Streak`;
+      document.getElementById('rocketXpBar').style.width = `${pct}%`;
+    }
+
+    // --- High-FPS Canvases Renderer ---
+    let animTime = 0;
+    function setupCanvasDPI(canvas) {
+      if (!canvas) return null;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return null;
+      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, w: rect.width, h: rect.height };
+    }
+
+    function drawHeroWorkshop() {
+      const el = document.getElementById('heroWorkshopCanvas');
+      const setup = setupCanvasDPI(el);
+      if (!setup) return;
+      const { ctx, w, h } = setup;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Subtle Blueprint Grid
+      ctx.strokeStyle = 'rgba(14, 165, 233, 0.10)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 22) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+      for (let y = 0; y < h; y += 22) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+      // Wooden Maker Workbench
+      const benchY = h * 0.78;
+      ctx.fillStyle = '#B45309';
+      ctx.fillRect(0, benchY, w, 12);
+      ctx.fillStyle = '#78350F';
+      ctx.fillRect(0, benchY + 12, w, h - benchY - 12);
+
+      // Speed modifier during test run
+      const speedMult = 1 + testBoost * 2.5;
+      if (testBoost > 0) testBoost = Math.max(0, testBoost - 0.015);
+      if (robotBounce > 0) robotBounce = Math.max(0, robotBounce - 0.04);
+
+      const t = animTime * speedMult;
+
+      // 1. Kid Builder (Left)
+      const kx = Math.max(70, w * 0.19);
+      const kbob = Math.sin(t * 2.2) * 3;
+      const ky = benchY + kbob;
+      // Apron torso
+      ctx.fillStyle = '#0284C7';
+      ctx.beginPath(); ctx.roundRect(kx - 18, ky - 52, 36, 52, 8); ctx.fill();
+      ctx.fillStyle = '#0369A1';
+      ctx.beginPath(); ctx.roundRect(kx - 10, ky - 30, 20, 16, 4); ctx.fill();
+      // Head
+      ctx.fillStyle = '#FDBA74';
+      ctx.beginPath(); ctx.arc(kx, ky - 70, 19, 0, Math.PI * 2); ctx.fill();
+      // Hair
+      ctx.fillStyle = '#451A03';
+      ctx.beginPath(); ctx.arc(kx, ky - 75, 20, Math.PI, 0); ctx.fill();
+      // Safety Goggles
+      ctx.fillStyle = '#1E293B'; ctx.fillRect(kx - 19, ky - 74, 38, 4);
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
+      ctx.beginPath(); ctx.roundRect(kx - 15, ky - 77, 13, 10, 3); ctx.roundRect(kx + 2, ky - 77, 13, 10, 3); ctx.fill();
+      // Smile
+      ctx.strokeStyle = '#78350F'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(kx, ky - 63, 5, 0.2, Math.PI - 0.2); ctx.stroke();
+      // Animated arm with hot glue gun
+      const armAng = Math.sin(t * 4) * 0.25;
+      const hx = kx + 28 + Math.cos(armAng) * 8;
+      const hy = ky - 30 + Math.sin(armAng) * 8;
+      ctx.strokeStyle = '#FDBA74'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(kx + 14, ky - 38); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.fillStyle = '#E11D48'; ctx.fillRect(hx - 2, hy - 5, 14, 7);
+      ctx.fillStyle = '#FACC15'; ctx.fillRect(hx + 12, hy - 3, 5, 3);
+
+      // Label
+      ctx.fillStyle = '#0284C7'; ctx.font = '800 10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Cadet Builder', kx, benchY + 28);
+
+      // 2. Active Workbench Machine (Center)
+      const cx = w * 0.5;
+      const proj = workshopProjects[currentWorkshopIdx].id;
+      if (proj === 'scissor') {
+        const lift = 18 + (Math.sin(t * 2.5) * 0.5 + 0.5) * 44;
+        ctx.fillStyle = '#78350F'; ctx.fillRect(cx - 40, benchY - 6, 80, 6);
+        ctx.strokeStyle = '#D97706'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+        // Tier 1
+        const t1 = benchY - lift * 0.5;
+        ctx.beginPath(); ctx.moveTo(cx - 26, benchY - 4); ctx.lineTo(cx + 26, t1); ctx.moveTo(cx + 26, benchY - 4); ctx.lineTo(cx - 26, t1); ctx.stroke();
+        // Tier 2
+        const t2 = benchY - lift;
+        ctx.beginPath(); ctx.moveTo(cx - 26, t1); ctx.lineTo(cx + 26, t2); ctx.moveTo(cx + 26, t1); ctx.lineTo(cx - 26, t2); ctx.stroke();
+        // Top payload platform
+        ctx.fillStyle = '#6366F1'; ctx.beginPath(); ctx.roundRect(cx - 32, t2 - 8, 64, 8, 3); ctx.fill();
+        ctx.fillStyle = '#10B981'; ctx.beginPath(); ctx.roundRect(cx - 10, t2 - 22, 20, 14, 3); ctx.fill();
+      } else if (proj === 'racer') {
+        const vib = Math.sin(t * 20) * 1.5;
+        // Speed wind lines
+        ctx.strokeStyle = '#38BDF8'; ctx.lineWidth = 2;
+        const doff = (t * 60) % 28;
+        ctx.beginPath(); ctx.moveTo(cx - 52 - doff, benchY - 28); ctx.lineTo(cx - 72 - doff, benchY - 28);
+        ctx.moveTo(cx - 46 - doff, benchY - 16); ctx.lineTo(cx - 68 - doff, benchY - 16); ctx.stroke();
+        // Chassis
+        ctx.fillStyle = '#D97706'; ctx.beginPath(); ctx.roundRect(cx - 44, benchY - 26 + vib, 88, 16, 4); ctx.fill();
+        ctx.fillStyle = '#E11D48'; ctx.fillRect(cx - 40, benchY - 36 + vib, 14, 10);
+        // Rubber band spring
+        ctx.strokeStyle = '#FACC15'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(cx - 10, benchY - 18 + vib); ctx.lineTo(cx + 22, benchY - 18 + vib); ctx.stroke();
+        // Spinning wheels
+        [cx - 26, cx + 26].forEach(wx => {
+          ctx.fillStyle = '#1E293B'; ctx.beginPath(); ctx.arc(wx, benchY - 10, 12, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#FDE68A'; ctx.lineWidth = 2;
+          for (let s = 0; s < 4; s++) {
+            const sa = t * 8 + (s * Math.PI / 2);
+            ctx.beginPath(); ctx.moveTo(wx, benchY - 10); ctx.lineTo(wx + Math.cos(sa) * 11, benchY - 10 + Math.sin(sa) * 11); ctx.stroke();
+          }
+        });
+      } else if (proj === 'gripper') {
+        const pinch = Math.sin(t * 2.5) * 0.5 + 0.5;
+        const spread = (1 - pinch) * 20;
+        ctx.fillStyle = '#78350F'; ctx.fillRect(cx - 8, benchY - 24, 16, 24);
+        ctx.fillStyle = '#D97706';
+        // Left & right jaws
+        ctx.beginPath(); ctx.moveTo(cx - 5, benchY - 24); ctx.lineTo(cx - 20 - spread, benchY - 62); ctx.lineTo(cx - 6 - spread * 0.2, benchY - 64); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx + 5, benchY - 24); ctx.lineTo(cx + 20 + spread, benchY - 62); ctx.lineTo(cx + 6 + spread * 0.2, benchY - 64); ctx.closePath(); ctx.fill();
+        // Target cube
+        ctx.fillStyle = '#10B981'; ctx.beginPath(); ctx.roundRect(cx - 9, benchY - 58, 18, 18, 3); ctx.fill();
+      } else {
+        // Marble Coaster
+        ctx.strokeStyle = '#64748B'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(cx - 60, benchY - 64);
+        ctx.bezierCurveTo(cx - 20, benchY - 4, cx + 20, benchY - 58, cx + 60, benchY - 12); ctx.stroke();
+        const mp = (t * 0.5) % 1;
+        const mx = cx - 60 + mp * 120;
+        const my = benchY - 64 + Math.sin(mp * Math.PI * 1.8) * 32 + mp * 44;
+        ctx.fillStyle = '#EC4899'; ctx.beginPath(); ctx.arc(mx, my, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(mx - 2, my - 2, 2.2, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // 3. Robot Companion "Bolts" (Right)
+      const rx = Math.min(w - 70, w * 0.81);
+      const rbob = Math.cos(t * 2.2) * 3 - Math.sin(robotBounce * Math.PI) * 18;
+      const ry = benchY + rbob;
+      // Antenna
+      ctx.strokeStyle = '#64748B'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(rx, ry - 70); ctx.lineTo(rx, ry - 86); ctx.stroke();
+      ctx.fillStyle = Math.sin(t * 8) > 0 ? '#34D399' : '#FACC15';
+      ctx.beginPath(); ctx.arc(rx, ry - 89, 5, 0, Math.PI * 2); ctx.fill();
+      // Head
+      ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.roundRect(rx - 22, ry - 70, 44, 30, 8); ctx.fill();
+      ctx.fillStyle = '#0F172A'; ctx.beginPath(); ctx.roundRect(rx - 16, ry - 64, 32, 18, 4); ctx.fill();
+      // Blinking cyan eyes
+      const eyeH = (Math.sin(t * 1.5) > 0.96) ? 1.5 : 3.5;
+      ctx.fillStyle = '#38BDF8';
+      ctx.beginPath(); ctx.ellipse(rx - 7, ry - 55, 3.5, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(rx + 7, ry - 55, 3.5, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+      // Robot Torso + rotating gear chest
+      ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.roundRect(rx - 24, ry - 36, 48, 36, 8); ctx.fill();
+      ctx.strokeStyle = '#FACC15'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(rx, ry - 18, 9, 0, Math.PI * 2); ctx.stroke();
+      for (let g = 0; g < 6; g++) {
+        const ga = t * 3 + g * Math.PI / 3;
+        ctx.beginPath(); ctx.moveTo(rx + Math.cos(ga) * 9, ry - 18 + Math.sin(ga) * 9); ctx.lineTo(rx + Math.cos(ga) * 13, ry - 18 + Math.sin(ga) * 13); ctx.stroke();
+      }
+      // Label
+      ctx.fillStyle = '#D97706'; ctx.font = '800 10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Architect Bot "Bolts"', rx, benchY + 28);
+
+      // 4. Particles / Sparks
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const sp = sparks[i];
+        sp.x += sp.vx; sp.y += sp.vy; sp.vy += 0.08; sp.life -= 0.025;
+        if (sp.life <= 0) { sparks.splice(i, 1); continue; }
+        ctx.globalAlpha = sp.life;
+        ctx.fillStyle = sp.color;
+        ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    function drawPipelineCanvas() {
+      const el = document.getElementById('pipelineCanvas');
+      const setup = setupCanvasDPI(el);
+      if (!setup) return;
+      const { ctx, w, h } = setup;
+      ctx.clearRect(0, 0, w, h);
+
+      // Subtle Blueprint Grid
+      ctx.strokeStyle = 'rgba(14, 165, 233, 0.12)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 24) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+      for (let y = 0; y < h; y += 24) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+      const beamY = h * 0.56;
+      ctx.strokeStyle = '#1E293B'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(w * 0.18, beamY); ctx.lineTo(w * 0.82, beamY); ctx.stroke();
+
+      // Flowing cyan energy sparks
+      for (let i = 0; i < 4; i++) {
+        const p = ((animTime * 0.35) + i * 0.25) % 1;
+        const px = w * 0.18 + (w * 0.64 * p);
+        ctx.fillStyle = '#38BDF8'; ctx.beginPath(); ctx.arc(px, beamY, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(56,189,248,0.28)'; ctx.beginPath(); ctx.arc(px, beamY, 9, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Stage 1: Cardboard Delivery Box
+      const bx = w * 0.2;
+      const by = beamY + Math.sin(animTime * 3) * 4;
+      ctx.fillStyle = '#B45309'; ctx.beginPath(); ctx.roundRect(bx - 24, by - 20, 48, 40, 5); ctx.fill();
+      ctx.fillStyle = '#FDE68A'; ctx.fillRect(bx - 24, by - 14, 48, 6);
+      ctx.fillStyle = '#94A3B8'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('SCRAP BOX', bx, h - 10);
+
+      // Stage 2: Spinning Holo Gear + Scanning Laser
+      const gx = w * 0.5;
+      ctx.strokeStyle = '#38BDF8'; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.arc(gx, beamY, 22, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(gx, beamY, 9, 0, Math.PI * 2); ctx.stroke();
+      for (let i = 0; i < 8; i++) {
+        const a = animTime * 2.5 + i * Math.PI / 4;
+        ctx.beginPath(); ctx.moveTo(gx + Math.cos(a) * 22, beamY + Math.sin(a) * 22); ctx.lineTo(gx + Math.cos(a) * 29, beamY + Math.sin(a) * 29); ctx.stroke();
+      }
+      const laserX = gx + Math.sin(animTime * 4) * 28;
+      ctx.strokeStyle = '#34D399'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(laserX, beamY - 34); ctx.lineTo(laserX, beamY + 34); ctx.stroke();
+      ctx.fillStyle = '#38BDF8'; ctx.font = '700 10px sans-serif';
+      ctx.fillText('3D CAD ENGINE', gx, h - 10);
+
+      // Stage 3: Finished Waving Cardboard Robot
+      const rx = w * 0.8;
+      const ry = beamY + Math.cos(animTime * 3) * 4;
+      ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(rx, ry - 30); ctx.lineTo(rx, ry - 42); ctx.stroke();
+      ctx.fillStyle = Math.sin(animTime * 8) > 0 ? '#10B981' : '#FACC15';
+      ctx.beginPath(); ctx.arc(rx, ry - 44, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.roundRect(rx - 18, ry - 30, 36, 22, 5); ctx.fill();
+      ctx.fillStyle = '#38BDF8';
+      ctx.beginPath(); ctx.arc(rx - 7, ry - 20, 2.5, 0, Math.PI * 2); ctx.arc(rx + 7, ry - 20, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#D97706'; ctx.beginPath(); ctx.roundRect(rx - 20, ry - 6, 40, 32, 6); ctx.fill();
+      // Waving arm
+      const wang = -0.6 + Math.sin(animTime * 6) * 0.45;
+      ctx.strokeStyle = '#FDE68A'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(rx + 20, ry); ctx.lineTo(rx + 20 + Math.cos(wang) * 18, ry + Math.sin(wang) * 18); ctx.stroke();
+      ctx.fillStyle = '#34D399'; ctx.font = '700 10px sans-serif';
+      ctx.fillText('WORKING ROBOT', rx, h - 10);
+    }
+
+    function drawDraftingCanvas() {
+      const screen = document.getElementById('robotDraftingScreen');
+      if (!screen || screen.style.display === 'none') return;
+      const el = document.getElementById('draftingBotCanvas');
+      const setup = setupCanvasDPI(el);
+      if (!setup) return;
+      const { ctx, w, h } = setup;
+      ctx.clearRect(0, 0, w, h);
+
+      // Blueprint background grid
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.14)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+      for (let y = 0; y < h; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+      // Sweeping laser scan beam
+      const lx = ((animTime * 90) % (w + 60)) - 30;
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+      ctx.fillRect(lx - 18, 0, 18, h);
+      ctx.strokeStyle = '#38BDF8'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx, h); ctx.stroke();
+
+      // Rotating Holo-Gears
+      [w * 0.25, w * 0.75].forEach((gx, idx) => {
+        ctx.strokeStyle = 'rgba(103, 232, 249, 0.75)'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(gx, h * 0.5, 22, 0, Math.PI * 2); ctx.stroke();
+        for (let i = 0; i < 8; i++) {
+          const a = animTime * (idx === 0 ? 3 : -3) + (i * Math.PI / 4);
+          ctx.beginPath(); ctx.moveTo(gx + Math.cos(a) * 22, h * 0.5 + Math.sin(a) * 22);
+          ctx.lineTo(gx + Math.cos(a) * 28, h * 0.5 + Math.sin(a) * 28); ctx.stroke();
+        }
+      });
+
+      // CAD Wireframe Chassis
+      ctx.strokeStyle = '#38BDF8'; ctx.lineWidth = 2;
+      ctx.strokeRect(w * 0.5 - 50, h * 0.5 - 30, 100, 60);
+      ctx.strokeStyle = '#34D399'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(w * 0.5 - 40, h * 0.5 - 20); ctx.lineTo(w * 0.5 + 40, h * 0.5 + 20); ctx.stroke();
+
+      // Moving drafting stylus particle
+      const sx = w * 0.5 + Math.cos(animTime * 5) * 42;
+      const sy = h * 0.5 + Math.sin(animTime * 3.5) * 22;
+      ctx.fillStyle = '#FDE047'; ctx.beginPath(); ctx.arc(sx, sy, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.35)'; ctx.beginPath(); ctx.arc(sx, sy, 10, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function animationLoop() {
+      animTime += 0.016;
+      drawHeroWorkshop();
+      drawPipelineCanvas();
+      drawDraftingCanvas();
+      requestAnimationFrame(animationLoop);
+    }
+    requestAnimationFrame(animationLoop);
+
+    // Smooth Scroll Reveal + Counter Up
+    document.addEventListener('DOMContentLoaded', () => {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.m-reveal').forEach(el => obs.observe(el));
+
+      // Count-up stat numbers smoothly
+      document.querySelectorAll('.anim-count').forEach(el => {
+        const target = parseInt(el.dataset.target || '0', 10);
+        let cur = 0;
+        const step = Math.max(1, Math.ceil(target / 30));
+        const timer = setInterval(() => {
+          cur += step;
+          if (cur >= target) {
+            el.textContent = target;
+            clearInterval(timer);
+          } else {
+            el.textContent = cur;
+          }
+        }, 25);
+      });
+    });
+
+    function spawnCelebrationConfetti() {
+      const container = document.getElementById('confettiContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      const colors = ['#6366F1', '#10B981', '#F59E0B', '#EC4899', '#38BDF8', '#FACC15'];
+      for (let i = 0; i < 36; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = `${Math.random() * 0.6}s`;
+        piece.style.width = `${6 + Math.random() * 6}px`;
+        piece.style.height = `${6 + Math.random() * 6}px`;
+        container.appendChild(piece);
+      }
+    }
+
+    const draftingPhases = [
+      { icon: '🤖', title: 'Bot "Bolts" Scanning Aptitude Profile...', detail: 'Analyzing spatial cognition, tactile motor readiness & interest parameters', pct: 20 },
+      { icon: '📐', title: 'Drafting 3D Kinematic Linkages...', detail: 'Aligning 0° corrugated cardboard flutes for 300% maximum bending strength', pct: 45 },
+      { icon: '⚙️', title: 'Simulating Axle Friction & Torque Curves...', detail: 'Testing straw-bearing rotation with Hooke\'s Law stored elastic potential', pct: 70 },
+      { icon: '📦', title: 'Curating 4 Personalized Blueprint Missions...', detail: 'Packaging chapter progression, checkpoint quizzes, and printable scales', pct: 90 },
+      { icon: '✨', title: 'Master Cadet Odyssey Plan Approved!', detail: 'Issuing Junior Robotics accreditation path & unlocking workshop blueprints', pct: 100 }
+    ];
+
+    async function handleAnalyze(e) {
+      e.preventDefault();
+      const studentName = document.getElementById('studentName').value.trim() || 'Young Cadet';
+      const btn = document.getElementById('analyzeBtn');
+      btn.textContent = 'Bot "Bolts" is Drafting Blueprint... ⚡';
+      btn.disabled = true;
+
+      document.getElementById('draftingCadetSubtitle').textContent = `Chief Architect Bot "Bolts" is generating ${studentName}'s personalized STEM trajectory...`;
+      document.getElementById('robotDraftingScreen').style.display = 'block';
+      document.getElementById('resultsSection').style.display = 'none';
+      document.getElementById('robotDraftingScreen').scrollIntoView({ behavior: 'smooth' });
+
+      // Animate through 5 phases smoothly
+      for (let i = 0; i < draftingPhases.length; i++) {
+        const phase = draftingPhases[i];
+        document.getElementById('draftingStepIcon').textContent = phase.icon;
+        document.getElementById('draftingStepTitle').textContent = phase.title;
+        document.getElementById('draftingStepDetail').textContent = phase.detail;
+        document.getElementById('draftingStepNumber').textContent = `Step ${i + 1} of 5`;
+        document.getElementById('draftingProgressBar').style.width = `${phase.pct}%`;
+        await new Promise(r => setTimeout(r, 450));
+      }
+
+      const payload = {
+        name: studentName,
+        age: selectedAge,
+        email: document.getElementById('studentEmail').value,
+        experience: document.getElementById('experienceLevel').value,
+        favoriteInterest: document.getElementById('favoriteInterest').value
+      };
+
+      try {
+        const res = await fetch('/api/marketing/diagnostic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        currentAnalysis = data;
+        document.getElementById('robotDraftingScreen').style.display = 'none';
+        displayResults(data);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('robotDraftingScreen').style.display = 'none';
+      } finally {
+        btn.textContent = 'Analyze Maker Capability & Generate Plan 🚀';
+        btn.disabled = false;
+      }
+    }
+
+    function displayResults(data) {
+      document.getElementById('resultsSection').style.display = 'block';
+      document.getElementById('resStemRank').textContent = data.stemRank;
+      document.getElementById('resArchetypeTitle').textContent = `${data.archetypeIcon} ${data.archetype}`;
+      document.getElementById('resFocusTrack').textContent = `Focus Track: ${data.focusTrack}`;
+      document.getElementById('resScore').textContent = `${data.aptitudeScore}%`;
+      document.getElementById('recProjectsTitle').textContent = `What ${data.studentName} is Capable of Building Right Now:`;
+      document.getElementById('resRecommendedPath').textContent = data.recommendedPath;
+
+      const grid = document.getElementById('recProjectsGrid');
+      grid.innerHTML = data.recommendedProjects.map(p => `
+        <div class="m-rec-card">
+          <h4>${p.title}</h4>
+          <div class="m-rec-meta">
+            <span class="m-badge-diff">${p.diff}</span>
+            <span class="m-badge-time">⏱️ ${p.time}</span>
+          </div>
+          <p>${p.desc}</p>
+        </div>
+      `).join('');
+
+      document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+      // Update modal defaults
+      document.getElementById('cardName').value = data.studentName;
+      document.getElementById('modalArchetypeIcon').textContent = data.archetypeIcon;
+      document.getElementById('modalPlanTitle').textContent = `${data.studentName}'s Cadet All-Access Pass`;
+      document.getElementById('modalPlanSub').textContent = `Age ${data.studentAge} • ${data.archetype}`;
+    }
+
+    function openCheckoutModal() {
+      if (!currentAnalysis) {
+        document.getElementById('modalPlanTitle').textContent = 'Cadet All-Access Lifetime Pass';
+        document.getElementById('modalPlanSub').textContent = 'Ages 7–16 • All 12 STEM Chapters';
+      }
+      document.getElementById('checkoutModal').style.display = 'flex';
+      updateTotalDisplay();
+    }
+
+    function closeCheckoutModal() {
+      document.getElementById('checkoutModal').style.display = 'none';
+    }
+
+    function applyPromo() {
+      const code = document.getElementById('promoInput').value.trim().toUpperCase();
+      const msg = document.getElementById('promoMessage');
+      if (code === 'MAKER100' || code === 'FREE') {
+        promoDiscount = 199;
+        msg.style.display = 'block';
+        msg.style.color = 'var(--mq-emerald)';
+        msg.textContent = '100% Free Cadet Scholarship Applied! 🎉';
+      } else if (code === 'STEM50') {
+        promoDiscount = 100;
+        msg.style.display = 'block';
+        msg.style.color = 'var(--mq-emerald)';
+        msg.textContent = '50% Student STEM Discount Applied! ⚡';
+      } else {
+        promoDiscount = 0;
+        msg.style.display = 'block';
+        msg.style.color = 'var(--mq-rose)';
+        msg.textContent = 'Invalid promo code. Try "MAKER100"';
+      }
+      updateTotalDisplay();
+    }
+
+    function updateTotalDisplay() {
+      const discountRow = document.getElementById('discountRow');
+      const discountVal = document.getElementById('discountVal');
+      const totalDueVal = document.getElementById('totalDueVal');
+      const payBtn = document.getElementById('paySubmitBtn');
+
+      const finalPrice = Math.max(0, basePrice - promoDiscount);
+
+      if (promoDiscount > 0) {
+        discountRow.style.display = 'flex';
+        discountVal.textContent = `-₹${promoDiscount}`;
+      } else {
+        discountRow.style.display = 'none';
+      }
+
+      totalDueVal.textContent = `₹${finalPrice}`;
+      payBtn.textContent = `🔒 Activate Cadet Journey (₹${finalPrice})`;
+    }
+
+    async function submitDummyPayment() {
+      const payBtn = document.getElementById('paySubmitBtn');
+      payBtn.textContent = 'Processing Authorization with Gateway... ⚡';
+      payBtn.disabled = true;
+
+      const payload = {
+        studentName: currentAnalysis ? currentAnalysis.studentName : document.getElementById('cardName').value,
+        studentEmail: currentAnalysis ? currentAnalysis.studentEmail : 'maker@stem.edu',
+        cardName: document.getElementById('cardName').value,
+        cardNumber: document.getElementById('cardNumber').value,
+        promoCode: document.getElementById('promoInput').value
+      };
+
+      try {
+        const res = await fetch('/api/marketing/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        
+        closeCheckoutModal();
+
+        localStorage.setItem('mq_enrolled', 'true');
+        localStorage.setItem('mq_cadet_name', result.studentName);
+        localStorage.setItem('mq_pass_id', result.passId);
+        
+        document.getElementById('certPassId').textContent = result.passId;
+        document.getElementById('certStudentName').textContent = result.studentName;
+        document.getElementById('celebrateModal').style.display = 'flex';
+        spawnCelebrationConfetti();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        payBtn.textContent = '🔒 Activate Cadet Journey';
+        payBtn.disabled = false;
+      }
+    }
+
+    function copyWhatsAppNumber() {
+      const phone = '+918075971988';
+      const showToast = () => {
+        const toast = document.getElementById('waToast');
+        if (!toast) return;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2200);
+      };
+      const fallbackCopy = () => {
+        const tmp = document.createElement('textarea');
+        tmp.value = phone;
+        document.body.appendChild(tmp);
+        tmp.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(tmp);
+        showToast();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(phone).then(showToast).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    }
+  </script>
+</body>
+</html>
+
