@@ -29,17 +29,18 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
   @override
   Widget build(BuildContext context) {
     final c = widget.challenge;
-    final isDesktop = MediaQuery.of(context).size.width >= 700;
+    final screenW = MediaQuery.of(context).size.width;
+    final isDesktop = screenW >= 700;
 
     return Dialog(
       insetPadding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 60 : 16,
-        vertical: 24,
+        horizontal: isDesktop ? 60 : 12,
+        vertical: 16,
       ),
       child: Container(
         width: isDesktop ? 680 : double.infinity,
         constraints: const BoxConstraints(maxHeight: 700),
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(screenW < 420 ? 14 : 20),
         child: _result != null ? _buildResultsView() : _buildQuizRunner(c),
       ),
     );
@@ -63,7 +64,9 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -80,7 +83,6 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
@@ -123,10 +125,13 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
 
         // Progress bar
         Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 Text(
                   'Scenario ${_currentQuestionIndex + 1} of $total',
@@ -171,9 +176,11 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
                       children: [
                         Icon(Icons.report_problem_rounded, color: AppColors.rose, size: 16),
                         SizedBox(width: 6),
-                        Text(
-                          'WORKSHOP TROUBLE REPORT:',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.rose),
+                        Expanded(
+                          child: Text(
+                            'WORKSHOP TROUBLE REPORT:',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.rose),
+                          ),
                         ),
                       ],
                     ),
@@ -300,8 +307,11 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
         const SizedBox(height: 16),
 
         // Navigation Row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             OutlinedButton(
               onPressed: _currentQuestionIndex > 0
@@ -357,7 +367,10 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
                   });
                 }
               },
-              child: Text(isLast ? 'Submit Diagnostic & Claim XP' : 'Next Scenario ➡️'),
+              child: Text(
+                isLast ? 'Submit Diagnostic & Claim XP' : 'Next Scenario ➡️',
+                textAlign: TextAlign.center,
+              ),
             ),
           ],
         ),
@@ -443,8 +456,11 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
                           Text(
                             qr.isCorrect ? '✅ Correct' : '❌ Needs Revision',
@@ -499,8 +515,10 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
 
         const SizedBox(height: 12),
 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 8,
           children: [
             if (!passed)
               OutlinedButton(
@@ -513,7 +531,6 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
                 },
                 child: const Text('Retry Challenge 🔄'),
               ),
-            const SizedBox(width: 12),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Return to Quest Map'),

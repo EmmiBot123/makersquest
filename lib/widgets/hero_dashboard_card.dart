@@ -16,8 +16,10 @@ class HeroDashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.sizeOf(context).width;
     final user = state.currentUser;
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final isMobile = screenW < 700;
+    final isCompact = screenW < 540;
 
     // Find next recommended project
     final nextProj = state.projects.cast<Project?>().firstWhere(
@@ -88,20 +90,39 @@ class HeroDashboardCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Middle: Quick Stats Grid
-          Row(
-            children: [
-              _buildStatItem('⚡', '${user.currentXp}', 'Total XP'),
-              _buildStatItem('📦', '${state.completedProjectsCount}', 'Projects Done'),
-              _buildStatItem('🎯', '${state.completedChallengesCount}', 'Checkpoints Passed'),
-              _buildStatItem('🏅', '${state.earnedBadgesCount} / ${state.badges.length}', 'Badges Earned'),
-            ],
-          ),
+          if (isCompact)
+            Column(
+              children: [
+                Row(
+                  children: [
+                    _buildStatItem('⚡', '${user.currentXp}', 'Total XP'),
+                    _buildStatItem('📦', '${state.completedProjectsCount}', 'Projects Done'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildStatItem('🎯', '${state.completedChallengesCount}', 'Checkpoints'),
+                    _buildStatItem('🏅', '${state.earnedBadgesCount} / ${state.badges.length}', 'Badges'),
+                  ],
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                _buildStatItem('⚡', '${user.currentXp}', 'Total XP'),
+                _buildStatItem('📦', '${state.completedProjectsCount}', 'Projects Done'),
+                _buildStatItem('🎯', '${state.completedChallengesCount}', 'Checkpoints Passed'),
+                _buildStatItem('🏅', '${state.earnedBadgesCount} / ${state.badges.length}', 'Badges Earned'),
+              ],
+            ),
 
           // Bottom: Recommended Mission
           if (nextProj != null) ...[
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
@@ -109,46 +130,92 @@ class HeroDashboardCard extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.35),
                 ),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.bolt_rounded, color: AppColors.amber, size: 24),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: isCompact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'RECOMMENDED MISSION',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.amber,
-                            letterSpacing: 0.8,
+                        Row(
+                          children: [
+                            const Icon(Icons.bolt_rounded, color: AppColors.amber, size: 22),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'RECOMMENDED MISSION',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.amber,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                  Text(
+                                    nextProj.title,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textMain,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            backgroundColor: AppColors.primary,
+                          ),
+                          onPressed: () => onLaunchProject?.call(nextProj),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                          label: Text('Start Mission (+${nextProj.xpReward} XP)'),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        const Icon(Icons.bolt_rounded, color: AppColors.amber, size: 24),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'RECOMMENDED MISSION',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.amber,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              Text(
+                                nextProj.title,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textMain,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          nextProj.title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textMain,
+                        const SizedBox(width: 10),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            backgroundColor: AppColors.primary,
                           ),
+                          onPressed: () => onLaunchProject?.call(nextProj),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                          label: Text('+${nextProj.xpReward} XP'),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      backgroundColor: AppColors.primary,
-                    ),
-                    onPressed: () => onLaunchProject?.call(nextProj),
-                    icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                    label: Text('+${nextProj.xpReward} XP'),
-                  ),
-                ],
-              ),
             ),
           ],
         ],
@@ -189,7 +256,10 @@ class HeroDashboardCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -208,7 +278,6 @@ class HeroDashboardCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
             Text(
               '${user.streakDays} Day Streak 🔥',
               style: const TextStyle(

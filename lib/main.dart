@@ -1,4 +1,5 @@
 // MakerQuest Flutter Web Application Entrypoint
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'services/quest_state.dart';
 import 'theme/app_theme.dart';
@@ -122,8 +123,12 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final user = _questState.currentUser;
     final isEnrolled = _questState.isEnrolled;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isTiny = screenW < 380;
+    final isCompact = screenW < 480;
 
     return AppBar(
+      titleSpacing: isCompact ? 10 : null,
       title: InkWell(
         onTap: () {
           setState(() {
@@ -134,47 +139,51 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: isTiny ? 32 : 36,
+              height: isTiny ? 32 : 36,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [AppColors.primary, Color(0xFFEC4899)],
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Center(
-                child: Text('⚡', style: TextStyle(fontSize: 20)),
+              child: Center(
+                child: Text('⚡', style: TextStyle(fontSize: isTiny ? 17 : 20)),
               ),
             ),
-            const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'MakerQuest',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textMain,
+            SizedBox(width: isTiny ? 8 : 10),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'MakerQuest',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isTiny ? 15 : 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textMain,
+                    ),
                   ),
-                ),
-                Text(
-                  'DIY STEM ODYSSEY',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.amber,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ],
+                  if (!isTiny)
+                    const Text(
+                      'DIY STEM ODYSSEY',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.amber,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ],
         ),
       ),
       actions: [
-        if (MediaQuery.of(context).size.width >= 940)
+        if (screenW >= 940)
           Padding(
             padding: const EdgeInsets.only(right: 10),
             child: OutlinedButton.icon(
@@ -200,7 +209,9 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
         else
           IconButton(
             tooltip: 'WhatsApp Helpline (${ExternalLauncher.whatsAppPhoneDisplay})',
-            icon: const Icon(Icons.chat_rounded, color: Color(0xFF16A34A)),
+            visualDensity: VisualDensity.compact,
+            constraints: isTiny ? const BoxConstraints(minWidth: 36, minHeight: 36) : null,
+            icon: Icon(Icons.chat_rounded, color: const Color(0xFF16A34A), size: isTiny ? 20 : 24),
             onPressed: () {
               SoundEffects.playPop();
               ExternalLauncher.openWhatsApp(
@@ -209,7 +220,7 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
               );
             },
           ),
-        if (MediaQuery.of(context).size.width >= 750)
+        if (screenW >= 750)
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: ElevatedButton.icon(
@@ -270,7 +281,9 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                 children: [
                   Icon(Icons.rocket_launch_rounded, size: 18, color: AppColors.primary),
                   SizedBox(width: 10),
-                  Text('STEM Diagnostic & Plans', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                  Flexible(
+                    child: Text('STEM Diagnostic & Plans', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                  ),
                 ],
               ),
             ),
@@ -280,9 +293,11 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                 children: [
                   Icon(Icons.chat_rounded, size: 18, color: Color(0xFF16A34A)),
                   SizedBox(width: 10),
-                  Text(
-                    'WhatsApp Mentor (${ExternalLauncher.whatsAppPhoneDisplay})',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF15803D), fontWeight: FontWeight.w700),
+                  Flexible(
+                    child: Text(
+                      'WhatsApp Mentor (${ExternalLauncher.whatsAppPhoneDisplay})',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF15803D), fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ],
               ),
@@ -301,12 +316,14 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                 children: [
                   const Text('🦊', style: TextStyle(fontSize: 18)),
                   const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(isEnrolled ? 'Alex Rivera (Level 2)' : 'Alex Rivera (Demo Pass)', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
-                      const Text('Kinetic Tinkerer • 320 XP', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(isEnrolled ? 'Alex Rivera (Level 2)' : 'Alex Rivera (Demo Pass)', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
+                        const Text('Kinetic Tinkerer • 320 XP', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -317,12 +334,14 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                 children: [
                   const Text('🚀', style: TextStyle(fontSize: 18)),
                   const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(isEnrolled ? 'Sam Chen (Level 1)' : 'Sam Chen (Demo Pass)', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
-                      const Text('Cardboard Starter • 50 XP', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(isEnrolled ? 'Sam Chen (Level 1)' : 'Sam Chen (Demo Pass)', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textMain)),
+                        const Text('Cardboard Starter • 50 XP', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -335,7 +354,9 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                   children: [
                     Icon(Icons.palette_rounded, size: 18, color: AppColors.primary),
                     SizedBox(width: 10),
-                    Text('Customize Avatar & Style', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                    Flexible(
+                      child: Text('Customize Avatar & Style', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                    ),
                   ],
                 ),
               ),
@@ -345,15 +366,17 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                   children: [
                     Icon(Icons.person_add_rounded, size: 18, color: AppColors.cyan),
                     SizedBox(width: 10),
-                    Text('Create New Cadet Profile', style: TextStyle(fontSize: 13, color: AppColors.cyan, fontWeight: FontWeight.w600)),
+                    Flexible(
+                      child: Text('Create New Cadet Profile', style: TextStyle(fontSize: 13, color: AppColors.cyan, fontWeight: FontWeight.w600)),
+                    ),
                   ],
                 ),
               ),
             ],
           ],
           child: Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            margin: EdgeInsets.only(right: isCompact ? 8 : 16),
+            padding: EdgeInsets.symmetric(horizontal: isCompact ? 7 : 10, vertical: 4),
             decoration: BoxDecoration(
               color: isEnrolled ? AppColors.bgSecondary : AppColors.amberSoft,
               borderRadius: BorderRadius.circular(20),
@@ -363,26 +386,35 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircleAvatar(
-                  radius: 12,
+                  radius: isTiny ? 11 : 12,
                   backgroundColor: isEnrolled ? AppColors.primary : AppColors.amber,
-                  child: Text(isEnrolled ? user.avatar : '🔒', style: const TextStyle(fontSize: 12)),
+                  child: Text(isEnrolled ? user.avatar : '🔒', style: TextStyle(fontSize: isTiny ? 11 : 12)),
                 ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      isEnrolled ? user.name : 'Prospect Cadet',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain),
-                    ),
-                    Text(
-                      isEnrolled ? 'Lvl ${user.currentLevel} • ${user.currentXp} XP' : 'Not Enrolled • ₹199',
-                      style: TextStyle(fontSize: 10, color: isEnrolled ? AppColors.amber : AppColors.rose, fontWeight: FontWeight.w600),
-                    ),
-                  ],
+                SizedBox(width: isTiny ? 5 : 8),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: isTiny ? 72 : 140),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isEnrolled ? user.name : 'Prospect Cadet',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: isTiny ? 11 : 12, fontWeight: FontWeight.w700, color: AppColors.textMain),
+                      ),
+                      Text(
+                        isTiny
+                            ? (isEnrolled ? 'L${user.currentLevel} • ${user.currentXp}XP' : 'Enroll ₹199')
+                            : (isEnrolled ? 'Lvl ${user.currentLevel} • ${user.currentXp} XP' : 'Not Enrolled • ₹199'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 10, color: isEnrolled ? AppColors.amber : AppColors.rose, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 const Icon(Icons.arrow_drop_down, color: AppColors.textMuted, size: 18),
               ],
             ),
@@ -446,15 +478,17 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
 
   Widget _buildBottomNavigationBar() {
     final locked = !_questState.isEnrolled;
+    final isTiny = MediaQuery.sizeOf(context).width < 380;
     return NavigationBar(
       selectedIndex: locked ? 5 : _currentNavIndex,
       backgroundColor: AppColors.bgSecondary,
       indicatorColor: AppColors.primary.withValues(alpha: 0.25),
+      labelBehavior: isTiny ? NavigationDestinationLabelBehavior.onlyShowSelected : NavigationDestinationLabelBehavior.alwaysShow,
       onDestinationSelected: _onSelectNav,
       destinations: [
         NavigationDestination(
           icon: Icon(locked ? Icons.lock_outline_rounded : Icons.alt_route_rounded),
-          label: locked ? 'Roadmap 🔒' : 'Roadmap',
+          label: locked ? 'Map 🔒' : 'Roadmap',
         ),
         NavigationDestination(
           icon: Icon(locked ? Icons.lock_outline_rounded : Icons.handyman_rounded),
@@ -462,7 +496,7 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
         ),
         NavigationDestination(
           icon: Icon(locked ? Icons.lock_outline_rounded : Icons.quiz_rounded),
-          label: locked ? 'Quizzes 🔒' : 'Checkpoints',
+          label: locked ? 'Quizzes 🔒' : (isTiny ? 'Quizzes' : 'Checkpoints'),
         ),
         NavigationDestination(
           icon: Icon(locked ? Icons.lock_outline_rounded : Icons.military_tech_rounded),
@@ -617,22 +651,27 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
-                          children: [
-                            Text('♻️', style: TextStyle(fontSize: 13)),
-                            SizedBox(width: 6),
-                            Text(
-                              'WHAT MATERIALS DO YOU HAVE AT HOME?',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.cyan,
-                                letterSpacing: 0.6,
+                        const Expanded(
+                          child: Row(
+                            children: [
+                              Text('♻️', style: TextStyle(fontSize: 13)),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'WHAT MATERIALS DO YOU HAVE AT HOME?',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.cyan,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        if (_pantryFilters.isNotEmpty)
+                        if (_pantryFilters.isNotEmpty) ...[
+                          const SizedBox(width: 8),
                           InkWell(
                             onTap: () {
                               SoundEffects.playPop();
@@ -640,6 +679,7 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                             },
                             child: const Text('Clear', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.cyan)),
                           ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -679,21 +719,51 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                     ],
                   ),
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 420,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.88,
-                  ),
-                  itemCount: projects.length,
-                  itemBuilder: (context, idx) {
-                    final p = projects[idx];
-                    return ProjectCard(
-                      project: p,
-                      state: _questState,
-                      onOpen: () => _openProject(context, p),
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < 560) {
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        itemCount: projects.length,
+                        itemBuilder: (context, idx) {
+                          final p = projects[idx];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: ProjectCard(
+                              project: p,
+                              state: _questState,
+                              onOpen: () => _openProject(context, p),
+                            ),
+                          );
+                        },
+                      );
+                    }
+
+                    final SliverGridDelegate delegate = constraints.maxWidth < 840
+                        ? const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            mainAxisExtent: 385,
+                          )
+                        : const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 420,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 0.88,
+                          );
+                    return GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      gridDelegate: delegate,
+                      itemCount: projects.length,
+                      itemBuilder: (context, idx) {
+                        final p = projects[idx];
+                        return ProjectCard(
+                          project: p,
+                          state: _questState,
+                          onOpen: () => _openProject(context, p),
+                        );
+                      },
                     );
                   },
                 ),
@@ -799,41 +869,48 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.rose.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.rose.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                'CHECKPOINT ${c.levelRequired}',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.rose),
+                              ),
                             ),
-                            child: Text(
-                              'CHECKPOINT ${c.levelRequired}',
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.rose),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.emerald.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                'UNLOCKS LEVEL ${c.levelTarget}',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.emerald),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.emerald.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'UNLOCKS LEVEL ${c.levelTarget}',
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.emerald),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '+${c.xpReward} XP',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.amber),
-                      ),
-                    ],
+                          ],
+                        ),
+                        Text(
+                          '+${c.xpReward} XP',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.amber),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -846,7 +923,9 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                     style: const TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.4),
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -860,8 +939,7 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                           style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                         ),
                       ),
-                      if (isCompleted && score != null) ...[
-                        const SizedBox(width: 8),
+                      if (isCompleted && score != null)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
@@ -873,7 +951,6 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                             style: const TextStyle(fontSize: 11, color: AppColors.emerald, fontWeight: FontWeight.w700),
                           ),
                         ),
-                      ],
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -955,7 +1032,9 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final screenW = MediaQuery.sizeOf(ctx).width;
         return AlertDialog(
+          insetPadding: EdgeInsets.symmetric(horizontal: screenW < 480 ? 14 : 40, vertical: 20),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: AppColors.bgSecondary,
           title: const Row(
@@ -974,15 +1053,15 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
             ],
           ),
           content: SizedBox(
-            width: 500,
+            width: math.min(500.0, screenW - 48),
             child: GridView.builder(
               shrinkWrap: true,
               itemCount: avatars.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: screenW < 520 ? 1 : 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 2.2,
+                mainAxisExtent: 68,
               ),
               itemBuilder: (context, i) {
                 final item = avatars[i];
@@ -1062,38 +1141,46 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (dialogCtx, setDialogState) {
+            final screenW = MediaQuery.sizeOf(dialogCtx).width;
             return AlertDialog(
+              insetPadding: EdgeInsets.symmetric(horizontal: screenW < 480 ? 14 : 40, vertical: 20),
               title: const Text('Create New Cadet Profile'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Cadet Name', hintText: 'e.g. Jordan Maker'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: emailCtrl,
-                    decoration: const InputDecoration(labelText: 'Student Email', hintText: 'jordan@makerquest.edu'),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedAvatar,
-                    decoration: const InputDecoration(labelText: 'Maker Avatar'),
-                    items: const [
-                      DropdownMenuItem(value: '🚀', child: Text('🚀 Rocket Pioneer')),
-                      DropdownMenuItem(value: '🤖', child: Text('🤖 Bot Builder')),
-                      DropdownMenuItem(value: '🦊', child: Text('🦊 Clever Fox')),
-                      DropdownMenuItem(value: '⚡', child: Text('⚡ Spark Inventor')),
-                      DropdownMenuItem(value: '🌻', child: Text('🌻 Solar Architect')),
+              content: SizedBox(
+                width: math.min(420.0, screenW - 48),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameCtrl,
+                        decoration: const InputDecoration(labelText: 'Cadet Name', hintText: 'e.g. Jordan Maker'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: emailCtrl,
+                        decoration: const InputDecoration(labelText: 'Student Email', hintText: 'jordan@makerquest.edu'),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        initialValue: selectedAvatar,
+                        decoration: const InputDecoration(labelText: 'Maker Avatar'),
+                        items: const [
+                          DropdownMenuItem(value: '🚀', child: Text('🚀 Rocket Pioneer')),
+                          DropdownMenuItem(value: '🤖', child: Text('🤖 Bot Builder')),
+                          DropdownMenuItem(value: '🦊', child: Text('🦊 Clever Fox')),
+                          DropdownMenuItem(value: '⚡', child: Text('⚡ Spark Inventor')),
+                          DropdownMenuItem(value: '🌻', child: Text('🌻 Solar Architect')),
+                        ],
+                        onChanged: (val) {
+                          setDialogState(() {
+                            selectedAvatar = val ?? '🚀';
+                          });
+                        },
+                      ),
                     ],
-                    onChanged: (val) {
-                      setDialogState(() {
-                        selectedAvatar = val ?? '🚀';
-                      });
-                    },
                   ),
-                ],
+                ),
               ),
               actions: [
                 TextButton(

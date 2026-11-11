@@ -85,10 +85,11 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
   @override
   Widget build(BuildContext context) {
     final p = widget.project;
+    final isNarrow = MediaQuery.sizeOf(context).width < 420;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 12),
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(isNarrow ? 12 : 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -105,10 +106,14 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Playground Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -119,27 +124,29 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
                     child: const Icon(Icons.videogame_asset_rounded, color: AppColors.cyan, size: 22),
                   ),
                   const SizedBox(width: 10),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'INTERACTIVE MECHANISM LAB',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.cyan,
-                          letterSpacing: 1.0,
+                  const Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'INTERACTIVE MECHANISM LAB',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.cyan,
+                            letterSpacing: 1.0,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Virtual Physics Playground',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textMain,
+                        Text(
+                          'Virtual Physics Playground',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textMain,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -228,66 +235,58 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         const SizedBox(height: 14),
 
         // Live Telemetry Readout Cards
-        Row(
-          children: [
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'INPUT SQUEEZE',
-                value: '$pushDistCm cm',
-                subtitle: 'Horizontal push',
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'VERTICAL LIFT',
-                value: '$heightCm cm',
-                subtitle: 'Platform height',
-                color: AppColors.emerald,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'RATIO',
-                value: '3.75x',
-                subtitle: 'Mechanical motion',
-                color: AppColors.amber,
-              ),
-            ),
-          ],
-        ),
+        _buildTelemetryGroup([
+          _buildTelemetryCard(
+            title: 'INPUT SQUEEZE',
+            value: '$pushDistCm cm',
+            subtitle: 'Horizontal push',
+            color: AppColors.primary,
+          ),
+          _buildTelemetryCard(
+            title: 'VERTICAL LIFT',
+            value: '$heightCm cm',
+            subtitle: 'Platform height',
+            color: AppColors.emerald,
+          ),
+          _buildTelemetryCard(
+            title: 'RATIO',
+            value: '3.75x',
+            subtitle: 'Mechanical motion',
+            color: AppColors.amber,
+          ),
+        ]),
 
         const SizedBox(height: 14),
 
         // Slider control
-        Row(
-          children: [
-            const Text('Collapsed', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-            Expanded(
-              child: Slider(
-                value: _scissorSqueeze,
-                min: 0.05,
-                max: 0.95,
-                activeColor: AppColors.primary,
-                onChanged: (val) {
-                  setState(() => _scissorSqueeze = val);
-                  SoundEffects.playPop();
-                },
-              ),
-            ),
-            const Text('Elevated 🚀', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
-          ],
+        _buildRangeSlider(
+          minLabel: const Text('Collapsed', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+          maxLabel: const Text('Elevated 🚀', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+          slider: Slider(
+            value: _scissorSqueeze,
+            min: 0.05,
+            max: 0.95,
+            activeColor: AppColors.primary,
+            onChanged: (val) {
+              setState(() => _scissorSqueeze = val);
+              SoundEffects.playPop();
+            },
+          ),
         ),
 
+        const SizedBox(height: 8),
+
         // Cargo selector
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             const Text('Platform Cargo:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMain)),
             Wrap(
               spacing: 6,
+              runSpacing: 6,
               children: ['🪙 Penny', '🍎 Apple', '📚 Book'].map((c) {
                 final isSelected = _scissorCargo == c;
                 return ChoiceChip(
@@ -354,92 +353,79 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         const SizedBox(height: 14),
 
         // Telemetry Meters
-        Row(
-          children: [
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'FRICTION COEFFICIENT',
-                value: 'μ = ${frictionCoeff.toStringAsFixed(2)}',
-                subtitle: _strawBearing ? 'Straw sleeve bearing' : 'High cardboard rub!',
-                color: _strawBearing ? AppColors.emerald : AppColors.rose,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'ROLLOUT DISTANCE',
-                value: '$rolloutDist m',
-                subtitle: 'Single push momentum',
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'TRACKING ALIGNMENT',
-                value: trackingStatus,
-                subtitle: 'Parallel wheelbase',
-                color: _wheelOffset > 0.3 ? AppColors.amber : AppColors.cyan,
-              ),
-            ),
-          ],
-        ),
+        _buildTelemetryGroup([
+          _buildTelemetryCard(
+            title: 'FRICTION COEFFICIENT',
+            value: 'μ = ${frictionCoeff.toStringAsFixed(2)}',
+            subtitle: _strawBearing ? 'Straw sleeve bearing' : 'High cardboard rub!',
+            color: _strawBearing ? AppColors.emerald : AppColors.rose,
+          ),
+          _buildTelemetryCard(
+            title: 'ROLLOUT DISTANCE',
+            value: '$rolloutDist m',
+            subtitle: 'Single push momentum',
+            color: AppColors.primary,
+          ),
+          _buildTelemetryCard(
+            title: 'TRACKING ALIGNMENT',
+            value: trackingStatus,
+            subtitle: 'Parallel wheelbase',
+            color: _wheelOffset > 0.3 ? AppColors.amber : AppColors.cyan,
+          ),
+        ]),
 
         const SizedBox(height: 12),
 
         // Controls
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: _strawBearing,
-                    activeColor: AppColors.emerald,
-                    onChanged: (val) {
-                      setState(() => _strawBearing = val ?? true);
-                      SoundEffects.playPop();
-                    },
-                  ),
-                  const Text('Straw Bearing', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                ],
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Checkbox(
+                  value: _strawBearing,
+                  activeColor: AppColors.emerald,
+                  onChanged: (val) {
+                    setState(() => _strawBearing = val ?? true);
+                    SoundEffects.playPop();
+                  },
+                ),
+                const Text('Straw Bearing', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+              ],
             ),
-            Expanded(
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: _cardboardWashers,
-                    activeColor: AppColors.emerald,
-                    onChanged: (val) {
-                      setState(() => _cardboardWashers = val ?? true);
-                      SoundEffects.playPop();
-                    },
-                  ),
-                  const Text('Donut Spacers', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                ],
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Checkbox(
+                  value: _cardboardWashers,
+                  activeColor: AppColors.emerald,
+                  onChanged: (val) {
+                    setState(() => _cardboardWashers = val ?? true);
+                    SoundEffects.playPop();
+                  },
+                ),
+                const Text('Donut Spacers', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+              ],
             ),
           ],
         ),
 
-        Row(
-          children: [
-            const Text('Centered Hole', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
-            Expanded(
-              child: Slider(
-                value: _wheelOffset,
-                min: 0.0,
-                max: 1.0,
-                activeColor: AppColors.amber,
-                onChanged: (val) {
-                  setState(() => _wheelOffset = val);
-                  SoundEffects.playPop();
-                },
-              ),
-            ),
-            const Text('Eccentric Wobble', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.amber)),
-          ],
+        _buildRangeSlider(
+          minLabel: const Text('Centered Hole', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+          maxLabel: const Text('Eccentric Wobble', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.amber)),
+          slider: Slider(
+            value: _wheelOffset,
+            min: 0.0,
+            max: 1.0,
+            activeColor: AppColors.amber,
+            onChanged: (val) {
+              setState(() => _wheelOffset = val);
+              SoundEffects.playPop();
+            },
+          ),
         ),
 
         const SizedBox(height: 6),
@@ -511,24 +497,28 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
               ),
               Positioned(
                 bottom: 12,
-                left: 14,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Text(
-                    _marbleRolling
-                        ? (_bankedCurve || _rampHeight < 70)
-                            ? '🏎️ Smooth Run! Marble cleared banked curve!'
-                            : '⚠️ Spin-out warning! Too fast without banked turns!'
-                        : 'Ready to launch',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: (_bankedCurve || _rampHeight < 70) ? AppColors.emerald : AppColors.rose,
+                left: 12,
+                right: 12,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Text(
+                      _marbleRolling
+                          ? (_bankedCurve || _rampHeight < 70)
+                              ? '🏎️ Smooth Run! Marble cleared banked curve!'
+                              : '⚠️ Spin-out warning! Too fast without banked turns!'
+                          : 'Ready to launch',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: (_bankedCurve || _rampHeight < 70) ? AppColors.emerald : AppColors.rose,
+                      ),
                     ),
                   ),
                 ),
@@ -540,64 +530,53 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         const SizedBox(height: 14),
 
         // Telemetry Meters
-        Row(
-          children: [
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'POTENTIAL ENERGY',
-                value: '$potentialPct%',
-                subtitle: 'Stored at start drop',
-                color: AppColors.amber,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'MAX SPEED',
-                value: '$speed cm/s',
-                subtitle: 'Velocity at finish',
-                color: AppColors.cyan,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'BANKING FORCE',
-                value: _bankedCurve ? 'Normal Inward' : 'Flat (Zero)',
-                subtitle: 'Centripetal turn',
-                color: _bankedCurve ? AppColors.emerald : AppColors.rose,
-              ),
-            ),
-          ],
-        ),
+        _buildTelemetryGroup([
+          _buildTelemetryCard(
+            title: 'POTENTIAL ENERGY',
+            value: '$potentialPct%',
+            subtitle: 'Stored at start drop',
+            color: AppColors.amber,
+          ),
+          _buildTelemetryCard(
+            title: 'MAX SPEED',
+            value: '$speed cm/s',
+            subtitle: 'Velocity at finish',
+            color: AppColors.cyan,
+          ),
+          _buildTelemetryCard(
+            title: 'BANKING FORCE',
+            value: _bankedCurve ? 'Normal Inward' : 'Flat (Zero)',
+            subtitle: 'Centripetal turn',
+            color: _bankedCurve ? AppColors.emerald : AppColors.rose,
+          ),
+        ]),
 
         const SizedBox(height: 12),
 
         // Controls
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Starting Drop Height: ${_rampHeight.round()} cm', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                  Slider(
-                    value: _rampHeight,
-                    min: 20.0,
-                    max: 100.0,
-                    activeColor: AppColors.amber,
-                    onChanged: (val) {
-                      setState(() => _rampHeight = val);
-                      SoundEffects.playPop();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final dropControl = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Starting Drop Height: ${_rampHeight.round()} cm', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                Slider(
+                  value: _rampHeight,
+                  min: 20.0,
+                  max: 100.0,
+                  activeColor: AppColors.amber,
+                  onChanged: (val) {
+                    setState(() => _rampHeight = val);
+                    SoundEffects.playPop();
+                  },
+                ),
+              ],
+            );
+            final bankToggle = Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text('Banked Curve', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                const SizedBox(width: 6),
                 Switch(
                   value: _bankedCurve,
                   activeThumbColor: AppColors.emerald,
@@ -608,8 +587,37 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
                   },
                 ),
               ],
-            ),
-          ],
+            );
+            if (constraints.maxWidth < 340) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  dropControl,
+                  Align(alignment: Alignment.centerLeft, child: bankToggle),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: dropControl),
+                const SizedBox(width: 12),
+                Column(
+                  children: [
+                    const Text('Banked Curve', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                    Switch(
+                      value: _bankedCurve,
+                      activeThumbColor: AppColors.emerald,
+                      activeTrackColor: AppColors.emerald.withValues(alpha: 0.35),
+                      onChanged: (val) {
+                        setState(() => _bankedCurve = val);
+                        SoundEffects.playPop();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
 
         const SizedBox(height: 6),
@@ -651,42 +659,34 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         const SizedBox(height: 14),
 
         // Telemetry
-        Row(
-          children: [
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'CARGO LOAD',
-                value: '${_cargoWeight.round()}g',
-                subtitle: 'Actual weight',
-                color: AppColors.rose,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'YOUR EFFORT',
-                value: '${effortGrams}g',
-                subtitle: _pulleyCount == 2 ? '50% EASIER! 🎉' : '100% effort',
-                color: _pulleyCount == 2 ? AppColors.emerald : AppColors.amber,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'LIFT HEIGHT',
-                value: '$liftHeight cm',
-                subtitle: 'Cable pulled: $cablePulled cm',
-                color: AppColors.primary,
-              ),
-            ),
-          ],
-        ),
+        _buildTelemetryGroup([
+          _buildTelemetryCard(
+            title: 'CARGO LOAD',
+            value: '${_cargoWeight.round()}g',
+            subtitle: 'Actual weight',
+            color: AppColors.rose,
+          ),
+          _buildTelemetryCard(
+            title: 'YOUR EFFORT',
+            value: '${effortGrams}g',
+            subtitle: _pulleyCount == 2 ? '50% EASIER! 🎉' : '100% effort',
+            color: _pulleyCount == 2 ? AppColors.emerald : AppColors.amber,
+          ),
+          _buildTelemetryCard(
+            title: 'LIFT HEIGHT',
+            value: '$liftHeight cm',
+            subtitle: 'Cable pulled: $cablePulled cm',
+            color: AppColors.primary,
+          ),
+        ]),
 
         const SizedBox(height: 14),
 
         // Interactive Pulley Toggle
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 8,
           children: [
             ChoiceChip(
               label: const Text('1 Fixed Pulley (1x Effort)', style: TextStyle(fontSize: 12)),
@@ -699,7 +699,6 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
                 }
               },
             ),
-            const SizedBox(width: 10),
             ChoiceChip(
               label: const Text('2 Compound Pulleys (2x Advantage)', style: TextStyle(fontSize: 12)),
               selected: _pulleyCount == 2,
@@ -717,47 +716,49 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         const SizedBox(height: 12),
 
         // Cargo Weight Adjuster
-        Row(
-          children: [
-            const Icon(Icons.fitness_center_rounded, color: AppColors.rose, size: 18),
-            const SizedBox(width: 8),
-            Text('Cargo Load: ${_cargoWeight.round()}g', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-            Expanded(
-              child: Slider(
-                value: _cargoWeight,
-                min: 100.0,
-                max: 1000.0,
-                divisions: 9,
-                activeColor: AppColors.rose,
-                onChanged: (val) {
-                  setState(() => _cargoWeight = val);
-                  SoundEffects.playPop();
-                },
-              ),
-            ),
-          ],
+        _buildLabeledSlider(
+          leading: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.fitness_center_rounded, color: AppColors.rose, size: 18),
+              const SizedBox(width: 8),
+              Text('Cargo Load: ${_cargoWeight.round()}g', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          slider: Slider(
+            value: _cargoWeight,
+            min: 100.0,
+            max: 1000.0,
+            divisions: 9,
+            activeColor: AppColors.rose,
+            onChanged: (val) {
+              setState(() => _cargoWeight = val);
+              SoundEffects.playPop();
+            },
+          ),
         ),
 
         // Winch Hand Crank Drag Controller
-        Row(
-          children: [
-            const Icon(Icons.handyman_rounded, color: AppColors.primary, size: 20),
-            const SizedBox(width: 8),
-            const Text('Turn Winch Crank:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-            Expanded(
-              child: Slider(
-                value: _winchRotation,
-                min: 0.0,
-                max: 1.0,
-                activeColor: AppColors.primary,
-                onChanged: (val) {
-                  setState(() => _winchRotation = val);
-                  SoundEffects.playPop();
-                },
-              ),
-            ),
-            Text('${(_winchRotation * 100).round()}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
-          ],
+        _buildLabeledSlider(
+          leading: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.handyman_rounded, color: AppColors.primary, size: 20),
+              SizedBox(width: 8),
+              Text('Turn Winch Crank:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          trailing: Text('${(_winchRotation * 100).round()}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+          slider: Slider(
+            value: _winchRotation,
+            min: 0.0,
+            max: 1.0,
+            activeColor: AppColors.primary,
+            onChanged: (val) {
+              setState(() => _winchRotation = val);
+              SoundEffects.playPop();
+            },
+          ),
         ),
       ],
     );
@@ -809,46 +810,40 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         const SizedBox(height: 14),
 
         // Telemetry
-        Row(
-          children: [
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'CRANK ANGLE',
-                value: '${_camAngle.round()}°',
-                subtitle: 'Driveshaft rotation',
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'PUPPET ELEVATION',
-                value: '$puppetHeightMm mm',
-                subtitle: 'Linear follower rise',
-                color: AppColors.emerald,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'FREQUENCY',
-                value: cyclesPerRev,
-                subtitle: _camType,
-                color: AppColors.amber,
-              ),
-            ),
-          ],
-        ),
+        _buildTelemetryGroup([
+          _buildTelemetryCard(
+            title: 'CRANK ANGLE',
+            value: '${_camAngle.round()}°',
+            subtitle: 'Driveshaft rotation',
+            color: AppColors.primary,
+          ),
+          _buildTelemetryCard(
+            title: 'PUPPET ELEVATION',
+            value: '$puppetHeightMm mm',
+            subtitle: 'Linear follower rise',
+            color: AppColors.emerald,
+          ),
+          _buildTelemetryCard(
+            title: 'FREQUENCY',
+            value: cyclesPerRev,
+            subtitle: _camType,
+            color: AppColors.amber,
+          ),
+        ]),
 
         const SizedBox(height: 12),
 
         // Cam Profile Selector
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             const Text('Cam Lobe Profile:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
             Wrap(
               spacing: 6,
+              runSpacing: 6,
               children: ['Round Eccentric', 'Egg Cam', 'Twin-Lobe'].map((type) {
                 final isSelected = _camType == type;
                 return ChoiceChip(
@@ -871,25 +866,26 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         const SizedBox(height: 10),
 
         // Crank Dial Slider
-        Row(
-          children: [
-            const Icon(Icons.rotate_right_rounded, color: AppColors.primary, size: 20),
-            const SizedBox(width: 6),
-            const Text('Turn Crank: ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-            Expanded(
-              child: Slider(
-                value: _camAngle,
-                min: 0.0,
-                max: 360.0,
-                activeColor: AppColors.primary,
-                onChanged: (val) {
-                  setState(() => _camAngle = val);
-                  SoundEffects.playPop();
-                },
-              ),
-            ),
-            Text('${_camAngle.round()}°', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primary)),
-          ],
+        _buildLabeledSlider(
+          leading: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.rotate_right_rounded, color: AppColors.primary, size: 20),
+              SizedBox(width: 6),
+              Text('Turn Crank: ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          trailing: Text('${_camAngle.round()}°', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primary)),
+          slider: Slider(
+            value: _camAngle,
+            min: 0.0,
+            max: 360.0,
+            activeColor: AppColors.primary,
+            onChanged: (val) {
+              setState(() => _camAngle = val);
+              SoundEffects.playPop();
+            },
+          ),
         ),
       ],
     );
@@ -933,64 +929,56 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
         const SizedBox(height: 14),
 
         // Telemetry
-        Row(
-          children: [
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'JAW APERTURE',
-                value: '$jawOpeningCm cm',
-                subtitle: 'Opening gap',
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'CLAMPING FORCE',
-                value: '$clampForceN N',
-                subtitle: 'Four-bar leverage',
-                color: AppColors.emerald,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildTelemetryCard(
-                title: 'GRIP SECURITY',
-                value: gripSecure ? 'Firm Hold! 🔒' : (_jawSqueeze > 0.4 ? 'Slipping! ⚠️' : 'Open'),
-                subtitle: _foamPads ? 'High-friction foam' : 'Raw cardboard',
-                color: gripSecure ? AppColors.emerald : AppColors.rose,
-              ),
-            ),
-          ],
-        ),
+        _buildTelemetryGroup([
+          _buildTelemetryCard(
+            title: 'JAW APERTURE',
+            value: '$jawOpeningCm cm',
+            subtitle: 'Opening gap',
+            color: AppColors.primary,
+          ),
+          _buildTelemetryCard(
+            title: 'CLAMPING FORCE',
+            value: '$clampForceN N',
+            subtitle: 'Four-bar leverage',
+            color: AppColors.emerald,
+          ),
+          _buildTelemetryCard(
+            title: 'GRIP SECURITY',
+            value: gripSecure ? 'Firm Hold! 🔒' : (_jawSqueeze > 0.4 ? 'Slipping! ⚠️' : 'Open'),
+            subtitle: _foamPads ? 'High-friction foam' : 'Raw cardboard',
+            color: gripSecure ? AppColors.emerald : AppColors.rose,
+          ),
+        ]),
 
         const SizedBox(height: 12),
 
         // Squeeze Slider
-        Row(
-          children: [
-            const Text('Open', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-            Expanded(
-              child: Slider(
-                value: _jawSqueeze,
-                min: 0.05,
-                max: 0.95,
-                activeColor: AppColors.primary,
-                onChanged: (val) {
-                  setState(() => _jawSqueeze = val);
-                  SoundEffects.playPop();
-                },
-              ),
-            ),
-            const Text('Clamped 🦀', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
-          ],
+        _buildRangeSlider(
+          minLabel: const Text('Open', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+          maxLabel: const Text('Clamped 🦀', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+          slider: Slider(
+            value: _jawSqueeze,
+            min: 0.05,
+            max: 0.95,
+            activeColor: AppColors.primary,
+            onChanged: (val) {
+              setState(() => _jawSqueeze = val);
+              SoundEffects.playPop();
+            },
+          ),
         ),
 
+        const SizedBox(height: 6),
+
         // Controls
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Switch(
                   value: _foamPads,
@@ -1005,6 +993,7 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
             ),
             Wrap(
               spacing: 6,
+              runSpacing: 6,
               children: ['🧃 Juice Box', '🥫 Soup Can', '🥚 Egg'].map((obj) {
                 final isSelected = _clampedObject == obj;
                 return ChoiceChip(
@@ -1208,89 +1197,89 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 150),
-                left: 80 + _botX,
-                top: 40 + _botY,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primary, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.2),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('🤖', style: TextStyle(fontSize: 26)),
-                      const SizedBox(width: 6),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Wiggle-Bot', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                          Text('${_motorRpm.round()} RPM Buzz', style: const TextStyle(fontSize: 9, color: AppColors.emerald)),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxTravel = math.max(10.0, constraints.maxWidth - 150.0);
+              final clampedX = 12.0 + (_botX / 160.0).clamp(0.0, 1.0) * maxTravel;
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 150),
+                    left: clampedX,
+                    top: 40 + _botY,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.primary, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            blurRadius: 12,
+                          ),
                         ],
                       ),
-                    ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🤖', style: TextStyle(fontSize: 26)),
+                          const SizedBox(width: 6),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Wiggle-Bot', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                              Text('${_motorRpm.round()} RPM Buzz', style: const TextStyle(fontSize: 9, color: AppColors.emerald)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
 
         const SizedBox(height: 12),
 
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Motor: ${_motorRpm.round()} RPM', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                  Slider(
-                    value: _motorRpm,
-                    min: 1000.0,
-                    max: 4500.0,
-                    activeColor: AppColors.cyan,
-                    onChanged: (val) {
-                      setState(() => _motorRpm = val);
-                      SoundEffects.playPop();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Bristle Slant: ${_bristleAngle.round()}°', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                  Slider(
-                    value: _bristleAngle,
-                    min: 5.0,
-                    max: 40.0,
-                    activeColor: AppColors.amber,
-                    onChanged: (val) {
-                      setState(() => _bristleAngle = val);
-                      SoundEffects.playPop();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final motorCtrl = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Motor: ${_motorRpm.round()} RPM', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                Slider(
+                  value: _motorRpm,
+                  min: 1000.0,
+                  max: 4500.0,
+                  activeColor: AppColors.cyan,
+                  onChanged: (val) {
+                    setState(() => _motorRpm = val);
+                    SoundEffects.playPop();
+                  },
+                ),
+              ],
+            );
+            final bristleCtrl = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Bristle Slant: ${_bristleAngle.round()}°', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                Slider(
+                  value: _bristleAngle,
+                  min: 5.0,
+                  max: 40.0,
+                  activeColor: AppColors.amber,
+                  onChanged: (val) {
+                    setState(() => _bristleAngle = val);
+                    SoundEffects.playPop();
+                  },
+                ),
+              ],
+            );
+            final actionBtn = ElevatedButton(
               onPressed: () {
                 SoundEffects.playChime();
                 setState(() {
@@ -1304,8 +1293,30 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
                 });
               },
               child: Text(_botActive ? 'Buzzing! ⚡' : 'Start Motor 🚀'),
-            ),
-          ],
+            );
+
+            if (constraints.maxWidth < 420) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  motorCtrl,
+                  bristleCtrl,
+                  const SizedBox(height: 6),
+                  actionBtn,
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: motorCtrl),
+                const SizedBox(width: 8),
+                Expanded(child: bristleCtrl),
+                const SizedBox(width: 8),
+                actionBtn,
+              ],
+            );
+          },
         ),
       ],
     );
@@ -1340,82 +1351,85 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppColors.cyan.withValues(alpha: 0.5)),
           ),
-          child: Stack(
-            children: [
-              // Draggable Sun
-              Positioned(
-                top: 20,
-                left: 140 + (_sunPosition * 120),
-                child: const Text('☀️', style: TextStyle(fontSize: 34)),
-              ),
-
-              // Sunflower Head
-              Positioned(
-                bottom: 20,
-                left: 150,
-                child: Transform.rotate(
-                  angle: _flowerAngle * 0.6,
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.amber,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                        ),
-                        child: const Text('🌻', style: TextStyle(fontSize: 32)),
-                      ),
-                      Container(
-                        width: 8,
-                        height: 35,
-                        color: Colors.green,
-                      ),
-                    ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final sunLeft = ((w * 0.5 - 18) + _sunPosition * (w * 0.34)).clamp(12.0, math.max(12.0, w - 50.0)).toDouble();
+              final flowerLeft = (w * 0.5 - 26).clamp(12.0, math.max(12.0, w - 60.0)).toDouble();
+              return Stack(
+                children: [
+                  // Draggable Sun
+                  Positioned(
+                    top: 28,
+                    left: sunLeft,
+                    child: const Text('☀️', style: TextStyle(fontSize: 34)),
                   ),
-                ),
-              ),
 
-              // Efficiency overlay
-              Positioned(
-                top: 10,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(10),
+                  // Sunflower Head
+                  Positioned(
+                    bottom: 20,
+                    left: flowerLeft,
+                    child: Transform.rotate(
+                      angle: _flowerAngle * 0.6,
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.amber,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                            ),
+                            child: const Text('🌻', style: TextStyle(fontSize: 32)),
+                          ),
+                          Container(
+                            width: 8,
+                            height: 35,
+                            color: Colors.green,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Text('Solar Output: ${voltage}V ($efficiency%)', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.amberGlow)),
-                ),
-              ),
-            ],
+
+                  // Efficiency overlay
+                  Positioned(
+                    top: 10,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text('Solar Output: ${voltage}V ($efficiency%)', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.amberGlow)),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
 
         const SizedBox(height: 12),
 
-        Row(
-          children: [
-            const Text('East (Morning)', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
-            Expanded(
-              child: Slider(
-                value: _sunPosition,
-                min: -1.0,
-                max: 1.0,
-                activeColor: Colors.amber,
-                onChanged: (val) {
-                  setState(() {
-                    _sunPosition = val;
-                    // Servo tracks sun
-                    _flowerAngle = val * 0.85;
-                  });
-                  SoundEffects.playPop();
-                },
-              ),
-            ),
-            const Text('West (Evening)', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
-          ],
+        _buildRangeSlider(
+          minLabel: const Text('East (Morning)', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+          maxLabel: const Text('West (Evening)', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+          slider: Slider(
+            value: _sunPosition,
+            min: -1.0,
+            max: 1.0,
+            activeColor: Colors.amber,
+            onChanged: (val) {
+              setState(() {
+                _sunPosition = val;
+                // Servo tracks sun
+                _flowerAngle = val * 0.85;
+              });
+              SoundEffects.playPop();
+            },
+          ),
         ),
       ],
     );
@@ -1444,6 +1458,115 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTelemetryGroup(List<Widget> cards) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 360 && cards.length >= 3) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: cards[0]),
+                  const SizedBox(width: 8),
+                  Expanded(child: cards[1]),
+                ],
+              ),
+              const SizedBox(height: 8),
+              cards[2],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (int i = 0; i < cards.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              Expanded(child: cards[i]),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRangeSlider({
+    required Widget minLabel,
+    required Widget maxLabel,
+    required Widget slider,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 340) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              slider,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(child: minLabel),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: DefaultTextStyle.merge(
+                        textAlign: TextAlign.right,
+                        child: maxLabel,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            minLabel,
+            Expanded(child: slider),
+            maxLabel,
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLabeledSlider({
+    required Widget leading,
+    Widget? trailing,
+    required Widget slider,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 350) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(child: leading),
+                  if (trailing != null) ...[
+                    const SizedBox(width: 8),
+                    trailing,
+                  ],
+                ],
+              ),
+              slider,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            leading,
+            Expanded(child: slider),
+            if (trailing != null) trailing,
+          ],
+        );
+      },
     );
   }
 
@@ -1517,8 +1640,9 @@ class _ScissorLiftCanvasPainter extends CustomPainter {
     canvas.drawLine(Offset(w * 0.1, h * 0.9), Offset(w * 0.9, h * 0.9), basePaint);
 
     final centerX = w * 0.5;
-    // Base width contracts from 180px down to 60px as squeeze increases
-    final halfBase = (1.0 - squeezeProgress) * 70.0 + 25.0;
+    // Base width scales proportionally so platform fits narrow viewports
+    final spanScale = math.min(1.0, (w - 40.0) / 210.0).clamp(0.45, 1.0);
+    final halfBase = ((1.0 - squeezeProgress) * 70.0 + 25.0) * spanScale;
     // Platform height rises from 30px to 130px
     final liftH = (squeezeProgress * 100.0) + 25.0;
 
@@ -1584,9 +1708,9 @@ class _MarbleCoasterPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    final startY = h * 0.9 - (rampHeight * 1.1);
-    path.moveTo(30, startY);
-    path.cubicTo(w * 0.35, h * 0.85, w * 0.6, h * 0.88, w - 40, h * 0.88);
+    final startY = (h * 0.9 - (rampHeight * 1.1)).clamp(16.0, h * 0.75);
+    path.moveTo(24, startY);
+    path.cubicTo(w * 0.35, h * 0.85, w * 0.6, h * 0.88, w - 36, h * 0.88);
 
     canvas.drawPath(path, trackPaint);
 
@@ -1645,9 +1769,9 @@ class _TestCartPainter extends CustomPainter {
       canvas.drawLine(Offset(x, h * 0.85), Offset(x, h * 0.85 + 6), markPaint);
     }
 
-    // Cart position: starts at 50, rolls up to w - 120
-    final maxTravel = w - 150.0;
-    final cartX = 50.0 + (rollProgress * maxTravel);
+    // Cart position: starts at 16, rolls safely inside canvas bounds
+    final maxTravel = math.max(20.0, w - 120.0);
+    final cartX = 16.0 + (rollProgress * maxTravel);
     // Wobble vertical bump based on eccentric offset
     final wobbleY = wheelOffset * math.sin(cartX * 0.2) * 6.0;
     final cartY = h * 0.65 + wobbleY;
@@ -1744,11 +1868,12 @@ class _CamAutomatonPainter extends CustomPainter {
     final cy = h * 0.65;
 
     // Horizontal Driveshaft Skewer
+    final halfShaft = math.min(90.0, w * 0.38);
     final shaftPaint = Paint()
       ..color = const Color(0xFFB45309)
       ..strokeWidth = 6.0
       ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(cx - 90, cy), Offset(cx + 90, cy), shaftPaint);
+    canvas.drawLine(Offset(cx - halfShaft, cy), Offset(cx + halfShaft, cy), shaftPaint);
 
     // Cam Disc
     final camPaint = Paint()

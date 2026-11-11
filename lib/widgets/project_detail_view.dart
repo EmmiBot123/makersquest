@@ -55,12 +55,14 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
     final p = widget.project;
     final isCompleted = widget.state.userProgress.isProjectCompleted(p.id);
     final isUnlocked = widget.state.isLevelUnlocked(p.levelRequired);
+    final isNarrowTabs = MediaQuery.sizeOf(context).width < 620;
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       appBar: AppBar(
         title: Text(
           p.title,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         actions: [
@@ -84,6 +86,8 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: isNarrowTabs,
+          tabAlignment: isNarrowTabs ? TabAlignment.start : null,
           indicatorColor: AppColors.primary,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textMuted,
@@ -194,20 +198,23 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Workshop Supplies Checklist',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textMain),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$count of $total gathered (${(pct * 100).round()}%)',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Workshop Supplies Checklist',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textMain),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$count of $total gathered (${(pct * 100).round()}%)',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
@@ -243,9 +250,11 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
                   children: [
                     Icon(Icons.check_circle_rounded, color: AppColors.emerald, size: 16),
                     SizedBox(width: 6),
-                    Text(
-                      'All parts gathered! Ready for assembly.',
-                      style: TextStyle(fontSize: 12, color: AppColors.emerald, fontWeight: FontWeight.w700),
+                    Expanded(
+                      child: Text(
+                        'All parts gathered! Ready for assembly.',
+                        style: TextStyle(fontSize: 12, color: AppColors.emerald, fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ],
                 ),
@@ -299,6 +308,7 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
@@ -618,23 +628,28 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundColor: isDone ? AppColors.emerald : AppColors.primary,
-                          child: Text(
-                            '${step.stepNumber}',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundColor: isDone ? AppColors.emerald : AppColors.primary,
+                            child: Text(
+                              '${step.stepNumber}',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          step.title,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textMain),
-                        ),
-                      ],
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              step.title,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textMain),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -768,22 +783,23 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Showcase Your Project Proof',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textMain),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    SizedBox(height: 4),
+                    Text(
                       'Attach a photo of your working DIY project and log your engineering reflections.',
                       style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
@@ -849,17 +865,21 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
         const SizedBox(height: 20),
 
         // Fun Rating
-        Row(
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 4,
           children: [
             const Text(
               'How much fun did you have?',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textMain),
             ),
-            const SizedBox(width: 12),
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: List.generate(5, (starIdx) {
                 return IconButton(
                   visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   padding: EdgeInsets.zero,
                   icon: Icon(
                     starIdx < _funRating ? Icons.star_rounded : Icons.star_border_rounded,

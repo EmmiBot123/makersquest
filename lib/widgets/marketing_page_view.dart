@@ -189,80 +189,91 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.emeraldSoft,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.emerald, width: 2),
-              ),
-              child: const Center(
-                child: Text('🎉', style: TextStyle(fontSize: 36)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Enrollment Successful! 🏆',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textMain),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Welcome aboard MakerQuest, Cadet $cadetName!\nYour All-Access Odyssey Pass has been activated with 50 XP starter bonus.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  Text(_archetypeIcon, style: const TextStyle(fontSize: 24)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Cadet Archetype: $_archetype', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                        Text('Aptitude: $_aptitudeScore% • Level 1 Unlocked', style: const TextStyle(fontSize: 11, color: AppColors.emerald, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
+      builder: (ctx) {
+        final isCompact = MediaQuery.sizeOf(ctx).width < 480;
+        return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: EdgeInsets.all(isCompact ? 18 : 24),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppColors.emeraldSoft,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.emerald, width: 2),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.rocket_launch_rounded),
-                label: const Text('Launch Cadet Workshop Now 🚀', style: TextStyle(fontWeight: FontWeight.w700)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: const Center(
+                    child: Text('🎉', style: TextStyle(fontSize: 36)),
+                  ),
                 ),
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  widget.onLaunchWorkshop();
-                },
-              ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Enrollment Successful! 🏆',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textMain),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Welcome aboard MakerQuest, Cadet $cadetName!\nYour All-Access Odyssey Pass has been activated with 50 XP starter bonus.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(_archetypeIcon, style: const TextStyle(fontSize: 24)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Cadet Archetype: $_archetype', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                            Text('Aptitude: $_aptitudeScore% • Level 1 Unlocked', style: const TextStyle(fontSize: 11, color: AppColors.emerald, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.rocket_launch_rounded),
+                    label: const Text(
+                      'Launch Cadet Workshop Now 🚀',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      widget.onLaunchWorkshop();
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -270,144 +281,164 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     SoundEffects.playPop();
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 860, maxHeight: 880),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primarySoft,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Center(child: Text('📐', style: TextStyle(fontSize: 20))),
-                        ),
-                        const SizedBox(width: 12),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (ctx) {
+        final screenW = MediaQuery.sizeOf(ctx).width;
+        final isCompact = screenW < 600;
+        return Dialog(
+          insetPadding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 40, vertical: 20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860, maxHeight: 880),
+            child: Padding(
+              padding: EdgeInsets.all(isCompact ? 14 : 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Row(
                           children: [
-                            Text(
-                              'Sample 3D CAD Blueprint Preview',
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.textMain),
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primarySoft,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Center(child: Text('📐', style: TextStyle(fontSize: 20))),
                             ),
-                            Text(
-                              'Interactive Kinematics, 3D Assembly & Stress Simulation Demo',
-                              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Sample 3D CAD Blueprint Preview',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: isCompact ? 14 : 16,
+                                      color: AppColors.textMain,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Interactive Kinematics, 3D Assembly & Stress Simulation Demo',
+                                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
-                      onPressed: () => Navigator.of(ctx).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
 
-                // Interactive Blueprint Viewer (Sample Scissor Linkage)
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const StepInfographicWidget(
-                          visualType: 'pantograph_cut',
-                          title: 'Measure & Cut Cardboard Struts with Aligned Flutes',
-                          stepNumber: 1,
-                          instruction: 'Use a ruler to draw six identical cardboard strips (15 cm long, 2 cm wide). Cut them so internal corrugation flutes run longitudinally for maximum bending resistance.',
-                          tip: 'Internal flutes vertically aligned resist over 300% more compressive load than horizontal cut strips.',
-                        ),
-                        const SizedBox(height: 16),
-                        // Lock Notice Banner
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFF59E0B)),
+                  // Interactive Blueprint Viewer (Sample Scissor Linkage)
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const StepInfographicWidget(
+                            visualType: 'pantograph_cut',
+                            title: 'Measure & Cut Cardboard Struts with Aligned Flutes',
+                            stepNumber: 1,
+                            instruction: 'Use a ruler to draw six identical cardboard strips (15 cm long, 2 cm wide). Cut them so internal corrugation flutes run longitudinally for maximum bending resistance.',
+                            tip: 'Internal flutes vertically aligned resist over 300% more compressive load than horizontal cut strips.',
                           ),
-                          child: Row(
-                            children: [
-                              const Text('🔒', style: TextStyle(fontSize: 24)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text(
-                                      'Sample Blueprint Only (Project 1 of 17)',
-                                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF92400E)),
-                                    ),
-                                    SizedBox(height: 2),
-                                    Text(
-                                      'Full workshop access to all 17 projects, step guides, physics simulations, and checkpoint challenges unlocks after Cadet Pass enrollment.',
-                                      style: TextStyle(fontSize: 11, color: Color(0xFF78350F)),
-                                    ),
-                                  ],
+                          const SizedBox(height: 16),
+                          // Lock Notice Banner
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFFF59E0B)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Text('🔒', style: TextStyle(fontSize: 24)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: const [
+                                      Text(
+                                        'Sample Blueprint Only (Project 1 of 17)',
+                                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF92400E)),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Full workshop access to all 17 projects, step guides, physics simulations, and checkpoint challenges unlocks after Cadet Pass enrollment.',
+                                        style: TextStyle(fontSize: 11, color: Color(0xFF78350F)),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Action Footer
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Close Preview', style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w700)),
+                        ),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.rocket_launch_rounded, size: 16),
+                          label: const Text(
+                            'Enroll to Unlock All 17 Blueprints (₹199) 💳',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.emerald,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                            _openCheckoutDialog();
+                          },
                         ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-
-                // Action Footer
-                Wrap(
-                  alignment: WrapAlignment.end,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 12,
-                  runSpacing: 8,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text('Close Preview', style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w700)),
-                    ),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.rocket_launch_rounded, size: 16),
-                      label: const Text('Enroll to Unlock All 17 Blueprints (₹199) 💳', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.emerald,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                        _openCheckoutDialog();
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
+    final screenW = MediaQuery.sizeOf(context).width;
     final isDesktop = screenW >= 900;
 
     return Scaffold(
@@ -424,33 +455,36 @@ class _MarketingPageViewState extends State<MarketingPageView> {
         },
         child: const Icon(Icons.chat_rounded, size: 26),
       ),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildTopNavigation(context),
-            _buildHeroSection(isDesktop),
-            _buildLiveActivityTicker(),
-            _buildTrustBadgeBar(isDesktop),
-            _buildScreenTimeContrastSection(isDesktop),
-            _buildWeekendOutcomesSection(isDesktop),
-            _buildScrapAuditWidget(isDesktop),
-            _buildScienceExhibitionSection(isDesktop),
-            _buildHowItWorksSection(isDesktop),
-            _buildCurriculumRoadmapSection(isDesktop),
-            _buildCertificatePreviewSection(isDesktop),
-            _buildWhatWeOfferSection(isDesktop),
-            _buildParentRoiCalculator(isDesktop),
-            _buildAssessmentSection(isDesktop),
-            if (_analysisComplete) _buildAnalysisResultsSection(isDesktop),
-            _buildPricingSection(isDesktop),
-            _buildCurriculumComparison(isDesktop),
-            _buildWhatsAppSupportSection(isDesktop),
-            _buildFaqSection(isDesktop),
-            _buildTestimonialsSection(isDesktop),
-            _buildFooter(),
-          ],
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildTopNavigation(context),
+              _buildHeroSection(isDesktop),
+              _buildLiveActivityTicker(),
+              _buildTrustBadgeBar(isDesktop),
+              _buildScreenTimeContrastSection(isDesktop),
+              _buildWeekendOutcomesSection(isDesktop),
+              _buildScrapAuditWidget(isDesktop),
+              _buildScienceExhibitionSection(isDesktop),
+              _buildHowItWorksSection(isDesktop),
+              _buildCurriculumRoadmapSection(isDesktop),
+              _buildCertificatePreviewSection(isDesktop),
+              _buildWhatWeOfferSection(isDesktop),
+              _buildParentRoiCalculator(isDesktop),
+              _buildAssessmentSection(isDesktop),
+              if (_analysisComplete) _buildAnalysisResultsSection(isDesktop),
+              _buildPricingSection(isDesktop),
+              _buildCurriculumComparison(isDesktop),
+              _buildWhatsAppSupportSection(isDesktop),
+              _buildFaqSection(isDesktop),
+              _buildTestimonialsSection(isDesktop),
+              _buildFooter(),
+            ],
+          ),
         ),
       ),
     );
@@ -458,97 +492,136 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 1. TOP MARKETING NAVIGATION
   Widget _buildTopNavigation(BuildContext context) {
-    final showWideNav = MediaQuery.of(context).size.width >= 720;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final showWideNav = screenW >= 720;
+    final isTiny = screenW < 420;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: isTiny ? 12 : 24, vertical: isTiny ? 10 : 14),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFFEC4899)]),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Center(child: Text('⚡', style: TextStyle(fontSize: 20))),
-              ),
-              const SizedBox(width: 10),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('MakerQuest', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.textMain, letterSpacing: -0.5)),
-                  Text('DIY STEM ODYSSEY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.amber, letterSpacing: 0.8)),
-                ],
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              if (showWideNav) ...[
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.chat_rounded, size: 15, color: Color(0xFF16A34A)),
-                  label: const Text(
-                    ExternalLauncher.whatsAppPhoneDisplay,
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF15803D)),
+      child: SizedBox(
+        width: double.infinity,
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: isTiny ? 32 : 38,
+                  height: isTiny ? 32 : 38,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFFEC4899)]),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF0FDF4),
-                    side: const BorderSide(color: Color(0xFF86EFAC)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Center(child: Text('⚡', style: TextStyle(fontSize: isTiny ? 17 : 20))),
+                ),
+                SizedBox(width: isTiny ? 8 : 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'MakerQuest',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: isTiny ? 15 : 18,
+                        color: AppColors.textMain,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'DIY STEM ODYSSEY',
+                      style: TextStyle(
+                        fontSize: isTiny ? 8 : 9,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.amber,
+                        letterSpacing: isTiny ? 0.5 : 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Wrap(
+              spacing: isTiny ? 6 : 10,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (showWideNav)
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.chat_rounded, size: 15, color: Color(0xFF16A34A)),
+                    label: const Text(
+                      ExternalLauncher.whatsAppPhoneDisplay,
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF15803D)),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF0FDF4),
+                      side: const BorderSide(color: Color(0xFF86EFAC)),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: () {
+                      SoundEffects.playPop();
+                      ExternalLauncher.openWhatsApp();
+                    },
+                  ),
+                if (widget.questState.isEnrolled)
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.handyman_rounded, size: isTiny ? 14 : 16),
+                    label: Text(
+                      isTiny ? 'Workshop' : 'Back to Workshop',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: isTiny ? 11 : 12),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.bgSurface,
+                      foregroundColor: AppColors.textMain,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(horizontal: isTiny ? 10 : 14, vertical: isTiny ? 8 : 10),
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: widget.onLaunchWorkshop,
+                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: isTiny ? 12 : 16, vertical: isTiny ? 8 : 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
                   onPressed: () {
-                    SoundEffects.playPop();
-                    ExternalLauncher.openWhatsApp();
+                    _openCheckoutDialog();
                   },
-                ),
-                const SizedBox(width: 10),
-              ],
-              if (widget.questState.isEnrolled) ...[
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.handyman_rounded, size: 16),
-                  label: const Text('Back to Workshop', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.bgSurface,
-                    foregroundColor: AppColors.textMain,
-                    elevation: 0,
-                    side: const BorderSide(color: AppColors.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  child: Text(
+                    isTiny ? 'Pass ₹199' : 'Get Cadet Pass ₹199',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: isTiny ? 11 : 12),
                   ),
-                  onPressed: widget.onLaunchWorkshop,
                 ),
-                const SizedBox(width: 10),
               ],
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-                onPressed: () {
-                  // Scroll to quiz or open checkout
-                  _openCheckoutDialog();
-                },
-                child: const Text('Get Cadet Pass ₹199', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // 2. HERO SECTION
   Widget _buildHeroSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+    final isTiny = screenW < 420;
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 48),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 60 : (isTiny ? 14 : 20),
+        vertical: isCompact ? 32 : 48,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -573,29 +646,35 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   children: [
                     Text('🇮🇳', style: TextStyle(fontSize: 14)),
                     SizedBox(width: 6),
-                    Text('Indian STEM Curriculum (CBSE • ICSE • NEP 2020) • Ages 7–16', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryLight)),
+                    Flexible(
+                      child: Text(
+                        'Indian STEM Curriculum (CBSE • ICSE • NEP 2020) • Ages 7–16',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryLight),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              const Text(
+              const SizedBox(height: 18),
+              Text(
                 'Transform Cardboard into Real Robotics.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 38,
+                  fontSize: isTiny ? 26 : (isDesktop ? 38 : 30),
                   fontWeight: FontWeight.w900,
                   color: AppColors.textMain,
-                  letterSpacing: -1.0,
+                  letterSpacing: -0.8,
                   height: 1.15,
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
+              Text(
                 'Step away from passive screens. MakerQuest turns everyday scrap boxes, wooden skewers, and rubber bands into 17+ working kinetic machines, pneumatic lifts, and speed racers — guided by interactive 3D blueprints and physics simulations.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: AppColors.textMuted, height: 1.55),
+                style: TextStyle(fontSize: isCompact ? 14 : 16, color: AppColors.textMuted, height: 1.55),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
               Wrap(
                 spacing: 12,
                 runSpacing: 10,
@@ -603,11 +682,15 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 children: [
                   ElevatedButton.icon(
                     icon: const Icon(Icons.analytics_rounded, size: 18),
-                    label: const Text('Free Student Capability Test 🚀', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                    label: Text(
+                      'Free Student Capability Test 🚀',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: isCompact ? 13 : 14, fontWeight: FontWeight.w800),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 24, vertical: isCompact ? 14 : 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: () {
@@ -616,25 +699,29 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   ),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
-                    label: const Text('Watch 3D Schematics in Action', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textMain)),
+                    label: Text(
+                      'Watch 3D Schematics in Action',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: isCompact ? 13 : 14, fontWeight: FontWeight.w700, color: AppColors.textMain),
+                    ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.border),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 20, vertical: isCompact ? 14 : 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: _showSampleSchematicPreviewDialog,
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Interactive Kid & Robot Live Workshop Animation
               const KidRobotWorkshopHeroAnimation(),
 
               const SizedBox(height: 16),
-              // Value stats bar
+              // Value stats bar (2x2 grid on narrow phones, 4-across row on wider screens)
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(isCompact ? 14 : 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -643,26 +730,52 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem('17+ Builds', 'Kinetic Mechanisms', '🛠️'),
-                    _buildStatItem('5 Realms', 'From Linkages to Rovers', '🗺️'),
-                    _buildStatItem('10 Badges', 'XP & Certifications', '🏅'),
-                    _buildStatItem('₹0 Kit Cost', '100% Upcycled Scrap', '♻️'),
-                  ],
-                ),
+                child: screenW < 640
+                    ? Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: _buildStatItem('17+ Builds', 'Kinetic Mechanisms', '🛠️')),
+                              Expanded(child: _buildStatItem('5 Realms', 'From Linkages to Rovers', '🗺️')),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(child: _buildStatItem('10 Badges', 'XP & Certifications', '🏅')),
+                              Expanded(child: _buildStatItem('₹0 Kit Cost', '100% Upcycled Scrap', '♻️')),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem('17+ Builds', 'Kinetic Mechanisms', '🛠️'),
+                          _buildStatItem('5 Realms', 'From Linkages to Rovers', '🗺️'),
+                          _buildStatItem('10 Badges', 'XP & Certifications', '🏅'),
+                          _buildStatItem('₹0 Kit Cost', '100% Upcycled Scrap', '♻️'),
+                        ],
+                      ),
               ),
               const SizedBox(height: 18),
               InkWell(
                 onTap: () => _scrollToKey(_assessmentKey),
                 borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Text('Scroll Down to Capability Diagnostic', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Scroll Down to Capability Diagnostic',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                        ),
+                      ),
                       SizedBox(width: 4),
                       Icon(Icons.arrow_downward_rounded, size: 16, color: AppColors.primary),
                     ],
@@ -681,8 +794,8 @@ class _MarketingPageViewState extends State<MarketingPageView> {
       children: [
         Text(icon, style: const TextStyle(fontSize: 20)),
         const SizedBox(height: 4),
-        Text(val, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.textMain)),
-        Text(sub, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+        Text(val, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.textMain)),
+        Text(sub, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
       ],
     );
   }
@@ -720,13 +833,15 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 children: [
                   Text(b.icon, style: const TextStyle(fontSize: 18)),
                   const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(b.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMain)),
-                      Text(b.desc, style: const TextStyle(fontSize: 9, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
-                    ],
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(b.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMain)),
+                        Text(b.desc, style: const TextStyle(fontSize: 9, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -752,8 +867,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 1C. SCREEN TIME DETOX CONTRAST SECTION
   Widget _buildScreenTimeContrastSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isTiny = screenW < 420;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (isTiny ? 14 : 20), vertical: isTiny ? 40 : 56),
       color: const Color(0xFFF1F5F9),
       child: Center(
         child: ConstrainedBox(
@@ -805,8 +922,9 @@ class _MarketingPageViewState extends State<MarketingPageView> {
   }
 
   Widget _buildContrastCard({required bool isPositive}) {
+    final isTiny = MediaQuery.sizeOf(context).width < 420;
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isTiny ? 16 : 24),
       decoration: BoxDecoration(
         color: isPositive ? Colors.white : const Color(0xFFFFF1F2),
         borderRadius: BorderRadius.circular(20),
@@ -876,6 +994,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 1D. WEEKEND PHYSICAL OUTCOMES SHOWCASE
   Widget _buildWeekendOutcomesSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+    final cols = isDesktop ? (screenW >= 1100 ? 4 : 2) : (screenW >= 600 ? 2 : 1);
+
     final outcomes = [
       (
         title: 'Cardboard Scissor Hoist',
@@ -915,9 +1037,70 @@ class _MarketingPageViewState extends State<MarketingPageView> {
       ),
     ];
 
+    Widget buildOutcomeCard(
+      ({String desc, String icon, String mechanic, String science, String stat, String title, String type}) o, {
+      required bool expandDesc,
+    }) {
+      return Container(
+        padding: EdgeInsets.all(isCompact ? 16 : 18),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(o.icon, style: const TextStyle(fontSize: 28)),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      o.stat,
+                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.primary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            AnimatedMechanismMiniPreview(
+              mechanicType: o.type,
+              height: 74,
+            ),
+            const SizedBox(height: 10),
+            Text(o.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textMain)),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: AppColors.emeraldSoft, borderRadius: BorderRadius.circular(6)),
+              child: Text(o.science, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.emerald)),
+            ),
+            const SizedBox(height: 6),
+            if (expandDesc)
+              Expanded(
+                child: Text(o.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4)),
+              )
+            else
+              Text(o.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4)),
+          ],
+        ),
+      );
+    }
+
     return Container(
       color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 40 : 56),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
@@ -929,13 +1112,13 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   color: AppColors.emeraldSoft,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text('TANGIBLE TINKERING OUTCOMES', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
+                child: const Text('TANGIBLE TINKERING OUTCOMES', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'What Your Child Will Build by Sunday Evening',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
+                style: TextStyle(fontSize: isCompact ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -943,73 +1126,29 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
               ),
-              const SizedBox(height: 36),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isDesktop ? (MediaQuery.of(context).size.width >= 1100 ? 4 : 2) : (MediaQuery.of(context).size.width >= 600 ? 2 : 1),
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  mainAxisExtent: 400,
+              const SizedBox(height: 32),
+              if (cols == 1)
+                Column(
+                  children: outcomes
+                      .map((o) => Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: buildOutcomeCard(o, expandDesc: false),
+                          ))
+                      .toList(),
+                )
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    mainAxisExtent: 410,
+                  ),
+                  itemCount: outcomes.length,
+                  itemBuilder: (ctx, i) => buildOutcomeCard(outcomes[i], expandDesc: true),
                 ),
-                itemCount: outcomes.length,
-                itemBuilder: (ctx, i) {
-                  final o = outcomes[i];
-                  return Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(o.icon, style: const TextStyle(fontSize: 28)),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primarySoft,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  o.stat,
-                                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.primary),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        AnimatedMechanismMiniPreview(
-                          mechanicType: o.type,
-                          height: 74,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(o.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textMain)),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: AppColors.emeraldSoft, borderRadius: BorderRadius.circular(6)),
-                          child: Text(o.science, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.emerald)),
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: Text(o.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
               const SizedBox(height: 32),
               const AnimatedScrapToRobotShowcase(),
             ],
@@ -1021,6 +1160,8 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 1E. 60-SECOND ZERO-EXPENSE SCRAP AUDIT
   Widget _buildScrapAuditWidget(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompactPad = screenW < 420;
     final items = [
       ('box', '📦 Clean Delivery Box', 'Amazon, Flipkart, or cereal cardboard'),
       ('skewers', '🍢 Wooden Skewers or Toothpicks', 'Standard 15cm wooden food skewers'),
@@ -1034,12 +1175,12 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
     return Container(
       color: const Color(0xFFF8FAFC),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (isCompactPad ? 14 : 20), vertical: 56),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 860),
           child: Container(
-            padding: EdgeInsets.all(isDesktop ? 36 : 24),
+            padding: EdgeInsets.all(isDesktop ? 36 : (isCompactPad ? 16 : 24)),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
@@ -1057,13 +1198,17 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('ZERO HIDDEN HARDWARE EXPENSES', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
-                          SizedBox(height: 4),
-                          Text('The 60-Second Household Scrap Audit', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textMain)),
+                        children: [
+                          const Text('ZERO HIDDEN HARDWARE EXPENSES', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
+                          const SizedBox(height: 4),
+                          Text(
+                            'The 60-Second Household Scrap Audit',
+                            style: TextStyle(fontSize: screenW < 600 ? 19 : 22, fontWeight: FontWeight.w900, color: AppColors.textMain),
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
@@ -1184,6 +1329,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 1F. CBSE & SCIENCE EXHIBITION ADVANTAGE
   Widget _buildScienceExhibitionSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
     final benefits = [
       (
         icon: '📋',
@@ -1207,7 +1353,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
     return Container(
       color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 56),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
@@ -1222,10 +1368,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 child: const Text('SCHOOL & ACADEMIC ADVANTAGE', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Win 1st Prize at the School Science Exhibition',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
+                style: TextStyle(fontSize: screenW < 600 ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -1280,6 +1426,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // HOW IT WORKS IN 3 STEPS
   Widget _buildHowItWorksSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
     final steps = [
       (
         step: '01',
@@ -1305,7 +1452,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     ];
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 56),
       color: const Color(0xFFF8FAFC),
       child: Center(
         child: ConstrainedBox(
@@ -1321,10 +1468,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 child: const Text('HOW IT WORKS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'From Delivery Box to Dynamic Robotics in 3 Steps',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.6),
+                style: TextStyle(fontSize: screenW < 600 ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.6),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -1384,6 +1531,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // COMPLETE 12-CHAPTER CURRICULUM SYLLABUS
   Widget _buildCurriculumRoadmapSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+    final cols = screenW >= 960 ? 3 : (screenW >= 600 ? 2 : 1);
+
     final chapters = [
       (
         num: '01',
@@ -1471,9 +1622,64 @@ class _MarketingPageViewState extends State<MarketingPageView> {
       ),
     ];
 
+    Widget buildChapterCard(
+      ({String build, String icon, String num, String principle, String title}) ch, {
+      required bool useSpacer,
+    }) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text('CHAPTER ${ch.num}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10, color: AppColors.primary)),
+                ),
+                Text(ch.icon, style: const TextStyle(fontSize: 20)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(ch.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textMain, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 4),
+            Text('🔬 ${ch.principle}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted), maxLines: 2, overflow: TextOverflow.ellipsis),
+            if (useSpacer) const Spacer() else const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.build_circle_rounded, size: 14, color: AppColors.emerald),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text('Build: ${ch.build}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMain), overflow: TextOverflow.ellipsis),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       key: _curriculumKey,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 60),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 42 : 60),
       color: Colors.white,
       child: Center(
         child: ConstrainedBox(
@@ -1486,13 +1692,13 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   color: AppColors.emeraldSoft,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text('NEP 2020 & ATL COMPLIANT SYLLABUS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
+                child: const Text('NEP 2020 & ATL COMPLIANT SYLLABUS', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.emerald, letterSpacing: 1.2)),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Structured Indian STEM Curriculum (Classes 3 to 10)',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
+                style: TextStyle(fontSize: isCompact ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -1500,81 +1706,44 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 32),
 
               // 12 Chapter Grid
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isDesktop ? 3 : 1,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: isDesktop ? 1.7 : 2.2,
+              if (cols == 1)
+                Column(
+                  children: chapters
+                      .map((ch) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: buildChapterCard(ch, useSpacer: false),
+                          ))
+                      .toList(),
+                )
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    mainAxisExtent: cols == 2 ? 196 : 186,
+                  ),
+                  itemCount: chapters.length,
+                  itemBuilder: (context, idx) => buildChapterCard(chapters[idx], useSpacer: true),
                 ),
-                itemCount: chapters.length,
-                itemBuilder: (context, idx) {
-                  final ch = chapters[idx];
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.primarySoft,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text('CHAPTER ${ch.num}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10, color: AppColors.primary)),
-                            ),
-                            Text(ch.icon, style: const TextStyle(fontSize: 20)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(ch.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textMain, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 4),
-                        Text('🔬 ${ch.principle}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted), maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFCBD5E1)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.build_circle_rounded, size: 14, color: AppColors.emerald),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text('Build: ${ch.build}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMain), overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
               ElevatedButton.icon(
                 icon: const Icon(Icons.rocket_launch_rounded, size: 18),
-                label: const Text('Enroll to Unlock All 12 Chapters (₹199) 🚀', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                label: Text(
+                  'Enroll to Unlock All 12 Chapters (₹199) 🚀',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: isCompact ? 13 : 14),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                  padding: EdgeInsets.symmetric(horizontal: isCompact ? 18 : 28, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 4,
                 ),
@@ -1589,11 +1758,14 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 2B. JUNIOR ROBOTICS DIPLOMA & PORTFOLIO ACCREDITATION
   Widget _buildCertificatePreviewSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+    final isTiny = screenW < 400;
     final cadetName = _nameController.text.trim().isEmpty ? 'Aarav Sharma' : _nameController.text.trim();
 
     return Container(
       color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (isTiny ? 14 : 20), vertical: isCompact ? 40 : 56),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 880),
@@ -1605,13 +1777,13 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   color: AppColors.amberSoft,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text('TANGIBLE RECOGNITION FOR SCHOOL', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.amberGlow, letterSpacing: 1.2)),
+                child: const Text('TANGIBLE RECOGNITION FOR SCHOOL', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.amberGlow, letterSpacing: 1.2)),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Recognized Junior Robotics Engineering Diploma',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
+                style: TextStyle(fontSize: isCompact ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.8),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -1619,10 +1791,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
               // Realistic Diploma Frame
               Container(
-                padding: EdgeInsets.all(isDesktop ? 36 : 20),
+                padding: EdgeInsets.all(isDesktop ? 36 : (isTiny ? 14 : 20)),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFFDF7),
                   borderRadius: BorderRadius.circular(16),
@@ -1636,30 +1808,58 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('🇮🇳', style: TextStyle(fontSize: 24)),
-                        Column(
-                          children: const [
-                            Text('MAKERQUEST ACADEMY OF JUNIOR ROBOTICS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF92400E), letterSpacing: 1.5)),
-                            Text('NATIONAL STEM EXPERIENTIAL FRAMEWORK • NEP 2020', style: TextStyle(fontSize: 9, color: Color(0xFFB45309), letterSpacing: 1.0)),
-                          ],
+                        Text('🇮🇳', style: TextStyle(fontSize: isTiny ? 20 : 24)),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Column(
+                              children: [
+                                Text(
+                                  'MAKERQUEST ACADEMY OF JUNIOR ROBOTICS',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 9.5 : 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF92400E),
+                                    letterSpacing: isCompact ? 0.5 : 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'NATIONAL STEM EXPERIENTIAL FRAMEWORK • NEP 2020',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 8 : 9,
+                                    color: const Color(0xFFB45309),
+                                    letterSpacing: isCompact ? 0.3 : 1.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         const AnimatedGoldShimmerDiplomaSeal(),
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const Text('OFFICIAL DIPLOMA OF CERTIFICATION', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1E293B), letterSpacing: 1.2)),
+                    Text(
+                      'OFFICIAL DIPLOMA OF CERTIFICATION',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: isCompact ? 15 : 18, fontWeight: FontWeight.w900, color: const Color(0xFF1E293B), letterSpacing: isCompact ? 0.6 : 1.2),
+                    ),
                     const SizedBox(height: 8),
-                    const Text('This credential is proudly awarded to', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFF64748B))),
+                    const Text('This credential is proudly awarded to', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFF64748B))),
                     const SizedBox(height: 10),
                     Text(
                       cadetName,
-                      style: const TextStyle(
-                        fontSize: 26,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: isCompact ? 22 : 26,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
+                        color: const Color(0xFF0F172A),
                         letterSpacing: 0.5,
                         decoration: TextDecoration.underline,
-                        decorationColor: Color(0xFFD4AF37),
+                        decorationColor: const Color(0xFFD4AF37),
                         decorationThickness: 2,
                       ),
                     ),
@@ -1672,32 +1872,39 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     const SizedBox(height: 24),
                     const Divider(color: Color(0xFFE2E8F0)),
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('VERIFIED CREDENTIAL ID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
-                            Text('MQ-CADET-2026-IND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), fontFamily: 'monospace')),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFF59E0B)),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.verified_rounded, size: 14, color: Color(0xFFD97706)),
-                              SizedBox(width: 4),
-                              Text('Official STEM Diploma', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 12,
+                        runSpacing: 10,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text('VERIFIED CREDENTIAL ID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
+                              Text('MQ-CADET-2026-IND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), fontFamily: 'monospace')),
                             ],
                           ),
-                        ),
-                      ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFF59E0B)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified_rounded, size: 14, color: Color(0xFFD97706)),
+                                SizedBox(width: 4),
+                                Text('Official STEM Diploma', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -1711,6 +1918,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 3. WHAT WE OFFER & WHAT WE DO
   Widget _buildWhatWeOfferSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+    final useGrid = screenW >= 680;
+
     final features = [
       (
         icon: '📐',
@@ -1738,70 +1949,91 @@ class _MarketingPageViewState extends State<MarketingPageView> {
       ),
     ];
 
+    Widget buildFeatureCard(({Color color, String desc, String icon, String title}) f) {
+      return Container(
+        padding: EdgeInsets.all(isCompact ? 16 : 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: isCompact ? 42 : 48,
+              height: isCompact ? 42 : 48,
+              decoration: BoxDecoration(
+                color: f.color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(child: Text(f.icon, style: TextStyle(fontSize: isCompact ? 20 : 24))),
+            ),
+            SizedBox(width: isCompact ? 12 : 16),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(f.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textMain)),
+                  const SizedBox(height: 6),
+                  Text(f.desc, style: const TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.45)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 50),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 40 : 50),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1000),
           child: Column(
             children: [
-              const Text('WHAT WE OFFER & WHAT WE DO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary, letterSpacing: 1.2)),
+              const Text('WHAT WE OFFER & WHAT WE DO', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary, letterSpacing: 1.2)),
               const SizedBox(height: 8),
-              const Text('The Complete Hands-On STEM Learning Journey', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textMain)),
+              Text('The Complete Hands-On STEM Learning Journey', textAlign: TextAlign.center, style: TextStyle(fontSize: isCompact ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain)),
               const SizedBox(height: 12),
               const Text(
                 'We turn engineering theory into tactile problem-solving that students can hold, test, and celebrate.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: AppColors.textMuted),
               ),
-              const SizedBox(height: 36),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isDesktop ? 2 : 1,
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                  childAspectRatio: isDesktop ? 2.2 : 2.0,
+              const SizedBox(height: 32),
+              if (!useGrid)
+                Column(
+                  children: features
+                      .map((f) => Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: buildFeatureCard(f),
+                          ))
+                      .toList(),
+                )
+              else
+                Column(
+                  children: [
+                    for (int rowStart = 0; rowStart < features.length; rowStart += 2) ...[
+                      if (rowStart > 0) const SizedBox(height: 20),
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: buildFeatureCard(features[rowStart])),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: rowStart + 1 < features.length
+                                  ? buildFeatureCard(features[rowStart + 1])
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                itemCount: features.length,
-                itemBuilder: (context, idx) {
-                  final f = features[idx];
-                  return Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: f.color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(child: Text(f.icon, style: const TextStyle(fontSize: 24))),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(f.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textMain)),
-                              const SizedBox(height: 6),
-                              Text(f.desc, style: const TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.45)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
             ],
           ),
         ),
@@ -1811,14 +2043,17 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 3B. SMART PARENT'S SAVINGS CALCULATOR
   Widget _buildParentRoiCalculator(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+
     return Container(
       color: const Color(0xFFF1F5F9),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 40 : 56),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 880),
           child: Container(
-            padding: EdgeInsets.all(isDesktop ? 36 : 24),
+            padding: EdgeInsets.all(isDesktop ? 36 : (screenW < 420 ? 16 : 24)),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
@@ -1830,16 +2065,20 @@ class _MarketingPageViewState extends State<MarketingPageView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 10,
                   children: [
-                    Expanded(
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: isCompact ? screenW - 60 : 560),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('THE SMART PARENT\'S ARITHMETIC', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
-                          SizedBox(height: 4),
-                          Text('Annual Extracurricular STEM Cost Comparison', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textMain)),
+                        children: [
+                          const Text('THE SMART PARENT\'S ARITHMETIC', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
+                          const SizedBox(height: 4),
+                          Text('Annual Extracurricular STEM Cost Comparison', style: TextStyle(fontSize: isCompact ? 18 : 22, fontWeight: FontWeight.w900, color: AppColors.textMain)),
                         ],
                       ),
                     ),
@@ -1898,19 +2137,25 @@ class _MarketingPageViewState extends State<MarketingPageView> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Text(
               '${isPositive ? "✅" : "❌"} $title',
-              style: TextStyle(fontSize: 13, fontWeight: isPositive ? FontWeight.w800 : FontWeight.w600, color: isPositive ? AppColors.textMain : AppColors.textMuted),
+              style: TextStyle(fontSize: 12.5, fontWeight: isPositive ? FontWeight.w800 : FontWeight.w600, color: isPositive ? AppColors.textMain : AppColors.textMuted),
             ),
           ),
-          Text(
-            cost,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: isPositive ? AppColors.emerald : AppColors.rose,
+          const SizedBox(width: 10),
+          Flexible(
+            flex: 0,
+            child: Text(
+              cost,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w900,
+                color: isPositive ? AppColors.emerald : AppColors.rose,
+              ),
             ),
           ),
         ],
@@ -1920,9 +2165,12 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 4. STUDENT CAPABILITY & READINESS ASSESSMENT
   Widget _buildAssessmentSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+
     return Container(
       key: _assessmentKey,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 50),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 38 : 50),
       color: Colors.white,
       child: Center(
         child: ConstrainedBox(
@@ -1935,19 +2183,19 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   color: AppColors.amberSoft,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text('FREE 60-SECOND MAKER DIAGNOSTIC', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.amberGlow)),
+                child: const Text('FREE 60-SECOND MAKER DIAGNOSTIC', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.amberGlow)),
               ),
               const SizedBox(height: 10),
-              const Text('Discover What Your Student is Capable of Building', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.textMain)),
+              Text('Discover What Your Student is Capable of Building', textAlign: TextAlign.center, style: TextStyle(fontSize: isCompact ? 22 : 26, fontWeight: FontWeight.w900, color: AppColors.textMain)),
               const SizedBox(height: 8),
               const Text(
                 'Enter your student\'s details below. Our pedagogical diagnostic engine will analyze their spatial, mechanical, and motor readiness, and recommend their customized robotics curriculum.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 26),
               Container(
-                padding: const EdgeInsets.all(28),
+                padding: EdgeInsets.all(isCompact ? 16 : 28),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(20),
@@ -2005,6 +2253,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         isExpanded: true,
+                        itemHeight: null,
                         initialValue: _experienceLevel,
                         decoration: InputDecoration(
                           filled: true,
@@ -2028,6 +2277,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         isExpanded: true,
+                        itemHeight: null,
                         initialValue: _favoriteInterest,
                         decoration: InputDecoration(
                           filled: true,
@@ -2056,12 +2306,13 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                               : const Icon(Icons.psychology_rounded, size: 20),
                           label: Text(
                             _isAnalyzing ? 'Bot "Bolts" is Drafting Blueprint...' : 'Analyze Maker Capability & Generate Plan 🚀',
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: isCompact ? 13 : 14),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: _isAnalyzing ? null : _runAnalysis,
@@ -2137,11 +2388,55 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 5. DIAGNOSTIC RESULTS: WHAT THE STUDENT IS CAPABLE OF BUILDING
   Widget _buildAnalysisResultsSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 650;
     final studentName = _nameController.text.trim().isEmpty ? 'Student' : _nameController.text.trim();
+
+    Widget buildProjectPreviewCard(({String desc, String diff, String icon, String name, String time}) p) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(p.icon, style: const TextStyle(fontSize: 28)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textMain)),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: AppColors.emeraldSoft, borderRadius: BorderRadius.circular(6)),
+                        child: Text(p.diff, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.emerald)),
+                      ),
+                      Text('⏱️ ${p.time}', style: const TextStyle(fontSize: 10, color: AppColors.textDim)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(p.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted), maxLines: 2, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       key: _resultsKey,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 50),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 38 : 50),
       decoration: BoxDecoration(
         color: const Color(0xFFEFF6FF),
         border: Border.all(color: const Color(0xFFBFDBFE)),
@@ -2154,32 +2449,35 @@ class _MarketingPageViewState extends State<MarketingPageView> {
             children: [
               // Badge & Archetype Header
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(isCompact ? 16 : 20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: const Color(0xFF93C5FD)),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: isCompact ? 48 : 56,
+                      height: isCompact ? 48 : 56,
                       decoration: BoxDecoration(
                         color: AppColors.primarySoft,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Center(child: Text(_archetypeIcon, style: const TextStyle(fontSize: 32))),
+                      child: Center(child: Text(_archetypeIcon, style: TextStyle(fontSize: isCompact ? 26 : 32))),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text('$studentName\'s Maker Profile:', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
@@ -2191,7 +2489,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(_archetype, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textMain)),
+                          Text(_archetype, style: TextStyle(fontSize: isCompact ? 17 : 20, fontWeight: FontWeight.w900, color: AppColors.textMain)),
                           const SizedBox(height: 2),
                           Text('Recommended Curriculum: $_recommendedTrack', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
                         ],
@@ -2208,62 +2506,33 @@ class _MarketingPageViewState extends State<MarketingPageView> {
               const SizedBox(height: 16),
 
               // 4 Recommended Projects Cards
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isDesktop ? 2 : 1,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: isDesktop ? 2.6 : 2.2,
+              if (isCompact)
+                Column(
+                  children: _recommendedProjects
+                      .map((p) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: buildProjectPreviewCard(p),
+                          ))
+                      .toList(),
+                )
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    mainAxisExtent: isDesktop ? 136 : 150,
+                  ),
+                  itemCount: _recommendedProjects.length,
+                  itemBuilder: (context, idx) => buildProjectPreviewCard(_recommendedProjects[idx]),
                 ),
-                itemCount: _recommendedProjects.length,
-                itemBuilder: (context, idx) {
-                  final p = _recommendedProjects[idx];
-                  return Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(p.icon, style: const TextStyle(fontSize: 28)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textMain)),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(color: AppColors.emeraldSoft, borderRadius: BorderRadius.circular(6)),
-                                    child: Text(p.diff, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.emerald)),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text('⏱️ ${p.time}', style: const TextStyle(fontSize: 10, color: AppColors.textDim)),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(p.desc, style: const TextStyle(fontSize: 11, color: AppColors.textMuted), maxLines: 2, overflow: TextOverflow.ellipsis),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
               // CALL TO ACTION / PURCHASE BOX
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(isCompact ? 18 : 24),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(colors: [Color(0xFF1E293B), Color(0xFF0F172A)]),
                   borderRadius: BorderRadius.circular(16),
@@ -2271,50 +2540,99 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 8)),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                child: isCompact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const Text('SPECIAL CADET ENROLLMENT OFFER', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF38BDF8))),
                           const SizedBox(height: 4),
-                          Text('Unlock $studentName\'s All-Access MakerQuest Odyssey', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
+                          Text('Unlock $studentName\'s All-Access MakerQuest Odyssey', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Colors.white)),
                           const SizedBox(height: 6),
                           const Text(
                             'One-time software license. Includes full 12-chapter interactive 3D blueprints, CAD simulator, gamified quest map, and engineering certificates.',
                             style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), height: 1.4),
                           ),
+                          const SizedBox(height: 16),
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(_currencySymbol, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                                      Text(_planPrice.toStringAsFixed(0), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+                                    ],
+                                  ),
+                                  const Text('Lifetime Access', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10)),
+                                ],
+                              ),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.payment_rounded, size: 16),
+                                label: const Text('Enroll Now 💳', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF38BDF8),
+                                  foregroundColor: const Color(0xFF0F172A),
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                onPressed: _openCheckoutDialog,
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('SPECIAL CADET ENROLLMENT OFFER', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF38BDF8))),
+                                const SizedBox(height: 4),
+                                Text('Unlock $studentName\'s All-Access MakerQuest Odyssey', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'One-time software license. Includes full 12-chapter interactive 3D blueprints, CAD simulator, gamified quest map, and engineering certificates.',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), height: 1.4),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Column(
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(_currencySymbol, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                                  Text(_planPrice.toStringAsFixed(0), style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
+                                ],
+                              ),
+                              const Text('Lifetime Access', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10)),
+                              const SizedBox(height: 10),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.payment_rounded, size: 16),
+                                label: const Text('Enroll Now 💳', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF38BDF8),
+                                  foregroundColor: const Color(0xFF0F172A),
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                onPressed: _openCheckoutDialog,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 20),
-                    Column(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(_currencySymbol, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-                            Text(_planPrice.toStringAsFixed(0), style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
-                          ],
-                        ),
-                        const Text('Lifetime Access', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10)),
-                        const SizedBox(height: 10),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.payment_rounded, size: 16),
-                          label: const Text('Enroll Now 💳', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF38BDF8),
-                            foregroundColor: const Color(0xFF0F172A),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          onPressed: _openCheckoutDialog,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -2325,9 +2643,13 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // STANDALONE PRICING & LIFETIME CADET PASS VALUE STACK
   Widget _buildPricingSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+    final isTiny = screenW < 420;
+
     return Container(
       key: _pricingKey,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 60),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (isTiny ? 14 : 20), vertical: isCompact ? 42 : 60),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -2351,15 +2673,21 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   children: [
                     Text('⚡', style: TextStyle(fontSize: 14)),
                     SizedBox(width: 6),
-                    Text('LIMITED LAUNCH OFFER • OVER 90% OFF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0)),
+                    Flexible(
+                      child: Text(
+                        'LIMITED LAUNCH OFFER • OVER 90% OFF',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Cadet All-Access Lifetime Pass',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.8),
+                style: TextStyle(fontSize: isCompact ? 26 : 34, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.8),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -2367,11 +2695,11 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8), height: 1.5),
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 30),
 
               // Pricing Card Box
               Container(
-                padding: EdgeInsets.all(isDesktop ? 36 : 24),
+                padding: EdgeInsets.all(isDesktop ? 36 : (isTiny ? 16 : 24)),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -2391,39 +2719,54 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                         border: Border.all(color: const Color(0xFFFDE68A)),
                       ),
                       child: Column(
-                        children: [
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text('🔥 Inaugural Cohort: 462 of 500 Passes Claimed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '🔥 Inaugural Cohort: 462 of 500 Passes Claimed',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF92400E)),
+                                ),
+                              ),
+                              SizedBox(width: 8),
                               Text('92% Claimed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFFD97706))),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: const LinearProgressIndicator(
+                            borderRadius: BorderRadius.all(Radius.circular(6)),
+                            child: LinearProgressIndicator(
                               value: 0.92,
                               minHeight: 6,
                               backgroundColor: Color(0xFFFDE68A),
                               valueColor: AlwaysStoppedAnimation(Color(0xFFD97706)),
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          const Text('Next 500 batch will be priced at ₹499. Lock in ₹199 lifetime rate today.', style: TextStyle(fontSize: 10, color: Color(0xFFB45309), fontWeight: FontWeight.w600)),
+                          SizedBox(height: 6),
+                          Text('Next 500 batch will be priced at ₹499. Lock in ₹199 lifetime rate today.', style: TextStyle(fontSize: 10, color: Color(0xFFB45309), fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ),
 
                     // Price Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 10,
+                      runSpacing: 6,
                       children: [
-                        const Text('₹', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.textMain)),
-                        const Text('199', style: TextStyle(fontSize: 54, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -1.5)),
-                        const SizedBox(width: 10),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text('₹', style: TextStyle(fontSize: isTiny ? 24 : 28, fontWeight: FontWeight.w800, color: AppColors.textMain)),
+                            Text('199', style: TextStyle(fontSize: isTiny ? 44 : 54, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -1.5)),
+                          ],
+                        ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
@@ -2450,6 +2793,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
                     // No-Brainer Cost Comparison
                     Container(
+                      width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
@@ -2477,25 +2821,32 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     const SizedBox(height: 24),
 
                     // CTA Button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 4,
-                      ),
-                      onPressed: _openCheckoutDialog,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.lock_open_rounded, size: 20),
-                          SizedBox(width: 10),
-                          Text(
-                            'Claim Cadet Lifetime Pass for ₹199 🚀',
-                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                          ),
-                        ],
+                    SizedBox(
+                      width: isCompact ? double.infinity : null,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 36, vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 4,
+                        ),
+                        onPressed: _openCheckoutDialog,
+                        child: Row(
+                          mainAxisSize: isCompact ? MainAxisSize.max : MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.lock_open_rounded, size: 20),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Claim Cadet Lifetime Pass for ₹199 🚀',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: isCompact ? 14 : 16),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -2503,16 +2854,16 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
                     // Instant UPI / Cards Payment Strip
                     Container(
+                      width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('⚡ Instant Activation via UPI (GPay • PhonePe • Paytm • BHIM) & Cards', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
-                        ],
+                      child: const Text(
+                        '⚡ Instant Activation via UPI (GPay • PhonePe • Paytm • BHIM) & Cards',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
                       ),
                     ),
 
@@ -2527,6 +2878,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                         border: Border.all(color: const Color(0xFFA7F3D0)),
                       ),
                       child: const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('🛡️', style: TextStyle(fontSize: 20)),
                           SizedBox(width: 8),
@@ -2554,7 +2906,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                           children: [
                             Icon(Icons.verified_user_rounded, size: 16, color: AppColors.emerald),
                             SizedBox(width: 6),
-                            Text('30-Day 100% Money-Back Guarantee', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain)),
+                            Flexible(child: Text('30-Day 100% Money-Back Guarantee', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain))),
                           ],
                         ),
                         Row(
@@ -2562,7 +2914,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                           children: [
                             Icon(Icons.shield_rounded, size: 16, color: AppColors.primary),
                             SizedBox(width: 6),
-                            Text('256-bit Encrypted Checkout', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                            Flexible(child: Text('256-bit Encrypted Checkout', style: TextStyle(fontSize: 12, color: AppColors.textMuted))),
                           ],
                         ),
                         Row(
@@ -2570,7 +2922,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                           children: [
                             Icon(Icons.flash_on_rounded, size: 16, color: AppColors.amber),
                             SizedBox(width: 6),
-                            Text('Instant Digital Workshop Unlock', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                            Flexible(child: Text('Instant Digital Workshop Unlock', style: TextStyle(fontSize: 12, color: AppColors.textMuted))),
                           ],
                         ),
                       ],
@@ -2609,8 +2961,18 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 6. CURRICULUM COMPARISON TABLE
   Widget _buildCurriculumComparison(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final useStackedCards = screenW < 650;
+    const rows = [
+      (feature: 'Materials Cost', mq: '₹0 (Scrap cardboard & rubber bands)', toy: '₹2,000 - ₹5,000+ per single kit'),
+      (feature: 'Mechanisms Taught', mq: '17+ physical kinematic machines', toy: '1 static proprietary toy'),
+      (feature: 'Interactive 3D CAD', mq: 'Full exploded 3D & physics vectors', toy: 'Static paper manual or none'),
+      (feature: 'Skill Longevity', mq: 'Lifelong engineering intuition', toy: 'Assembled once, abandoned in drawer'),
+      (feature: 'Curriculum Progression', mq: '5 Levels, NEP 2020 & CBSE/ICSE Physics Labs', toy: 'No curriculum alignment'),
+    ];
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 50),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 44),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
@@ -2618,26 +2980,68 @@ class _MarketingPageViewState extends State<MarketingPageView> {
             children: [
               const Text('TRANSPARENT VALUE', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary, letterSpacing: 1.2)),
               const SizedBox(height: 8),
-              const Text('Why Families Choose MakerQuest over Plastic Kits', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.textMain)),
-              const SizedBox(height: 24),
-              Table(
-                border: TableBorder.all(color: AppColors.border, borderRadius: BorderRadius.circular(12)),
-                children: [
-                  TableRow(
-                    decoration: const BoxDecoration(color: Color(0xFFF1F5F9)),
-                    children: const [
-                      Padding(padding: EdgeInsets.all(12), child: Text('Feature', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
-                      Padding(padding: EdgeInsets.all(12), child: Text('MakerQuest Software', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary))),
-                      Padding(padding: EdgeInsets.all(12), child: Text('Traditional Toy Robot Kits', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.textMuted))),
-                    ],
-                  ),
-                  _buildTableRow('Materials Cost', '₹0 (Scrap cardboard & rubber bands)', '₹2,000 - ₹5,000+ per single kit'),
-                  _buildTableRow('Mechanisms Taught', '17+ physical kinematic machines', '1 static proprietary toy'),
-                  _buildTableRow('Interactive 3D CAD', 'Full exploded 3D & physics vectors', 'Static paper manual or none'),
-                  _buildTableRow('Skill Longevity', 'Lifelong engineering intuition', 'Assembled once, abandoned in drawer'),
-                  _buildTableRow('Curriculum Progression', '5 Levels, NEP 2020 & CBSE/ICSE Physics Labs', 'No curriculum alignment'),
-                ],
+              Text(
+                'Why Families Choose MakerQuest over Plastic Kits',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: screenW < 600 ? 22 : 26, fontWeight: FontWeight.w900, color: AppColors.textMain),
               ),
+              const SizedBox(height: 24),
+              if (useStackedCards)
+                Column(
+                  children: rows.map((r) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+                            ),
+                            child: Text(r.feature, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textMain)),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('MakerQuest Software:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                                const SizedBox(height: 2),
+                                Text('✅ ${r.mq}', style: const TextStyle(fontSize: 12.5, color: AppColors.emerald, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 10),
+                                const Text('Traditional Toy Robot Kits:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+                                const SizedBox(height: 2),
+                                Text('❌ ${r.toy}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                )
+              else
+                Table(
+                  border: TableBorder.all(color: AppColors.border, borderRadius: BorderRadius.circular(12)),
+                  children: [
+                    TableRow(
+                      decoration: const BoxDecoration(color: Color(0xFFF1F5F9)),
+                      children: const [
+                        Padding(padding: EdgeInsets.all(12), child: Text('Feature', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                        Padding(padding: EdgeInsets.all(12), child: Text('MakerQuest Software', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary))),
+                        Padding(padding: EdgeInsets.all(12), child: Text('Traditional Toy Robot Kits', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.textMuted))),
+                      ],
+                    ),
+                    ...rows.map((r) => _buildTableRow(r.feature, r.mq, r.toy)),
+                  ],
+                ),
             ],
           ),
         ),
@@ -2657,14 +3061,17 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 6B. WHATSAPP MENTOR SUPPORT
   Widget _buildWhatsAppSupportSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 600;
+
     return Container(
       color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: isCompact ? 40 : 56),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 880),
           child: Container(
-            padding: EdgeInsets.all(isDesktop ? 36 : 24),
+            padding: EdgeInsets.all(isDesktop ? 36 : (screenW < 420 ? 16 : 24)),
             decoration: BoxDecoration(
               gradient: const LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E293B)]),
               borderRadius: BorderRadius.circular(24),
@@ -2681,7 +3088,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     children: [
                       const Text('1-ON-1 MAKER MENTORSHIP', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF34D399), letterSpacing: 1.2)),
                       const SizedBox(height: 6),
-                      const Text('Never Get Stuck: Dedicated WhatsApp Support', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+                      Text('Never Get Stuck: Dedicated WhatsApp Support', style: TextStyle(fontSize: isCompact ? 19 : 22, fontWeight: FontWeight.w900, color: Colors.white)),
                       const SizedBox(height: 8),
                       const Text(
                         'Is a linkage sticking? Straw bearing wobbling? Send a 10-second video or photo to our dedicated engineering WhatsApp helpline. Our maker mentors respond with personalized alignment tips within 15 minutes during build hours.',
@@ -2697,12 +3104,14 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('📞', style: TextStyle(fontSize: 14)),
-                            const SizedBox(width: 8),
-                            const SelectableText(
-                              'Official WhatsApp Helpline: ${ExternalLauncher.whatsAppPhoneDisplay}',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7), letterSpacing: 0.3),
+                          children: const [
+                            Text('📞', style: TextStyle(fontSize: 14)),
+                            SizedBox(width: 8),
+                            Flexible(
+                              child: SelectableText(
+                                'Official WhatsApp Helpline: ${ExternalLauncher.whatsAppPhoneDisplay}',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7), letterSpacing: 0.3),
+                              ),
                             ),
                           ],
                         ),
@@ -2714,14 +3123,15 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                         children: [
                           ElevatedButton.icon(
                             icon: const Icon(Icons.chat_rounded, size: 17),
-                            label: const Text(
+                            label: Text(
                               'Chat on WhatsApp (${ExternalLauncher.whatsAppPhoneDisplay})',
-                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: isCompact ? 12 : 13),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF25D366),
                               foregroundColor: const Color(0xFF052E16),
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             onPressed: () {
@@ -2793,6 +3203,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // FREQUENTLY ASKED QUESTIONS ACCORDION
   Widget _buildFaqSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
     final faqs = [
       (
         q: 'Do I need to buy expensive robotics kits, electronics, or specialized tools?',
@@ -2823,7 +3234,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     return Container(
       key: _faqKey,
       color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 56),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 860),
@@ -2838,10 +3249,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 child: const Text('FREQUENTLY ASKED QUESTIONS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary, letterSpacing: 1.2)),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Everything You Need to Know',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.6),
+                style: TextStyle(fontSize: screenW < 600 ? 22 : 28, fontWeight: FontWeight.w900, color: AppColors.textMain, letterSpacing: -0.6),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -2875,7 +3286,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                         });
                       },
                       child: Padding(
-                        padding: const EdgeInsets.all(18),
+                        padding: EdgeInsets.all(screenW < 420 ? 14 : 18),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -2891,6 +3302,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 10),
                                 Icon(
                                   isExpanded ? Icons.remove_circle_outline_rounded : Icons.add_circle_outline_rounded,
                                   color: isExpanded ? AppColors.primary : AppColors.textMuted,
@@ -2921,6 +3333,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   // 7. TESTIMONIALS
   Widget _buildTestimonialsSection(bool isDesktop) {
+    final screenW = MediaQuery.sizeOf(context).width;
     final testimonials = [
       (
         quote: 'My 10-year-old built the scissor lift and rubber-band racer in two days using Amazon delivery boxes! He actually understands mechanical advantage and levers now.',
@@ -2936,7 +3349,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
     return Container(
       color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : 20, vertical: 50),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 60 : (screenW < 420 ? 14 : 20), vertical: 50),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
@@ -2985,7 +3398,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
   Widget _buildFooter() {
     return Container(
       color: const Color(0xFF0F172A),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+      padding: const EdgeInsets.fromLTRB(20, 36, 20, 96),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
@@ -3004,7 +3417,12 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                     child: const Center(child: Text('⚡', style: TextStyle(fontSize: 18))),
                   ),
                   const SizedBox(width: 10),
-                  const Text('MakerQuest Academy', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white)),
+                  const Flexible(
+                    child: Text(
+                      'MakerQuest Academy',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -3029,12 +3447,17 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   ),
                   child: const Text(
                     '💬 WhatsApp Helpline: ${ExternalLauncher.whatsAppPhoneDisplay} • Chat Now',
+                    textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF6EE7B7)),
                   ),
                 ),
               ),
               const SizedBox(height: 14),
-              const Text('© 2026 MakerQuest. All rights reserved. Kid-Safe Solo DIY Platform.', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+              const Text(
+                '© 2026 MakerQuest. All rights reserved. Kid-Safe Solo DIY Platform.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              ),
             ],
           ),
         ),
@@ -3135,14 +3558,17 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isTiny = screenW < 400;
     final total = math.max(0.0, widget.planPrice - _discount);
 
     return Dialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: screenW < 480 ? 12 : 40, vertical: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(screenW < 480 ? 16 : 24),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -3152,26 +3578,30 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.primarySoft,
-                            borderRadius: BorderRadius.circular(10),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Center(child: Text('💳', style: TextStyle(fontSize: 20))),
                           ),
-                          child: const Center(child: Text('💳', style: TextStyle(fontSize: 20))),
-                        ),
-                        const SizedBox(width: 10),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Secure Checkout', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textMain)),
-                            Text('Simulated Sandbox Payment Gateway', style: TextStyle(fontSize: 10, color: AppColors.emerald, fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                      ],
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Secure Checkout', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textMain)),
+                                Text('Simulated Sandbox Payment Gateway', style: TextStyle(fontSize: 10, color: AppColors.emerald, fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded, size: 20),
@@ -3214,8 +3644,9 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Promo Discount', style: TextStyle(color: AppColors.emerald, fontSize: 11, fontWeight: FontWeight.w700)),
-                            Text('-${widget.currencySymbol}${_discount.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w800, fontSize: 12)),
+                            const Flexible(child: Text('Promo Discount', style: TextStyle(color: AppColors.emerald, fontSize: 11, fontWeight: FontWeight.w700))),
+                            const SizedBox(width: 8),
+                            Text('-${widget.currencySymbol}${_discount.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.emerald, fontSize: 12, fontWeight: FontWeight.w800)),
                           ],
                         ),
                       ],
@@ -3278,10 +3709,11 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                 // Simulated Express Checkout
                 const Text('Instant UPI / Express Checkout:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.textMuted)),
                 const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
+                if (isTiny)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      OutlinedButton.icon(
                         icon: const Text('⚡', style: TextStyle(fontSize: 16)),
                         label: const Text('UPI / GPay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black)),
                         style: OutlinedButton.styleFrom(
@@ -3292,10 +3724,8 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                         ),
                         onPressed: _submitPayment,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
                         icon: const Text('📱', style: TextStyle(fontSize: 16)),
                         label: const Text('PhonePe / Paytm', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black)),
                         style: OutlinedButton.styleFrom(
@@ -3306,9 +3736,40 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                         ),
                         onPressed: _submitPayment,
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Text('⚡', style: TextStyle(fontSize: 16)),
+                          label: const Text('UPI / GPay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black)),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.black.withValues(alpha: 0.05),
+                            side: const BorderSide(color: AppColors.border),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: _submitPayment,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Text('📱', style: TextStyle(fontSize: 16)),
+                          label: const Text('PhonePe / Paytm', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black)),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.black.withValues(alpha: 0.05),
+                            side: const BorderSide(color: AppColors.border),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: _submitPayment,
+                        ),
+                      ),
+                    ],
+                  ),
                 const SizedBox(height: 16),
 
                 // Card details form
@@ -3390,11 +3851,17 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                             children: [
                               SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
                               SizedBox(width: 10),
-                              Text('Processing Sandbox Payment...', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Flexible(
+                                child: Text(
+                                  'Processing Sandbox Payment...',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ),
                             ],
                           )
                         : Text(
                             'Pay ${widget.currencySymbol}${total.toStringAsFixed(0)} & Activate Cadet Journey 🚀',
+                            textAlign: TextAlign.center,
                             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                           ),
                   ),
@@ -3403,6 +3870,7 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                 const Center(
                   child: Text(
                     '🔒 256-Bit SSL Encrypted • Simulated Mock Payment • Zero Real Charges',
+                    textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 10, color: AppColors.textDim),
                   ),
                 ),
@@ -3421,6 +3889,7 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       child: Text(
                         '💬 Need UPI or enrollment help? WhatsApp ${ExternalLauncher.whatsAppPhoneDisplay}',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,

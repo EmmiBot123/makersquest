@@ -154,10 +154,15 @@ class ProjectCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Materials Gathered',
-                        style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      const Flexible(
+                        child: Text(
+                          'Materials Gathered',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '$checkedCount / $totalMaterials',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMain),
@@ -202,7 +207,7 @@ class ProjectCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isCompleted ? AppColors.emerald : AppColors.primary,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
                         onPressed: onOpen,
                         icon: Icon(
@@ -211,6 +216,7 @@ class ProjectCard extends StatelessWidget {
                         ),
                         label: Text(
                           isCompleted ? 'Review Completed Project' : 'Open DIY Blueprint & Checklist',
+                          textAlign: TextAlign.center,
                           style: const TextStyle(fontSize: 12),
                         ),
                       ),

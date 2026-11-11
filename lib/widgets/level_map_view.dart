@@ -1,4 +1,5 @@
 // Gamified STEM Learning Roadmap & Quest Progression Trail for MakerQuest
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../services/quest_state.dart';
 import '../services/sound_effects.dart';
@@ -95,9 +96,11 @@ class _LevelMapViewState extends State<LevelMapView> {
     final completedCount = nodes.where((n) => _isNodeMastered(n)).length;
     final totalCount = nodes.where((n) => n.type != RoadmapNodeType.realmBanner).length;
 
+    final isCompact = MediaQuery.sizeOf(context).width < 420;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isCompact ? 12 : 16),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(24),
@@ -169,8 +172,9 @@ class _LevelMapViewState extends State<LevelMapView> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.border),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
                 children: [
                   _buildModeTab('🗺️ Quest Trail', 'trail'),
                   _buildModeTab('🧭 Blueprint Tree', 'tree'),
@@ -310,15 +314,15 @@ class _LevelMapViewState extends State<LevelMapView> {
           double stepGap;
           switch (node.type) {
             case RoadmapNodeType.realmBanner:
-              h = 76.0;
+              h = w < 380 ? 116.0 : 84.0;
               stepGap = 36.0;
               break;
             case RoadmapNodeType.checkpointGate:
-              h = 86.0;
+              h = w < 420 ? 132.0 : 92.0;
               stepGap = 44.0;
               break;
             case RoadmapNodeType.summitCapstone:
-              h = 130.0;
+              h = w < 360 ? 156.0 : 136.0;
               stepGap = 40.0;
               break;
             case RoadmapNodeType.projectStation:
@@ -460,12 +464,37 @@ class _LevelMapViewState extends State<LevelMapView> {
   Widget _buildRealmBanner(RoadmapNode node) {
     final isUnlocked = widget.state.isLevelUnlocked(node.level);
     final isCurrent = widget.state.currentUser.currentLevel == node.level;
+    final isTight = MediaQuery.sizeOf(context).width < 440;
+
+    final statusChip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isCurrent
+            ? AppColors.emeraldSoft
+            : isUnlocked
+                ? AppColors.primarySoft
+                : AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        isCurrent ? '📍 YOU ARE HERE' : isUnlocked ? 'UNLOCKED' : 'LOCKED 🔒',
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          color: isCurrent
+              ? AppColors.emerald
+              : isUnlocked
+                  ? AppColors.primary
+                  : AppColors.textDim,
+        ),
+      ),
+    );
 
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 440),
         margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: isTight ? 12 : 16, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -488,17 +517,17 @@ class _LevelMapViewState extends State<LevelMapView> {
         child: Row(
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: isTight ? 40 : 46,
+              height: isTight ? 40 : 46,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isUnlocked ? AppColors.primarySoft : AppColors.bgSurface,
               ),
               child: Center(
-                child: Text(node.icon, style: const TextStyle(fontSize: 24)),
+                child: Text(node.icon, style: TextStyle(fontSize: isTight ? 20 : 24)),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: isTight ? 10 : 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,33 +564,17 @@ class _LevelMapViewState extends State<LevelMapView> {
                     node.subtitle,
                     style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
+                  if (isTight) ...[
+                    const SizedBox(height: 6),
+                    statusChip,
+                  ],
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isCurrent
-                    ? AppColors.emeraldSoft
-                    : isUnlocked
-                        ? AppColors.primarySoft
-                        : AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                isCurrent ? '📍 YOU ARE HERE' : isUnlocked ? 'UNLOCKED' : 'LOCKED 🔒',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  color: isCurrent
-                      ? AppColors.emerald
-                      : isUnlocked
-                          ? AppColors.primary
-                          : AppColors.textDim,
-                ),
-              ),
-            ),
+            if (!isTight) ...[
+              const SizedBox(width: 8),
+              statusChip,
+            ],
           ],
         ),
       ),
@@ -588,8 +601,9 @@ class _LevelMapViewState extends State<LevelMapView> {
     final discX = anchor.dx - discDiameter / 2;
     final discY = anchor.dy - discDiameter / 2;
 
-    const pillWidth = 176.0;
-    final pillX = (anchor.dx - pillWidth / 2).clamp(10.0, canvasWidth - pillWidth - 10.0);
+    final pillWidth = math.min(176.0, math.max(124.0, canvasWidth * 0.48));
+    final maxPillX = math.max(8.0, canvasWidth - pillWidth - 8.0);
+    final pillX = (anchor.dx - pillWidth / 2).clamp(8.0, maxPillX);
     final pillY = discY + discDiameter + 8.0;
 
     const kSimIds = {
@@ -696,30 +710,37 @@ class _LevelMapViewState extends State<LevelMapView> {
                 if (isActiveMission)
                   Positioned(
                     top: -26,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4F46E5),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.white, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(user.avatar, style: const TextStyle(fontSize: 11)),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${user.name}: Start Here! 🚀',
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
-                          ),
-                        ],
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: math.max(120.0, canvasWidth * 0.56)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4F46E5),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(user.avatar, style: const TextStyle(fontSize: 11)),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                '${user.name}: Start Here! 🚀',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   )
@@ -826,9 +847,11 @@ class _LevelMapViewState extends State<LevelMapView> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
+                    runSpacing: 2,
                     children: [
                       Text(
                         isMastered ? '⭐ Done' : '+${p.xpReward} XP',
@@ -842,8 +865,7 @@ class _LevelMapViewState extends State<LevelMapView> {
                                   : const Color(0xFFD97706),
                         ),
                       ),
-                      if (hasSim) ...[
-                        const SizedBox(width: 4),
+                      if (hasSim)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                           decoration: BoxDecoration(
@@ -855,7 +877,6 @@ class _LevelMapViewState extends State<LevelMapView> {
                             style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.cyan),
                           ),
                         ),
-                      ],
                     ],
                   ),
                 ],
@@ -909,12 +930,30 @@ class _LevelMapViewState extends State<LevelMapView> {
 
     final isUnlocked = widget.state.isLevelUnlocked(c.levelRequired);
     final isCompleted = widget.state.userProgress.isChallengeCompleted(c.id);
+    final isCompact = MediaQuery.sizeOf(context).width < 460;
+
+    final gateButton = ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isCompleted ? AppColors.emerald : (isUnlocked ? AppColors.amber : AppColors.bgSurface),
+        foregroundColor: isCompleted ? Colors.white : (isUnlocked ? const Color(0xFF1E1B4B) : AppColors.textDim),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        minimumSize: const Size(0, 32),
+      ),
+      onPressed: () {
+        SoundEffects.playPop();
+        _showMissionLaunchpad(node);
+      },
+      child: Text(
+        isCompleted ? 'Review' : (isUnlocked ? 'Enter ⚡' : 'Locked 🔒'),
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+      ),
+    );
 
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 420),
         margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16, vertical: 10),
         decoration: BoxDecoration(
           color: isCompleted ? const Color(0xFFECFDF5) : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -938,18 +977,18 @@ class _LevelMapViewState extends State<LevelMapView> {
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: isCompact ? 42 : 48,
+                height: isCompact ? 42 : 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCompleted ? AppColors.emerald.withValues(alpha: 0.15) : AppColors.amber.withValues(alpha: 0.15),
                   border: Border.all(color: isCompleted ? AppColors.emerald : AppColors.amber, width: 2),
                 ),
                 child: Center(
-                  child: Text(isCompleted ? '⚡' : '🚧', style: const TextStyle(fontSize: 22)),
+                  child: Text(isCompleted ? '⚡' : '🚧', style: TextStyle(fontSize: isCompact ? 19 : 22)),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: isCompact ? 10 : 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -992,26 +1031,17 @@ class _LevelMapViewState extends State<LevelMapView> {
                         fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
+                    if (isCompact) ...[
+                      const SizedBox(height: 8),
+                      gateButton,
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isCompleted ? AppColors.emerald : (isUnlocked ? AppColors.amber : AppColors.bgSurface),
-                  foregroundColor: isCompleted ? Colors.white : (isUnlocked ? const Color(0xFF1E1B4B) : AppColors.textDim),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  minimumSize: const Size(0, 32),
-                ),
-                onPressed: () {
-                  SoundEffects.playPop();
-                  _showMissionLaunchpad(node);
-                },
-                child: Text(
-                  isCompleted ? 'Review' : (isUnlocked ? 'Enter ⚡' : 'Locked 🔒'),
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                ),
-              ),
+              if (!isCompact) ...[
+                const SizedBox(width: 8),
+                gateButton,
+              ],
             ],
           ),
         ),
@@ -1047,18 +1077,22 @@ class _LevelMapViewState extends State<LevelMapView> {
             final currentChecklist = widget.state.userProgress.getChecklistFor(p.id);
             final currentCount = currentChecklist.length;
             final pct = totalMaterials > 0 ? (currentCount / totalMaterials * 100).round() : 0;
+            final screenW = MediaQuery.sizeOf(dialogCtx).width;
+            final isNarrow = screenW < 480;
 
             return AlertDialog(
+              insetPadding: EdgeInsets.symmetric(horizontal: isNarrow ? 12 : 40, vertical: 20),
+              actionsOverflowButtonSpacing: 8,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               backgroundColor: Colors.white,
-              titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-              actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              titlePadding: EdgeInsets.fromLTRB(isNarrow ? 16 : 20, 18, isNarrow ? 16 : 20, 10),
+              contentPadding: EdgeInsets.symmetric(horizontal: isNarrow ? 16 : 20),
+              actionsPadding: EdgeInsets.fromLTRB(isNarrow ? 16 : 20, 12, isNarrow ? 16 : 20, 18),
               title: Row(
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: isNarrow ? 42 : 48,
+                    height: isNarrow ? 42 : 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: isMastered ? AppColors.emeraldSoft : AppColors.primarySoft,
@@ -1070,7 +1104,7 @@ class _LevelMapViewState extends State<LevelMapView> {
                     child: Center(
                       child: Text(
                         isMastered ? '⭐' : '🛠️',
-                        style: const TextStyle(fontSize: 24),
+                        style: TextStyle(fontSize: isNarrow ? 20 : 24),
                       ),
                     ),
                   ),
@@ -1079,25 +1113,31 @@ class _LevelMapViewState extends State<LevelMapView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.primarySoft,
-                                borderRadius: BorderRadius.circular(6),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primarySoft,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'LEVEL ${p.levelRequired} • ${p.category.toUpperCase()}',
+                                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.primary),
+                                ),
                               ),
-                              child: Text(
-                                'LEVEL ${p.levelRequired} • ${p.category.toUpperCase()}',
-                                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.primary),
+                              Text(
+                                '+${p.xpReward} XP',
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.amber),
                               ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              '+${p.xpReward} XP',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.amber),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -1110,7 +1150,7 @@ class _LevelMapViewState extends State<LevelMapView> {
                 ],
               ),
               content: SizedBox(
-                width: 460,
+                width: math.min(460.0, screenW - 48),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1159,22 +1199,28 @@ class _LevelMapViewState extends State<LevelMapView> {
                       const SizedBox(height: 14),
 
                       // Interactive Supplies Mini Checklist
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Workshop Supplies Needed:',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textMain),
-                          ),
-                          Text(
-                            '$currentCount / $totalMaterials gathered ($pct%)',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: pct == 100 ? AppColors.emerald : AppColors.amber,
+                      SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            const Text(
+                              'Workshop Supplies Needed:',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textMain),
                             ),
-                          ),
-                        ],
+                            Text(
+                              '$currentCount / $totalMaterials gathered ($pct%)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: pct == 100 ? AppColors.emerald : AppColors.amber,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 6),
                       ClipRRect(
@@ -1295,20 +1341,27 @@ class _LevelMapViewState extends State<LevelMapView> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final screenW = MediaQuery.sizeOf(ctx).width;
+        final isNarrow = screenW < 480;
         return AlertDialog(
+          insetPadding: EdgeInsets.symmetric(horizontal: isNarrow ? 12 : 40, vertical: 20),
+          actionsOverflowButtonSpacing: 8,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           backgroundColor: Colors.white,
+          titlePadding: EdgeInsets.fromLTRB(isNarrow ? 16 : 24, 20, isNarrow ? 16 : 24, 10),
+          contentPadding: EdgeInsets.symmetric(horizontal: isNarrow ? 16 : 24),
+          actionsPadding: EdgeInsets.fromLTRB(isNarrow ? 16 : 24, 12, isNarrow ? 16 : 24, 20),
           title: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: isNarrow ? 42 : 48,
+                height: isNarrow ? 42 : 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCompleted ? AppColors.emeraldSoft : AppColors.amberSoft,
                 ),
                 child: Center(
-                  child: Text(isCompleted ? '⚡' : '🚧', style: const TextStyle(fontSize: 24)),
+                  child: Text(isCompleted ? '⚡' : '🚧', style: TextStyle(fontSize: isNarrow ? 20 : 24)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1335,45 +1388,47 @@ class _LevelMapViewState extends State<LevelMapView> {
             ],
           ),
           content: SizedBox(
-            width: 440,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Divider(),
-                Text(
-                  c.description,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.4),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      const Text('🎯', style: TextStyle(fontSize: 20)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          '${c.questions.length} Scenario Troubleshooting Puzzles • +${c.xpReward} XP Reward',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!isUnlocked) ...[
-                  const SizedBox(height: 12),
+            width: math.min(440.0, screenW - 48),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(),
                   Text(
-                    '🔒 Complete Level ${c.levelRequired} DIY projects before entering this checkpoint gateway.',
-                    style: const TextStyle(fontSize: 11, color: AppColors.rose),
+                    c.description,
+                    style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.4),
                   ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgSurface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text('🎯', style: TextStyle(fontSize: 20)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${c.questions.length} Scenario Troubleshooting Puzzles • +${c.xpReward} XP Reward',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isUnlocked) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      '🔒 Complete Level ${c.levelRequired} DIY projects before entering this checkpoint gateway.',
+                      style: const TextStyle(fontSize: 11, color: AppColors.rose),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           actions: [
@@ -1494,13 +1549,15 @@ class _LevelMapViewState extends State<LevelMapView> {
             child: ExpansionTile(
               initiallyExpanded: isCurrent || tier.level <= 2,
               leading: Text(tier.icon, style: const TextStyle(fontSize: 24)),
-              title: Row(
+              title: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
                   Text(
                     'Level ${tier.level}: ${tier.title}',
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textMain),
                   ),
-                  const SizedBox(width: 8),
                   if (isCurrent)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1565,39 +1622,48 @@ class _LevelMapViewState extends State<LevelMapView> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Text('⚡', style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  chk.title,
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('⚡', style: TextStyle(fontSize: 18)),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      chk.title,
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain),
+                                    ),
+                                    Text(
+                                      'Unlocks Level ${chk.levelTarget} License',
+                                      style: const TextStyle(fontSize: 10, color: AppColors.amberGlow),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  'Unlocks Level ${chk.levelTarget} License',
-                                  style: const TextStyle(fontSize: 10, color: AppColors.amberGlow),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.amber,
-                            foregroundColor: const Color(0xFF1E1B4B),
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            minimumSize: const Size(0, 32),
+                              ),
+                            ],
                           ),
-                          onPressed: isUnlocked ? () => _handleChallengeTap(chk) : null,
-                          child: const Text('Gateway Quiz', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                        ),
-                      ],
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.amber,
+                              foregroundColor: const Color(0xFF1E1B4B),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              minimumSize: const Size(0, 32),
+                            ),
+                            onPressed: isUnlocked ? () => _handleChallengeTap(chk) : null,
+                            child: const Text('Gateway Quiz', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

@@ -484,25 +484,26 @@ class _StepInfographicWidgetState extends State<StepInfographicWidget> with Sing
                       child: const Icon(Icons.architecture_rounded, size: 14, color: Colors.white),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'STEP ${widget.stepNumber} INFOGRAPHIC BLUEPRINT',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF0369A1),
-                        letterSpacing: 0.6,
+                    Flexible(
+                      child: Text(
+                        'STEP ${widget.stepNumber} INFOGRAPHIC BLUEPRINT',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0369A1),
+                          letterSpacing: 0.6,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 // View Mode Switcher
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
                   children: [
                     _buildModeTab(InfographicMode.blueprint, '📐 CAD Blueprint'),
-                    const SizedBox(width: 4),
                     _buildModeTab(InfographicMode.assembly, '🎨 3D Assembly'),
-                    const SizedBox(width: 4),
                     _buildModeTab(InfographicMode.physics, '⚡ Physics Forces'),
                   ],
                 ),
@@ -523,9 +524,11 @@ class _StepInfographicWidgetState extends State<StepInfographicWidget> with Sing
                   children: [
                     Text('🧰', style: TextStyle(fontSize: 12)),
                     SizedBox(width: 6),
-                    Text(
-                      'PARTS & TOOLS NEEDED FOR THIS STEP:',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.5),
+                    Expanded(
+                      child: Text(
+                        'PARTS & TOOLS NEEDED FOR THIS STEP:',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.5),
+                      ),
                     ),
                   ],
                 ),
@@ -962,6 +965,7 @@ class _StemConceptInfographicWidgetState extends State<StemConceptInfographicWid
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () {
                   SoundEffects.playPop();
@@ -1001,76 +1005,84 @@ class _StemConceptInfographicWidgetState extends State<StemConceptInfographicWid
 
   // Infographic: Sliding Friction vs Rolling Bearing Friction
   Widget _buildCartFrictionInfographic() {
-    return Column(
-      children: [
-        Row(
+    final leftCard = Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFECDD3)),
+      ),
+      child: Column(
+        children: [
+          const Text('❌ Direct Sliding Contact', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFE11D48))),
+          const SizedBox(height: 6),
+          Container(
+            height: 48,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDE68A),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFB45309)),
+            ),
+            child: const Center(
+              child: Text('Raw Cardboard on Floor\nHigh Drag μ = 0.40', textAlign: TextAlign.center, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF78350F))),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text('Stops in 20 cm (Energy Lost to Heat)', textAlign: TextAlign.center, style: TextStyle(fontSize: 9, color: Color(0xFF9F1239), fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+
+    final rightCard = Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Column(
+        children: [
+          const Text('✅ Straw Sleeve Bearing', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF059669))),
+          const SizedBox(height: 6),
+          Container(
+            height: 48,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE0F2FE),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFF0284C7)),
+            ),
+            child: const Center(
+              child: Text('Rotating Wheel + Straw Bore\nRolling Drag μ = 0.02', textAlign: TextAlign.center, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF0369A1))),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text('Rolls 300+ cm (95% Friction Eliminated!)', textAlign: TextAlign.center, style: TextStyle(fontSize: 9, color: Color(0xFF166534), fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 360) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              leftCard,
+              const SizedBox(height: 10),
+              rightCard,
+            ],
+          );
+        }
+        return Row(
           children: [
-            // Left: Sliding Block (High Friction)
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFECDD3)),
-                ),
-                child: Column(
-                  children: [
-                    const Text('❌ Direct Sliding Contact', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFE11D48))),
-                    const SizedBox(height: 6),
-                    Container(
-                      height: 48,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFDE68A),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFB45309)),
-                      ),
-                      child: const Center(
-                        child: Text('Raw Cardboard on Floor\nHigh Drag μ = 0.40', textAlign: TextAlign.center, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF78350F))),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text('Stops in 20 cm (Energy Lost to Heat)', style: TextStyle(fontSize: 9, color: Color(0xFF9F1239), fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ),
+            Expanded(child: leftCard),
             const SizedBox(width: 10),
-            // Right: Straw Sleeve + Wheel (95% Friction Reduction)
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFBBF7D0)),
-                ),
-                child: Column(
-                  children: [
-                    const Text('✅ Straw Sleeve Bearing', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF059669))),
-                    const SizedBox(height: 6),
-                    Container(
-                      height: 48,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F2FE),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF0284C7)),
-                      ),
-                      child: const Center(
-                        child: Text('Rotating Wheel + Straw Bore\nRolling Drag μ = 0.02', textAlign: TextAlign.center, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF0369A1))),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text('Rolls 300+ cm (95% Friction Eliminated!)', style: TextStyle(fontSize: 9, color: Color(0xFF166534), fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              ),
-            ),
+            Expanded(child: rightCard),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 

@@ -48,19 +48,22 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
         const SizedBox(height: 16),
 
         // 2. Filter Bar
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
           children: [
             const Text(
               'Engineering Logbook Entries',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textMain),
             ),
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 _buildFilterButton('All Logs', 'all'),
-                const SizedBox(width: 6),
                 _buildFilterButton('Mastered', 'mastered'),
-                const SizedBox(width: 6),
                 _buildFilterButton('In-Progress', 'progress'),
               ],
             ),
@@ -285,10 +288,16 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Status & Level row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
               children: [
-                Row(
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -307,7 +316,6 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Text(
                       'Level ${p.levelRequired} • ${p.category}',
                       style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
@@ -365,12 +373,14 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
                       children: [
                         Text('📝', style: TextStyle(fontSize: 14)),
                         SizedBox(width: 6),
-                        Text(
-                          'Cadet Reflection & Discovery Log:',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textMain,
+                        Flexible(
+                          child: Text(
+                            'Cadet Reflection & Discovery Log:',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textMain,
+                            ),
                           ),
                         ),
                       ],
@@ -445,8 +455,11 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
             const SizedBox(height: 14),
 
             // Footer progress & Open Blueprint button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 Text(
                   isDone
@@ -512,16 +525,19 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
   void _showStemCertificateDialog(BuildContext context) {
     final user = widget.state.currentUser;
     final completedCount = widget.state.userProgress.completedProjects.length;
+    final screenSize = MediaQuery.sizeOf(context);
+    final isCompact = screenSize.width < 420;
 
     showDialog(
       context: context,
       builder: (ctx) {
+        final maxDialogH = MediaQuery.sizeOf(ctx).height * 0.88;
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
+          insetPadding: EdgeInsets.all(isCompact ? 12 : 16),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 620),
-            padding: const EdgeInsets.all(24),
+            constraints: BoxConstraints(maxWidth: 620, maxHeight: maxDialogH),
+            padding: EdgeInsets.all(isCompact ? 16 : 24),
             decoration: BoxDecoration(
               color: const Color(0xFF0F172A),
               borderRadius: BorderRadius.circular(24),
@@ -534,141 +550,154 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
                 ),
               ],
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Certificate Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.amber.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('⚡', style: TextStyle(fontSize: 18)),
-                        SizedBox(width: 8),
-                        Text(
-                          'MAKERQUEST STEM ACADEMY',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
-                            color: AppColors.amberGlow,
+                        // Certificate Header
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    'CERTIFICATE OF STEM MASTERY',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  const Text(
-                    'This officially certifies that',
-                    style: TextStyle(fontSize: 13, color: AppColors.textMuted, fontStyle: FontStyle.italic),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Cadet Name
-                  Text(
-                    user.name,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.cyan,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    'Has achieved rank Level ${user.currentLevel}: ${user.levelTitle}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.amber,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'For successfully mastering $completedCount hands-on DIY engineering blueprints, gathering workshop materials, and passing troubleshooting scenario diagnostics.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFCBD5E1),
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Official Seal & Signatures
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgSecondary,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Flexible(
-                          child: Column(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('🎖️', style: TextStyle(fontSize: 26)),
-                              SizedBox(height: 4),
-                              Text(
-                                'Verified Blueprint Seal',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMuted),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'MakerQuest STEM Faculty',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  fontStyle: FontStyle.italic,
+                              Text('⚡', style: TextStyle(fontSize: 18)),
+                              SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'MAKERQUEST STEM ACADEMY',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.5,
+                                    color: AppColors.amberGlow,
+                                  ),
                                 ),
-                                textAlign: TextAlign.center,
                               ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Director of Hands-on Learning',
-                                style: TextStyle(fontSize: 10, color: AppColors.textMuted),
-                                textAlign: TextAlign.center,
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: isCompact ? 12 : 16),
+
+                        Text(
+                          'CERTIFICATE OF STEM MASTERY',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isCompact ? 18 : 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        const Text(
+                          'This officially certifies that',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, color: AppColors.textMuted, fontStyle: FontStyle.italic),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Cadet Name
+                        Text(
+                          user.name,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isCompact ? 22 : 26,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.cyan,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        Text(
+                          'Has achieved rank Level ${user.currentLevel}: ${user.levelTitle}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.amber,
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: isCompact ? 6 : 16),
+                          child: Text(
+                            'For successfully mastering $completedCount hands-on DIY engineering blueprints, gathering workshop materials, and passing troubleshooting scenario diagnostics.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFCBD5E1),
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Official Seal & Signatures
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.bgSecondary,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Flexible(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('🎖️', style: TextStyle(fontSize: 26)),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Verified Blueprint Seal',
+                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'MakerQuest STEM Faculty',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Director of Hands-on Learning',
+                                      style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -676,38 +705,38 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
                       ],
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 20),
+                const SizedBox(height: 14),
 
-                  // Actions
-                  Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('Close'),
+                // Sticky bottom actions so Close/Save always remain reachable on short phones
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
                       ),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        onPressed: () {
-                          Navigator.of(ctx).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Certificate downloaded for ${user.name}! 🎓'),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.download_rounded, size: 16),
-                        label: const Text('Save / Print Certificate'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Certificate downloaded for ${user.name}! 🎓'),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.download_rounded, size: 16),
+                      label: const Text('Save / Print Certificate'),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         );

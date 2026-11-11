@@ -103,6 +103,7 @@ class _KidRobotWorkshopHeroAnimationState extends State<KidRobotWorkshopHeroAnim
   @override
   Widget build(BuildContext context) {
     final activeBuild = _buildProjects[_currentBuildIndex];
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 960),
@@ -125,46 +126,47 @@ class _KidRobotWorkshopHeroAnimationState extends State<KidRobotWorkshopHeroAnim
           children: [
             // Workshop Stage Header Ribbon
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16, vertical: 10),
               decoration: const BoxDecoration(
                 color: Color(0xFF0F172A),
                 border: Border(bottom: BorderSide(color: Color(0xFF1E293B))),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Flexible(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.emerald.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppColors.emerald.withValues(alpha: 0.5)),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('🛠️', style: TextStyle(fontSize: 11)),
-                              SizedBox(width: 4),
-                              Text('LIVE WORKSHOP', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7), letterSpacing: 0.8)),
-                            ],
-                          ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.emerald.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: AppColors.emerald.withValues(alpha: 0.5)),
                         ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            'Building: ${activeBuild.name}',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('🛠️', style: TextStyle(fontSize: 11)),
+                            SizedBox(width: 4),
+                            Text('LIVE WORKSHOP', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7), letterSpacing: 0.8)),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'Building: ${activeBuild.name}',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
@@ -173,15 +175,15 @@ class _KidRobotWorkshopHeroAnimationState extends State<KidRobotWorkshopHeroAnim
                         onTap: _onSwitchProject,
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E293B),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: const Color(0xFF334155)),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
+                            children: [
                               Icon(Icons.swap_horiz_rounded, size: 14, color: AppColors.primaryLight),
                               SizedBox(width: 4),
                               Text('Switch Machine', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
@@ -193,14 +195,14 @@ class _KidRobotWorkshopHeroAnimationState extends State<KidRobotWorkshopHeroAnim
                         onTap: _onTestDrive,
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFFEC4899)]),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
+                            children: [
                               Icon(Icons.play_arrow_rounded, size: 14, color: Colors.white),
                               SizedBox(width: 2),
                               Text('Test Run ⚡', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
@@ -233,66 +235,113 @@ class _KidRobotWorkshopHeroAnimationState extends State<KidRobotWorkshopHeroAnim
               ),
             ),
 
-            // Kid & Robot Live Speech Bubbles
+            // Kid & Robot Live Speech Bubbles (Stacked cleanly on mobile)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16, vertical: 10),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
               ),
-              child: Row(
-                children: [
-                  // Kid speech
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Text('🧑‍🔧', style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _kidSpeeches[_speechIndex],
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1E3A8A)),
-                              overflow: TextOverflow.ellipsis,
+              child: isCompact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Text('🧑‍🔧', style: TextStyle(fontSize: 16)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _kidSpeeches[_speechIndex],
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1E3A8A)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFA7F3D0)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Text('🤖', style: TextStyle(fontSize: 16)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _robotSpeeches[_speechIndex],
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF065F46)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        // Kid speech
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Text('🧑‍🔧', style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _kidSpeeches[_speechIndex],
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1E3A8A)),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Robot speech
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Text('🤖', style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _robotSpeeches[_speechIndex],
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF065F46)),
-                              overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(width: 10),
+                        // Robot speech
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Text('🤖', style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _robotSpeeches[_speechIndex],
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF065F46)),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),
@@ -357,12 +406,12 @@ class _KidRobotWorkshopPainter extends CustomPainter {
     _drawSparks(canvas, w, h);
 
     // 4. Draw Kid Inventor (Left Side)
-    final kidX = w * 0.18;
+    final kidX = math.max(38.0, w * 0.16);
     final kidY = benchY - 10;
     _drawKid(canvas, kidX, kidY);
 
     // 5. Draw Robot Assistant (Right Side)
-    final robotX = w * 0.82;
+    final robotX = math.min(w - 38.0, w * 0.84);
     final robotY = benchY - 10;
     _drawRobot(canvas, robotX, robotY);
 
@@ -806,11 +855,13 @@ class _RobotPlanDraftingAnimationState extends State<RobotPlanDraftingAnimation>
   Widget build(BuildContext context) {
     final currentStep = _steps[_stepIndex];
     final progress = _draftingController.value;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 480;
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 860),
       margin: const EdgeInsets.symmetric(vertical: 24),
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(isCompact ? 16 : 28),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(24),
@@ -839,9 +890,12 @@ class _RobotPlanDraftingAnimationState extends State<RobotPlanDraftingAnimation>
               children: [
                 const Text('⚡', style: TextStyle(fontSize: 12)),
                 const SizedBox(width: 6),
-                Text(
-                  'ROBOT ARCHITECT AT WORK FOR ${widget.studentName.toUpperCase()}',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF93C5FD), letterSpacing: 1.0),
+                Flexible(
+                  child: Text(
+                    'ROBOT ARCHITECT AT WORK FOR ${widget.studentName.toUpperCase()}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF93C5FD), letterSpacing: 1.0),
+                  ),
                 ),
               ],
             ),
@@ -887,7 +941,7 @@ class _RobotPlanDraftingAnimationState extends State<RobotPlanDraftingAnimation>
 
           // Dynamic Step Indicator Card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isCompact ? 12 : 16),
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B),
               borderRadius: BorderRadius.circular(16),
@@ -922,6 +976,7 @@ class _RobotPlanDraftingAnimationState extends State<RobotPlanDraftingAnimation>
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             'Step ${_stepIndex + 1} of ${_steps.length}',
                             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF38BDF8)),
@@ -1003,9 +1058,12 @@ class _RobotDraftingBlueprintPainter extends CustomPainter {
     // Center Chassis Outline
     final cx = w * 0.5;
     final cy = h * 0.5;
+    final chassisW = w < 240 ? 72.0 : 90.0;
+    final chassisH = w < 240 ? 58.0 : 70.0;
+    final gearOffset = math.min(80.0, w * 0.28);
     if (penProgress > 0.1) {
       canvas.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy), width: 90, height: 70), const Radius.circular(8)),
+        RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(cx, cy), width: chassisW, height: chassisH), const Radius.circular(8)),
         drawPaint,
       );
     }
@@ -1013,8 +1071,10 @@ class _RobotDraftingBlueprintPainter extends CustomPainter {
     // Rotating Mechanism Gear on blueprint
     if (penProgress > 0.25) {
       final gearAngle = progress * 6 * math.pi;
-      _drawHoloGear(canvas, Offset(cx - 80, cy), 24, gearAngle);
-      _drawHoloGear(canvas, Offset(cx + 80, cy), 18, -gearAngle);
+      final r1 = w < 240 ? 18.0 : 24.0;
+      final r2 = w < 240 ? 14.0 : 18.0;
+      _drawHoloGear(canvas, Offset(cx - gearOffset, cy), r1, gearAngle);
+      _drawHoloGear(canvas, Offset(cx + gearOffset, cy), r2, -gearAngle);
     }
 
     // Kinematic vectors & dimensions
@@ -1453,10 +1513,12 @@ class _AnimatedCadetMarqueeTickerState extends State<AnimatedCadetMarqueeTicker>
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 420;
     final repeated = [...widget.items, ...widget.items];
     return Container(
       color: const Color(0xFF0F172A),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 10 : 16, vertical: 9),
       child: Row(
         children: [
           AnimatedBuilder(
@@ -1464,7 +1526,7 @@ class _AnimatedCadetMarqueeTickerState extends State<AnimatedCadetMarqueeTicker>
             builder: (context, _) {
               final scale = 0.85 + (_pulseController.value * 0.35);
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: isCompact ? 7 : 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.rose.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -1493,9 +1555,9 @@ class _AnimatedCadetMarqueeTickerState extends State<AnimatedCadetMarqueeTicker>
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Text(
-                      'LIVE CADET ACTIVITY',
-                      style: TextStyle(
+                    Text(
+                      isCompact ? 'LIVE CADETS' : 'LIVE CADET ACTIVITY',
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFFFDA4AF),
@@ -1507,7 +1569,7 @@ class _AnimatedCadetMarqueeTickerState extends State<AnimatedCadetMarqueeTicker>
               );
             },
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: isCompact ? 8 : 14),
           Expanded(
             child: SingleChildScrollView(
               controller: _scrollController,
@@ -1610,10 +1672,13 @@ class _AnimatedParentImpactMetersState extends State<AnimatedParentImpactMeters>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          m.label,
-                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.textMain),
+                        Expanded(
+                          child: Text(
+                            m.label,
+                            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.textMain),
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           m.valText,
                           style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: m.color),
@@ -1772,12 +1837,14 @@ class _AnimatedScrapToRobotShowcaseState extends State<AnimatedScrapToRobotShowc
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 820;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isDesktop = screenW >= 820;
+    final isTiny = screenW < 420;
     final rocketPct = (_selectedBadgeIndex + 1) / _badges.length;
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isDesktop ? 28 : 18),
+      padding: EdgeInsets.all(isDesktop ? 28 : (isTiny ? 14 : 18)),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -1882,8 +1949,11 @@ class _AnimatedScrapToRobotShowcaseState extends State<AnimatedScrapToRobotShowc
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     Text(
                       'Rank Lv.${_selectedBadgeIndex + 1}: ${_badges[_selectedBadgeIndex].title}',
@@ -1952,12 +2022,14 @@ class _AnimatedScrapToRobotShowcaseState extends State<AnimatedScrapToRobotShowc
                               child: Text(b.icon, style: const TextStyle(fontSize: 16)),
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              b.title,
-                              style: TextStyle(
-                                color: selected ? Colors.white : const Color(0xFFCBD5E1),
-                                fontSize: 11,
-                                fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                            Flexible(
+                              child: Text(
+                                b.title,
+                                style: TextStyle(
+                                  color: selected ? Colors.white : const Color(0xFFCBD5E1),
+                                  fontSize: 11,
+                                  fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
