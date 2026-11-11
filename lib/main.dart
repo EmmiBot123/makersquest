@@ -14,6 +14,7 @@ import 'widgets/badges_grid_view.dart';
 import 'widgets/frosted_glass_background.dart';
 import 'widgets/maker_notebook_view.dart';
 import 'widgets/marketing_page_view.dart';
+import 'widgets/whatsapp_brand_logo.dart';
 import 'services/external_launcher.dart';
 import 'services/sound_effects.dart';
 
@@ -194,10 +195,10 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
           Padding(
             padding: const EdgeInsets.only(right: 10),
             child: OutlinedButton.icon(
-              icon: const Icon(Icons.chat_rounded, size: 15, color: Color(0xFF16A34A)),
+              icon: const WhatsAppBrandLogo(size: 19),
               label: const Text(
                 'WhatsApp ${ExternalLauncher.whatsAppPhoneDisplay}',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF065F46)),
               ),
               style: OutlinedButton.styleFrom(
                 backgroundColor: const Color(0xFFF0FDF4),
@@ -218,7 +219,7 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
             tooltip: 'WhatsApp Helpline (${ExternalLauncher.whatsAppPhoneDisplay})',
             visualDensity: VisualDensity.compact,
             constraints: isTiny ? const BoxConstraints(minWidth: 36, minHeight: 36) : null,
-            icon: Icon(Icons.chat_rounded, color: const Color(0xFF16A34A), size: isTiny ? 20 : 24),
+            icon: WhatsAppBrandLogo(size: isTiny ? 20 : 24),
             onPressed: () {
               SoundEffects.playPop();
               ExternalLauncher.openWhatsApp(
@@ -298,7 +299,7 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
               value: 'whatsapp',
               child: Row(
                 children: [
-                  Icon(Icons.chat_rounded, size: 18, color: Color(0xFF16A34A)),
+                  WhatsAppBrandLogo(size: 19),
                   SizedBox(width: 10),
                   Flexible(
                     child: Text(

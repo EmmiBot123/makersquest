@@ -17,6 +17,7 @@ import 'robot_boost_flight_overlay.dart';
 import 'stem_infographics.dart';
 import 'talking_robot_guide.dart';
 import 'frosted_glass_background.dart';
+import 'whatsapp_brand_logo.dart';
 
 bool get _isRunningTests =>
     WidgetsBinding.instance.runtimeType.toString().contains('Test');
@@ -1446,7 +1447,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
             SoundEffects.playPop();
             ExternalLauncher.openWhatsApp();
           },
-          child: const Icon(Icons.chat_rounded, size: 24),
+          child: const WhatsAppBrandLogo(size: 30, inverted: true),
         ),
         body: SafeArea(
           bottom: false,
@@ -1627,22 +1628,51 @@ class _MarketingPageViewState extends State<MarketingPageView>
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 if (showWideNav)
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.chat_rounded, size: 15, color: Color(0xFF16A34A)),
-                    label: const Text(
-                      ExternalLauncher.whatsAppPhoneDisplay,
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF15803D)),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF0FDF4),
-                      side: const BorderSide(color: Color(0xFF86EFAC)),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    ),
-                    onPressed: () {
+                  InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
                       SoundEffects.playPop();
                       ExternalLauncher.openWhatsApp();
                     },
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(6, 5, 12, 5),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.94),
+                            const Color(0xFFECFDF5),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: const Color(0xFF4ADE80).withValues(alpha: 0.78),
+                          width: 1.3,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF22C55E).withValues(alpha: 0.14),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          WhatsAppBrandLogo(size: 22),
+                          SizedBox(width: 7),
+                          Text(
+                            ExternalLauncher.whatsAppPhoneDisplay,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                              color: Color(0xFF065F46),
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 if (widget.questState.isEnrolled)
                   ElevatedButton.icon(
@@ -2902,7 +2932,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
                   runSpacing: 8,
                   children: [
                     ElevatedButton.icon(
-                      icon: const Icon(Icons.chat_rounded, size: 15),
+                      icon: const WhatsAppBrandLogo(size: 17, inverted: true),
                       label: const Text(
                         'Chat on WhatsApp (${ExternalLauncher.whatsAppPhoneDisplay})',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:makerquest/main.dart';
 import 'package:makerquest/services/external_launcher.dart';
+import 'package:makerquest/widgets/whatsapp_brand_logo.dart';
 
 void main() {
   group('WhatsApp Connection Unit & Widget Tests', () {
@@ -34,8 +35,9 @@ void main() {
       await tester.pumpWidget(const MakerQuestApp());
       await tester.pumpAndSettle();
 
-      // Top navigation, FAB tooltip, and minimal footer expose +918075971988
+      // Top navigation, FAB tooltip, custom vector WhatsApp logos & minimal footer expose +918075971988
       expect(find.textContaining('+918075971988'), findsWidgets);
+      expect(find.byType(WhatsAppBrandLogo), findsNWidgets(2));
       expect(find.byTooltip('WhatsApp Mentor Helpline: +918075971988'), findsOneWidget);
 
       // Navigate to Step 4 (Pass & Mentor Help) & verify WhatsApp CTA + Copy Number
@@ -46,6 +48,7 @@ void main() {
       await tester.ensureVisible(chatBtn);
       await tester.pumpAndSettle();
       expect(chatBtn, findsOneWidget);
+      expect(find.byType(WhatsAppBrandLogo), findsNWidgets(3));
 
       final copyBtn = find.text('Copy Number');
       expect(copyBtn, findsOneWidget);
