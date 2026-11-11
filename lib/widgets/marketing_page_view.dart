@@ -7,9 +7,13 @@ import '../services/quest_state.dart';
 import '../services/sound_effects.dart';
 import '../theme/app_theme.dart';
 import 'kid_robot_builder_animation.dart';
+import 'robot_boost_flight_overlay.dart';
 import 'stem_infographics.dart';
 import 'talking_robot_guide.dart';
 import 'frosted_glass_background.dart';
+
+bool get _isRunningTests =>
+    WidgetsBinding.instance.runtimeType.toString().contains('Test');
 
 class MarketingPageView extends StatefulWidget {
   final QuestState questState;
@@ -25,14 +29,15 @@ class MarketingPageView extends StatefulWidget {
   State<MarketingPageView> createState() => _MarketingPageViewState();
 }
 
-class _MarketingPageViewState extends State<MarketingPageView> {
+class _MarketingPageViewState extends State<MarketingPageView>
+    with SingleTickerProviderStateMixin {
   // Guided Stage Index:
   // 0: Meet Bolts (Intro + Scrap-to-Robot bench)
   // 1: Play With Examples (4 interactive physics demos)
   // 2: Your Plan (Lightweight interactive plan builder + drafting hologram)
   // 3: Cadet Pass (Minimal ₹199 unlock card + Ask Bolts FAQ + WhatsApp help)
   int _activeStage = 0;
-  int _robotEntranceKey = 0;
+  final int _robotEntranceKey = 0;
   int _confettiKey = 0;
   int _highFiveCount = 0;
   bool _isRobotTalking = false;
@@ -44,6 +49,21 @@ class _MarketingPageViewState extends State<MarketingPageView> {
   bool _soundEnabled = SoundEffects.enabled;
   String _botMessage =
       'Beep-boop! I am Bolts! Tap scraps on my bench, paint me a new color, or give me a high-five!';
+
+  // Jetpack boost & fly-into-page transition controller
+  late final AnimationController _flightController;
+  int _pendingStage = 0;
+  String? _pendingCustomMessage;
+  bool _isFlightActive = false;
+  bool _stageSwappedForFlight = false;
+
+  final GlobalKey _stageStackKey = GlobalKey();
+  final GlobalKey _dockRobotKey = GlobalKey();
+  final GlobalKey _rightPaneKey = GlobalKey();
+
+  Offset? _takeoffCenter;
+  Offset? _portalTargetCenter;
+  double _takeoffRobotHeight = 184.0;
 
   // Interactive example index (Stage 1)
   int _exampleIdx = 0;
@@ -84,6 +104,12 @@ class _MarketingPageViewState extends State<MarketingPageView> {
   @override
   void initState() {
     super.initState();
+    _flightController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: _isRunningTests ? 60 : 960),
+    )
+      ..addListener(_handleFlightTick)
+      ..addStatusListener(_handleFlightStatus);
     _computeRecommendations();
     _nameController.addListener(() {
       if (mounted) setState(() {});
@@ -92,42 +118,120 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
   @override
   void dispose() {
+    _flightController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
   }
 
-  void _goToStage(int stage, {String? customMessage}) {
-    SoundEffects.playPop();
-    setState(() {
-      _activeStage = stage;
-      _robotEntranceKey++;
-      switch (stage) {
-        case 0:
-          _robotMood = _isDancing ? RobotMood.dancing : RobotMood.greeting;
-          _botMessage = customMessage ??
-              'Beep-boop! I am Bolts! Tap the household scraps on my bench — watch plain cardboard turn into a real moving robot!';
-          break;
-        case 1:
-          _robotMood = _isDancing ? RobotMood.dancing : RobotMood.explaining;
-          _botMessage = customMessage ?? _machineIntros[_exampleIdx];
-          break;
-        case 2:
-          _robotMood = _isDancing
-              ? RobotMood.dancing
-              : (_planReady ? RobotMood.excited : RobotMood.thinking);
-          _botMessage = customMessage ??
-              (_planReady
-                  ? 'Awesome, $_safeName! Here are 3 cardboard machines tailored right for your skills!'
-                  : 'Quick 10-second check! Tell me your name, age & favorite build — I will draft your starter plan.');
-          break;
-        case 3:
-          _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
-          _botMessage = customMessage ??
-              'All 17 projects, 3D blueprints & workshops unlock for ₹199 once! Tap any question below to ask me.';
-          break;
+  void _handleFlightTick() {
+    if (!_isFlightActive || _stageSwappedForFlight) return;
+    if (_flightController.value >= 0.44) {
+      _commitPendingStage();
+    }
+  }
+
+  void _handleFlightStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      if (!_isFlightActive) return;
+      if (!_stageSwappedForFlight) {
+        _commitPendingStage();
       }
+      if (mounted) {
+        setState(() {
+          _isFlightActive = false;
+        });
+      }
+    }
+  }
+
+  void _commitPendingStage() {
+    if (!mounted) return;
+    setState(() {
+      _stageSwappedForFlight = true;
+      _applyStageState(_pendingStage, customMessage: _pendingCustomMessage);
+      _confettiKey++;
     });
+  }
+
+  void _captureFlightAnchors() {
+    final stageRender = _stageStackKey.currentContext?.findRenderObject();
+    if (stageRender is! RenderBox || !stageRender.hasSize) return;
+
+    final dockRender = _dockRobotKey.currentContext?.findRenderObject();
+    if (dockRender is RenderBox && dockRender.hasSize) {
+      _takeoffCenter = dockRender.localToGlobal(
+        dockRender.size.center(Offset.zero),
+        ancestor: stageRender,
+      );
+      _takeoffRobotHeight = dockRender.size.height;
+    }
+
+    final rightRender = _rightPaneKey.currentContext?.findRenderObject();
+    if (rightRender is RenderBox && rightRender.hasSize) {
+      final topLeft = rightRender.localToGlobal(
+        Offset.zero,
+        ancestor: stageRender,
+      );
+      _portalTargetCenter = Offset(
+        topLeft.dx + rightRender.size.width * 0.48,
+        topLeft.dy + math.min(rightRender.size.height * 0.42, 165.0),
+      );
+    }
+  }
+
+  void _applyStageState(int stage, {String? customMessage}) {
+    _activeStage = stage;
+    switch (stage) {
+      case 0:
+        _robotMood = _isDancing ? RobotMood.dancing : RobotMood.greeting;
+        _botMessage = customMessage ??
+            'Beep-boop! I am Bolts! Tap the household scraps on my bench — watch plain cardboard turn into a real moving robot!';
+        break;
+      case 1:
+        _robotMood = _isDancing ? RobotMood.dancing : RobotMood.explaining;
+        _botMessage = customMessage ?? _machineIntros[_exampleIdx];
+        break;
+      case 2:
+        _robotMood = _isDancing
+            ? RobotMood.dancing
+            : (_planReady ? RobotMood.excited : RobotMood.thinking);
+        _botMessage = customMessage ??
+            (_planReady
+                ? 'Awesome, $_safeName! Here are 3 cardboard machines tailored right for your skills!'
+                : 'Quick 10-second check! Tell me your name, age & favorite build — I will draft your starter plan.');
+        break;
+      case 3:
+        _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
+        _botMessage = customMessage ??
+            'All 17 projects, 3D blueprints & workshops unlock for ₹199 once! Tap any question below to ask me.';
+        break;
+    }
+  }
+
+  void _goToStage(int stage, {String? customMessage}) {
+    final targetChanged = stage != _activeStage ||
+        (_isFlightActive && stage != _pendingStage);
+    if (!targetChanged) {
+      SoundEffects.playPop();
+      if (customMessage != null) {
+        setState(() {
+          _applyStageState(stage, customMessage: customMessage);
+        });
+      }
+      return;
+    }
+
+    _captureFlightAnchors();
+    SoundEffects.playBoostFlight();
+    setState(() {
+      _pendingStage = stage;
+      _pendingCustomMessage = customMessage;
+      _stageSwappedForFlight = false;
+      _isFlightActive = true;
+      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
+    });
+    _flightController.forward(from: 0.0);
   }
 
   String get _safeName =>
@@ -875,7 +979,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
           runSpacing: 8,
           children: List.generate(_stageTabs.length, (i) {
             final tab = _stageTabs[i];
-            final active = i == _activeStage;
+            final active = i == (_isFlightActive ? _pendingStage : _activeStage);
             return InkWell(
               onTap: () => _goToStage(i),
               borderRadius: BorderRadius.circular(24),
@@ -939,40 +1043,82 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     required bool isWideStage,
     required bool isTiny,
   }) {
-    return GlassSurface(
-      borderRadius: 26,
-      blurSigma: 18,
-      tintColor: _robotPaint.swatch,
-      topOpacity: 0.78,
-      bottomOpacity: 0.56,
-      borderColor: Colors.white.withValues(alpha: 0.90),
-      borderWidth: 1.5,
-      padding: EdgeInsets.all(isTiny ? 12 : 22),
-      child: isWideStage
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: _buildRobotHostPane(isWideStage: true, isTiny: false),
-                ),
-                const SizedBox(width: 24),
-                Expanded(
-                  flex: 7,
-                  child: _buildStageRightPane(isTiny: false),
-                ),
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildRobotHostPane(isWideStage: false, isTiny: isTiny),
-                const SizedBox(height: 14),
-                _buildStageRightPane(isTiny: isTiny),
-                const SizedBox(height: 14),
-                _buildQuickReplyChips(),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stageW =
+            constraints.maxWidth.isFinite ? constraints.maxWidth : 600.0;
+        final fallbackStart = isWideStage
+            ? Offset(stageW * 0.21, 134.0)
+            : Offset(isTiny ? 56.0 : 66.0, isTiny ? 58.0 : 68.0);
+        final fallbackTarget = isWideStage
+            ? Offset(stageW * 0.68, 175.0)
+            : Offset(stageW * 0.54, 290.0);
+
+        return Stack(
+          key: _stageStackKey,
+          clipBehavior: Clip.none,
+          children: [
+            GlassSurface(
+              borderRadius: 26,
+              blurSigma: 18,
+              tintColor: _robotPaint.swatch,
+              topOpacity: 0.78,
+              bottomOpacity: 0.56,
+              borderColor: Colors.white.withValues(alpha: 0.90),
+              borderWidth: 1.5,
+              padding: EdgeInsets.all(isTiny ? 12 : 22),
+              child: isWideStage
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: _buildRobotHostPane(
+                            isWideStage: true,
+                            isTiny: false,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: 7,
+                          child: _buildStageRightPane(isTiny: false),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildRobotHostPane(isWideStage: false, isTiny: isTiny),
+                        const SizedBox(height: 14),
+                        _buildStageRightPane(isTiny: isTiny),
+                        const SizedBox(height: 14),
+                        _buildQuickReplyChips(),
+                      ],
+                    ),
             ),
+            if (_isFlightActive)
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _flightController,
+                  builder: (context, _) {
+                    return BoostFlightStageOverlay(
+                      progress: _flightController.value,
+                      startCenter: _takeoffCenter ?? fallbackStart,
+                      portalTargetCenter:
+                          _portalTargetCenter ?? fallbackTarget,
+                      robotHeight: _takeoffRobotHeight,
+                      isWideStage: isWideStage,
+                      targetStage: _pendingStage,
+                      paintStyle: _robotPaint,
+                      hat: _robotHat,
+                      isDancing: _isDancing,
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -1028,17 +1174,23 @@ class _MarketingPageViewState extends State<MarketingPageView> {
             ),
             child: Column(
               children: [
-                TalkingRobotCharacter(
-                  mood: _robotMood,
-                  isTalking: _isRobotTalking,
-                  entranceKey: _robotEntranceKey,
-                  confettiBurstKey: _confettiKey,
-                  paintStyle: _robotPaint,
-                  hat: _robotHat,
-                  hasBoosters: _hasBoosters,
-                  isDancing: _isDancing,
-                  height: 184,
-                  onTap: _onTapRobot,
+                Opacity(
+                  opacity: _isFlightActive ? 0.0 : 1.0,
+                  child: KeyedSubtree(
+                    key: _dockRobotKey,
+                    child: TalkingRobotCharacter(
+                      mood: _robotMood,
+                      isTalking: _isRobotTalking,
+                      entranceKey: _robotEntranceKey,
+                      confettiBurstKey: _confettiKey,
+                      paintStyle: _robotPaint,
+                      hat: _robotHat,
+                      hasBoosters: _hasBoosters,
+                      isDancing: _isDancing,
+                      height: 184,
+                      onTap: _onTapRobot,
+                    ),
+                  ),
                 ),
                 const Text(
                   'Tap Bolts for high-fives • Drag or hover in 3D!',
@@ -1085,17 +1237,23 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   width: 1.2,
                 ),
               ),
-              child: TalkingRobotCharacter(
-                mood: _robotMood,
-                isTalking: _isRobotTalking,
-                entranceKey: _robotEntranceKey,
-                confettiBurstKey: _confettiKey,
-                paintStyle: _robotPaint,
-                hat: _robotHat,
-                hasBoosters: _hasBoosters,
-                isDancing: _isDancing,
-                height: isTiny ? 84 : 102,
-                onTap: _onTapRobot,
+              child: Opacity(
+                opacity: _isFlightActive ? 0.0 : 1.0,
+                child: KeyedSubtree(
+                  key: _dockRobotKey,
+                  child: TalkingRobotCharacter(
+                    mood: _robotMood,
+                    isTalking: _isRobotTalking,
+                    entranceKey: _robotEntranceKey,
+                    confettiBurstKey: _confettiKey,
+                    paintStyle: _robotPaint,
+                    hat: _robotHat,
+                    hasBoosters: _hasBoosters,
+                    isDancing: _isDancing,
+                    height: isTiny ? 84 : 102,
+                    onTap: _onTapRobot,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -1272,33 +1430,53 @@ class _MarketingPageViewState extends State<MarketingPageView> {
   }
 
   Widget _buildStageRightPane({required bool isTiny}) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 220),
-      child: KeyedSubtree(
-        key: ValueKey('stage_$_activeStage'),
-        child: _activeStage == 0
-            ? ScrapToRobotWorkbench(
-                onReaction: (msg, {bool complete = false}) {
-                  setState(() {
-                    _robotMood = complete ? RobotMood.excited : RobotMood.explaining;
-                    _botMessage = msg;
-                  });
-                },
-              )
-            : _activeStage == 1
-                ? InteractiveMachinePlayground(
-                    activeIndex: _exampleIdx,
-                    onSelectMachine: _onSelectMachineExample,
-                    onBoltsComment: (msg) {
+    return KeyedSubtree(
+      key: _rightPaneKey,
+      child: AnimatedBuilder(
+        animation: _flightController,
+        builder: (context, child) {
+          if (!_isFlightActive) return child!;
+          final xf =
+              BoostFlightKinematics.evaluatePaneTransition(_flightController.value);
+          return Opacity(
+            opacity: xf.opacity,
+            child: Transform.scale(
+              scale: xf.scale,
+              alignment: Alignment.center,
+              child: child,
+            ),
+          );
+        },
+        child: AnimatedSwitcher(
+          duration: Duration(milliseconds: _isFlightActive ? 0 : 220),
+          child: KeyedSubtree(
+            key: ValueKey('stage_$_activeStage'),
+            child: _activeStage == 0
+                ? ScrapToRobotWorkbench(
+                    onReaction: (msg, {bool complete = false}) {
                       setState(() {
-                        _robotMood = RobotMood.excited;
+                        _robotMood =
+                            complete ? RobotMood.excited : RobotMood.explaining;
                         _botMessage = msg;
                       });
                     },
                   )
-                : _activeStage == 2
-                    ? _buildInteractivePlanCard(isTiny)
-                    : _buildMinimalPassCard(isTiny),
+                : _activeStage == 1
+                    ? InteractiveMachinePlayground(
+                        activeIndex: _exampleIdx,
+                        onSelectMachine: _onSelectMachineExample,
+                        onBoltsComment: (msg) {
+                          setState(() {
+                            _robotMood = RobotMood.excited;
+                            _botMessage = msg;
+                          });
+                        },
+                      )
+                    : _activeStage == 2
+                        ? _buildInteractivePlanCard(isTiny)
+                        : _buildMinimalPassCard(isTiny),
+          ),
+        ),
       ),
     );
   }

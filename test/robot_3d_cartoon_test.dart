@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:makerquest/widgets/frosted_glass_background.dart';
-import 'package:makerquest/widgets/robot_3d_cartoon_painter.dart';
 import 'package:makerquest/widgets/talking_robot_guide.dart';
 
 void main() {

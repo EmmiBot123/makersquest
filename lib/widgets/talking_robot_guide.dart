@@ -8,7 +8,13 @@ import 'frosted_glass_background.dart';
 import 'robot_3d_cartoon_painter.dart';
 
 export 'robot_3d_cartoon_painter.dart'
-    show RobotMood, RobotHat, RobotHatX, RobotPaint, RobotPaintX;
+    show
+        RobotMood,
+        RobotHat,
+        RobotHatX,
+        RobotPaint,
+        RobotPaintX,
+        TalkingRobot3DCartoonPainter;
 
 bool get _isRunningTests =>
     WidgetsBinding.instance.runtimeType.toString().contains('Test');

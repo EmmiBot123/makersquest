@@ -120,3 +120,40 @@ void playSoundBoingImpl() {
   } catch (_) {}
 }
 
+void playSoundBoostImpl() {
+  try {
+    final ctx = _getAudioContext();
+    if (ctx == null) return;
+    final now = ctx.currentTime;
+
+    // Thruster ignition whoosh (ascending dual sweep)
+    final thrustOsc = ctx.createOscillator();
+    final thrustGain = ctx.createGain();
+    thrustOsc.connect(thrustGain);
+    thrustGain.connect(ctx.destination);
+    thrustOsc.type = 'sawtooth';
+    thrustOsc.frequency.setValueAtTime(140, now);
+    thrustOsc.frequency.exponentialRampToValueAtTime(780, now + 0.34);
+    thrustGain.gain.setValueAtTime(0.055, now);
+    thrustGain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+    thrustOsc.start(now);
+    thrustOsc.stop(now + 0.38);
+
+    // Portal sparkle chime when Bolts dives into the target page
+    final chimeNotes = [783.99, 1046.50, 1318.51];
+    for (int i = 0; i < chimeNotes.length; i++) {
+      final osc = ctx.createOscillator();
+      final gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      final t = now + 0.30 + (i * 0.055);
+      osc.frequency.setValueAtTime(chimeNotes[i], t);
+      gain.gain.setValueAtTime(0.065, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.start(t);
+      osc.stop(t + 0.18);
+    }
+  } catch (_) {}
+}
+

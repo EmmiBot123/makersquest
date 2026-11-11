@@ -4,4 +4,5 @@ void playSoundChimeImpl() {}
 void playSoundFanfareImpl() {}
 void playSoundRobotBeepImpl() {}
 void playSoundBoingImpl() {}
+void playSoundBoostImpl() {}
 

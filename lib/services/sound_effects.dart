@@ -35,5 +35,11 @@ class SoundEffects {
     if (!enabled) return;
     playSoundBoingImpl();
   }
+
+  /// Plays a jetpack boost ignition whoosh + portal sparkle chime when Bolts flies into a page
+  static void playBoostFlight() {
+    if (!enabled) return;
+    playSoundBoostImpl();
+  }
 }
 

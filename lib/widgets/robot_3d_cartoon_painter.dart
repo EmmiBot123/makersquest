@@ -245,6 +245,8 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
   final bool isDancing;
   final double userYaw;
   final double userPitch;
+  final bool showGroundShadow;
+  final double boostThrust;
 
   TalkingRobot3DCartoonPainter({
     required this.idle,
@@ -260,6 +262,8 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     required this.isDancing,
     this.userYaw = 0.0,
     this.userPitch = 0.0,
+    this.showGroundShadow = true,
+    this.boostThrust = 0.0,
   });
 
   static const Color _inkColor = Color(0xFF0F172A);
@@ -293,64 +297,66 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     final liftFactor =
         ((jumpOffset + danceHop + boosterLift) / (26.0 * scale)).clamp(0.0, 1.0);
 
-    // 1. Soft Ambient Contact Shadow / Disco Floor Spotlight
-    final shadowCenterX = (w * 0.5) + slideX * 0.85 + danceSwayX * 0.4;
-    final shadowBaseWidth = (isDancing ? 96.0 : 86.0) * (1.0 - 0.18 * liftFactor) * scale;
-    final shadowHeight = (isDancing ? 16.0 : 14.0) * (1.0 - 0.14 * liftFactor) * scale;
+    // 1. Soft Ambient Contact Shadow / Disco Floor Spotlight (skipped during airborne boost flight)
+    if (showGroundShadow) {
+      final shadowCenterX = (w * 0.5) + slideX * 0.85 + danceSwayX * 0.4;
+      final shadowBaseWidth = (isDancing ? 96.0 : 86.0) * (1.0 - 0.18 * liftFactor) * scale;
+      final shadowHeight = (isDancing ? 16.0 : 14.0) * (1.0 - 0.14 * liftFactor) * scale;
 
-    if (isDancing) {
-      final discoBeat = 0.28 + 0.22 * math.sin(idle * 8 * math.pi).abs();
-      final discoColor = (idle * 4).floor().isEven
-          ? const Color(0xFFEC4899)
-          : const Color(0xFF38BDF8);
+      if (isDancing) {
+        final discoBeat = 0.28 + 0.22 * math.sin(idle * 8 * math.pi).abs();
+        final discoColor = (idle * 4).floor().isEven
+            ? const Color(0xFFEC4899)
+            : const Color(0xFF38BDF8);
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(shadowCenterX, groundY),
+            width: shadowBaseWidth * 1.18,
+            height: shadowHeight * 1.12,
+          ),
+          Paint()
+            ..shader = RadialGradient(
+              colors: [
+                discoColor.withValues(alpha: discoBeat),
+                discoColor.withValues(alpha: discoBeat * 0.35),
+                discoColor.withValues(alpha: 0.0),
+              ],
+            ).createShader(
+              Rect.fromCenter(
+                center: Offset(shadowCenterX, groundY),
+                width: shadowBaseWidth * 1.18,
+                height: shadowHeight * 1.12,
+              ),
+            ),
+        );
+      } else {
+        final auraRect = Rect.fromCenter(
+          center: Offset(shadowCenterX, groundY),
+          width: shadowBaseWidth,
+          height: shadowHeight,
+        );
+        canvas.drawOval(
+          auraRect,
+          Paint()
+            ..shader = RadialGradient(
+              colors: [
+                paintStyle.swatch.withValues(alpha: 0.26),
+                paintStyle.swatch.withValues(alpha: 0.0),
+              ],
+            ).createShader(auraRect),
+        );
+      }
+
       canvas.drawOval(
         Rect.fromCenter(
           center: Offset(shadowCenterX, groundY),
-          width: shadowBaseWidth * 1.18,
-          height: shadowHeight * 1.12,
+          width: shadowBaseWidth * 0.62,
+          height: 6.5 * scale,
         ),
         Paint()
-          ..shader = RadialGradient(
-            colors: [
-              discoColor.withValues(alpha: discoBeat),
-              discoColor.withValues(alpha: discoBeat * 0.35),
-              discoColor.withValues(alpha: 0.0),
-            ],
-          ).createShader(
-            Rect.fromCenter(
-              center: Offset(shadowCenterX, groundY),
-              width: shadowBaseWidth * 1.18,
-              height: shadowHeight * 1.12,
-            ),
-          ),
-      );
-    } else {
-      final auraRect = Rect.fromCenter(
-        center: Offset(shadowCenterX, groundY),
-        width: shadowBaseWidth,
-        height: shadowHeight,
-      );
-      canvas.drawOval(
-        auraRect,
-        Paint()
-          ..shader = RadialGradient(
-            colors: [
-              paintStyle.swatch.withValues(alpha: 0.26),
-              paintStyle.swatch.withValues(alpha: 0.0),
-            ],
-          ).createShader(auraRect),
+          ..color = _inkColor.withValues(alpha: 0.22 * (1.0 - 0.32 * liftFactor)),
       );
     }
-
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(shadowCenterX, groundY),
-        width: shadowBaseWidth * 0.62,
-        height: 6.5 * scale,
-      ),
-      Paint()
-        ..color = _inkColor.withValues(alpha: 0.22 * (1.0 - 0.32 * liftFactor)),
-    );
 
     final baseY = groundY - 4.0 * scale - jumpOffset - danceHop - boosterLift + bobOffset;
 
@@ -2430,24 +2436,47 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     canvas.drawPath(nozzlePath, Paint()..color = const Color(0xFF1E293B));
 
     // Volumetric Layered Rocket Plasma Flame!
+    final thrustExtra = boostThrust.clamp(0.0, 1.5);
     final flameLen = (14.0 +
             math.sin(idle * 18 * math.pi).abs() * 11.0 +
-            (isDancing || tapBounce > 0.02 ? 7.0 : 0.0)) *
+            (isDancing || tapBounce > 0.02 ? 7.0 : 0.0) +
+            thrustExtra * 22.0) *
         s;
     final flameBase = Offset(botP.p.dx, botP.p.dy + 5.2 * s);
+    final halfW = (5.8 + thrustExtra * 2.4) * s;
+
+    if (thrustExtra > 0.2) {
+      canvas.drawCircle(
+        Offset(flameBase.dx, flameBase.dy + flameLen * 0.28),
+        halfW * 2.1,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              const Color(0xFF38BDF8).withValues(alpha: 0.38 * (thrustExtra / 1.5)),
+              const Color(0xFFF97316).withValues(alpha: 0.22 * (thrustExtra / 1.5)),
+              Colors.transparent,
+            ],
+          ).createShader(
+            Rect.fromCircle(
+              center: Offset(flameBase.dx, flameBase.dy + flameLen * 0.28),
+              radius: halfW * 2.1,
+            ),
+          ),
+      );
+    }
 
     final outerFlame = Path()
-      ..moveTo(flameBase.dx - 5.8 * s, flameBase.dy)
+      ..moveTo(flameBase.dx - halfW, flameBase.dy)
       ..quadraticBezierTo(
-        flameBase.dx - 4 * s,
-        flameBase.dy + flameLen * 0.6,
+        flameBase.dx - halfW * 0.72,
+        flameBase.dy + flameLen * 0.62,
         flameBase.dx,
         flameBase.dy + flameLen,
       )
       ..quadraticBezierTo(
-        flameBase.dx + 4 * s,
-        flameBase.dy + flameLen * 0.6,
-        flameBase.dx + 5.8 * s,
+        flameBase.dx + halfW * 0.72,
+        flameBase.dy + flameLen * 0.62,
+        flameBase.dx + halfW,
         flameBase.dy,
       )
       ..close();
@@ -2457,18 +2486,23 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: const [Color(0xFFF97316), Color(0xFFEF4444), Color(0x66EF4444)],
+          colors: thrustExtra > 0.3
+              ? const [Color(0xFF38BDF8), Color(0xFFF97316), Color(0x88EF4444)]
+              : const [Color(0xFFF97316), Color(0xFFEF4444), Color(0x66EF4444)],
         ).createShader(outerFlame.getBounds()),
     );
 
     final innerFlame = Path()
       ..moveTo(flameBase.dx - 2.8 * s, flameBase.dy)
-      ..lineTo(flameBase.dx, flameBase.dy + flameLen * 0.66)
+      ..lineTo(flameBase.dx, flameBase.dy + flameLen * 0.68)
       ..lineTo(flameBase.dx + 2.8 * s, flameBase.dy)
       ..close();
     canvas.drawPath(
       innerFlame,
-      Paint()..color = const Color(0xFFFEF08A),
+      Paint()
+        ..color = thrustExtra > 0.3
+            ? const Color(0xFFE0F2FE)
+            : const Color(0xFFFEF08A),
     );
   }
 
@@ -2646,6 +2680,8 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
         oldDelegate.hasBoosters != hasBoosters ||
         oldDelegate.isDancing != isDancing ||
         oldDelegate.userYaw != userYaw ||
-        oldDelegate.userPitch != userPitch;
+        oldDelegate.userPitch != userPitch ||
+        oldDelegate.showGroundShadow != showGroundShadow ||
+        oldDelegate.boostThrust != boostThrust;
   }
 }
