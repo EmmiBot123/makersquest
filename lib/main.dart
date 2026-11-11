@@ -191,43 +191,6 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
         ),
       ),
       actions: [
-        if (screenW >= 940)
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: OutlinedButton.icon(
-              icon: const WhatsAppBrandLogo(size: 19),
-              label: const Text(
-                'WhatsApp ${ExternalLauncher.whatsAppPhoneDisplay}',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF065F46)),
-              ),
-              style: OutlinedButton.styleFrom(
-                backgroundColor: const Color(0xFFF0FDF4),
-                side: const BorderSide(color: Color(0xFF86EFAC)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              ),
-              onPressed: () {
-                SoundEffects.playPop();
-                ExternalLauncher.openWhatsApp(
-                  message:
-                      'Hi MakerQuest Mentor! I am an enrolled cadet (${user.name}) and need quick guidance with a build.',
-                );
-              },
-            ),
-          )
-        else
-          IconButton(
-            tooltip: 'WhatsApp Helpline (${ExternalLauncher.whatsAppPhoneDisplay})',
-            visualDensity: VisualDensity.compact,
-            constraints: isTiny ? const BoxConstraints(minWidth: 36, minHeight: 36) : null,
-            icon: WhatsAppBrandLogo(size: isTiny ? 20 : 24),
-            onPressed: () {
-              SoundEffects.playPop();
-              ExternalLauncher.openWhatsApp(
-                message:
-                    'Hi MakerQuest Mentor! I am an enrolled cadet (${user.name}) and need quick guidance with a build.',
-              );
-            },
-          ),
         if (screenW >= 750)
           Padding(
             padding: const EdgeInsets.only(right: 12),

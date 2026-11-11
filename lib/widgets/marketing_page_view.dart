@@ -1565,7 +1565,6 @@ class _MarketingPageViewState extends State<MarketingPageView>
 
   Widget _buildTopNavigation(BuildContext context) {
     final screenW = MediaQuery.sizeOf(context).width;
-    final showWideNav = screenW >= 720;
     final isTiny = screenW < 420;
 
     return GlassChromeBar(
@@ -1627,53 +1626,6 @@ class _MarketingPageViewState extends State<MarketingPageView>
               runSpacing: 6,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (showWideNav)
-                  InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () {
-                      SoundEffects.playPop();
-                      ExternalLauncher.openWhatsApp();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(6, 5, 12, 5),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.94),
-                            const Color(0xFFECFDF5),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: const Color(0xFF4ADE80).withValues(alpha: 0.78),
-                          width: 1.3,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF22C55E).withValues(alpha: 0.14),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          WhatsAppBrandLogo(size: 22),
-                          SizedBox(width: 7),
-                          Text(
-                            ExternalLauncher.whatsAppPhoneDisplay,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 12,
-                              color: Color(0xFF065F46),
-                              letterSpacing: -0.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 if (widget.questState.isEnrolled)
                   ElevatedButton.icon(
                     icon: Icon(Icons.handyman_rounded, size: isTiny ? 14 : 16),
