@@ -176,3 +176,45 @@ void playSoundBoostImpl() {
   } catch (_) {}
 }
 
+void playSoundPowerUpImpl() {
+  try {
+    final ctx = _getAudioContext();
+    if (ctx == null) return;
+    final now = ctx.currentTime;
+    final notes = [330.0, 440.0, 659.25, 880.0, 1318.51];
+    for (int i = 0; i < notes.length; i++) {
+      final osc = ctx.createOscillator();
+      final gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = i.isEven ? 'triangle' : 'sine';
+      final t = now + (i * 0.06);
+      osc.frequency.setValueAtTime(notes[i], t);
+      gain.gain.setValueAtTime(0.09, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.start(t);
+      osc.stop(t + 0.18);
+    }
+  } catch (_) {}
+}
+
+void playSoundBackflipImpl() {
+  try {
+    final ctx = _getAudioContext();
+    if (ctx == null) return;
+    final now = ctx.currentTime;
+    final osc = ctx.createOscillator();
+    final gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(340, now);
+    osc.frequency.exponentialRampToValueAtTime(980, now + 0.18);
+    osc.frequency.exponentialRampToValueAtTime(520, now + 0.36);
+    gain.gain.setValueAtTime(0.10, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+    osc.start(now);
+    osc.stop(now + 0.38);
+  } catch (_) {}
+}
+

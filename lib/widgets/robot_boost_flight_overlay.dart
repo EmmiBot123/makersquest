@@ -264,6 +264,7 @@ class BoostFlightStageOverlay extends StatelessWidget {
   final RobotPaint paintStyle;
   final RobotHat hat;
   final bool isDancing;
+  final bool isRainbowMode;
 
   const BoostFlightStageOverlay({
     super.key,
@@ -276,6 +277,7 @@ class BoostFlightStageOverlay extends StatelessWidget {
     required this.paintStyle,
     required this.hat,
     required this.isDancing,
+    this.isRainbowMode = false,
   });
 
   static String _warpBannerText(int stage) {
@@ -417,6 +419,7 @@ class BoostFlightStageOverlay extends StatelessWidget {
                             userPitch: pose.pitch,
                             showGroundShadow: false,
                             boostThrust: pose.boostThrust,
+                            isRainbowMode: isRainbowMode,
                           ),
                         ),
                       ),

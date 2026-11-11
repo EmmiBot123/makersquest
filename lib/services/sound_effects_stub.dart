@@ -5,4 +5,6 @@ void playSoundFanfareImpl() {}
 void playSoundRobotBeepImpl() {}
 void playSoundBoingImpl() {}
 void playSoundBoostImpl() {}
+void playSoundPowerUpImpl() {}
+void playSoundBackflipImpl() {}
 

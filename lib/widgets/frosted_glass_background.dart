@@ -50,6 +50,7 @@ class FrostedCloudBackdrop extends StatefulWidget {
 class _FrostedCloudBackdropState extends State<FrostedCloudBackdrop>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  Offset _parallax = Offset.zero;
 
   @override
   void initState() {
@@ -84,28 +85,51 @@ class _FrostedCloudBackdropState extends State<FrostedCloudBackdrop>
     super.dispose();
   }
 
+  void _updateParallax(Offset localPos, Size size) {
+    if (_isRunningTests || widget.paused || size.width <= 0 || size.height <= 0) {
+      return;
+    }
+    final nx = ((localPos.dx / size.width) - 0.5) * 2.0;
+    final ny = ((localPos.dy / size.height) - 0.5) * 2.0;
+    final next = Offset(nx.clamp(-1.0, 1.0), ny.clamp(-1.0, 1.0));
+    if ((next - _parallax).distance > 0.025) {
+      setState(() => _parallax = next);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Positioned.fill(
-          child: RepaintBoundary(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                return CustomPaint(
-                  painter: _FrostedCloudBackdropPainter(
-                    progress: _controller.value,
-                    accentColor: widget.accentColor,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxSize = constraints.biggest;
+        return Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerHover: (e) => _updateParallax(e.localPosition, boxSize),
+          onPointerMove: (e) => _updateParallax(e.localPosition, boxSize),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, _) {
+                      return CustomPaint(
+                        painter: _FrostedCloudBackdropPainter(
+                          progress: _controller.value,
+                          accentColor: widget.accentColor,
+                          parallax: _parallax,
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              widget.child,
+            ],
           ),
-        ),
-        widget.child,
-      ],
+        );
+      },
     );
   }
 }
@@ -113,10 +137,12 @@ class _FrostedCloudBackdropState extends State<FrostedCloudBackdrop>
 class _FrostedCloudBackdropPainter extends CustomPainter {
   final double progress;
   final Color? accentColor;
+  final Offset parallax;
 
   const _FrostedCloudBackdropPainter({
     required this.progress,
     this.accentColor,
+    this.parallax = Offset.zero,
   });
 
   @override
@@ -126,6 +152,8 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
     if (w <= 0 || h <= 0) return;
 
     final theta = progress * 2 * math.pi;
+    final pxShift = parallax.dx * 18.0;
+    final pyShift = parallax.dy * 14.0;
 
     // 1. Airy Frosted Studio Base Gradient
     final basePaint = Paint()
@@ -142,15 +170,15 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), basePaint);
 
-    // 2. Seamless Drifting Pastel Cloud Orbs (soft radial gradients behind glass cards)
+    // 2. Seamless Drifting Pastel Cloud Orbs (soft radial gradients + pointer parallax)
     final accent = accentColor ?? const Color(0xFF6366F1);
     final baseSpan = math.max(w, h);
 
     _drawCloudOrb(
       canvas,
       center: Offset(
-        w * (0.16 + 0.08 * math.sin(theta)),
-        h * (0.18 + 0.07 * math.cos(theta)),
+        w * (0.16 + 0.08 * math.sin(theta)) + pxShift * 0.9,
+        h * (0.18 + 0.07 * math.cos(theta)) + pyShift * 0.9,
       ),
       radius: baseSpan * (0.36 + 0.03 * math.sin(theta * 2)),
       color: const Color(0xFF38BDF8),
@@ -160,8 +188,8 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
     _drawCloudOrb(
       canvas,
       center: Offset(
-        w * (0.84 + 0.07 * math.cos(theta + 0.8)),
-        h * (0.20 + 0.08 * math.sin(theta)),
+        w * (0.84 + 0.07 * math.cos(theta + 0.8)) - pxShift * 1.1,
+        h * (0.20 + 0.08 * math.sin(theta)) + pyShift * 0.7,
       ),
       radius: baseSpan * (0.38 + 0.03 * math.cos(theta * 2)),
       color: accent,
@@ -171,8 +199,8 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
     _drawCloudOrb(
       canvas,
       center: Offset(
-        w * (0.24 + 0.09 * math.cos(theta + 2.1)),
-        h * (0.80 + 0.07 * math.sin(theta + 1.4)),
+        w * (0.24 + 0.09 * math.cos(theta + 2.1)) + pxShift * 0.6,
+        h * (0.80 + 0.07 * math.sin(theta + 1.4)) - pyShift * 0.8,
       ),
       radius: baseSpan * (0.34 + 0.025 * math.sin(theta)),
       color: const Color(0xFF34D399),
@@ -182,8 +210,8 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
     _drawCloudOrb(
       canvas,
       center: Offset(
-        w * (0.80 + 0.08 * math.sin(theta + 2.6)),
-        h * (0.82 + 0.06 * math.cos(theta + 0.5)),
+        w * (0.80 + 0.08 * math.sin(theta + 2.6)) - pxShift * 0.8,
+        h * (0.82 + 0.06 * math.cos(theta + 0.5)) - pyShift * 1.0,
       ),
       radius: baseSpan * (0.30 + 0.025 * math.cos(theta)),
       color: const Color(0xFFFBBF24),
@@ -217,8 +245,9 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
     ];
 
     for (final p in particles) {
-      final px = w * p.x + math.sin(theta + p.phase) * 14;
-      final py = h * p.y + math.cos(theta + p.phase) * 12;
+      final depthScale = p.isSpark ? 1.2 : 0.7;
+      final px = w * p.x + math.sin(theta + p.phase) * 14 + pxShift * depthScale;
+      final py = h * p.y + math.cos(theta + p.phase) * 12 + pyShift * depthScale;
       final shimmer = 0.55 + 0.45 * math.sin(theta * 2 + p.phase);
 
       if (p.isSpark) {
@@ -283,7 +312,8 @@ class _FrostedCloudBackdropPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _FrostedCloudBackdropPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-        oldDelegate.accentColor != accentColor;
+        oldDelegate.accentColor != accentColor ||
+        oldDelegate.parallax != parallax;
   }
 }
 

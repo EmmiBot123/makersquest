@@ -247,6 +247,9 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
   final double userPitch;
   final bool showGroundShadow;
   final double boostThrust;
+  final bool isRainbowMode;
+  final double overchargeProgress;
+  final double flipProgress;
 
   TalkingRobot3DCartoonPainter({
     required this.idle,
@@ -264,7 +267,14 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     this.userPitch = 0.0,
     this.showGroundShadow = true,
     this.boostThrust = 0.0,
+    this.isRainbowMode = false,
+    this.overchargeProgress = 0.0,
+    this.flipProgress = 0.0,
   });
+
+  Color get _activeNeon => isRainbowMode
+      ? HSLColor.fromAHSL(1.0, (idle * 360.0) % 360.0, 0.90, 0.58).toColor()
+      : (overchargeProgress > 0.05 ? const Color(0xFFFACC15) : paintStyle.neonColor);
 
   static const Color _inkColor = Color(0xFF0F172A);
   static const double _fov = 360.0;
@@ -358,10 +368,26 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
       );
     }
 
-    final baseY = groundY - 4.0 * scale - jumpOffset - danceHop - boosterLift + bobOffset;
+    final flipLift =
+        flipProgress > 0.001 && flipProgress < 0.999
+            ? math.sin(flipProgress * math.pi) * 28.0 * scale
+            : 0.0;
+    final baseY = groundY -
+        4.0 * scale -
+        jumpOffset -
+        flipLift -
+        danceHop -
+        boosterLift +
+        bobOffset;
 
     canvas.translate(cx, baseY);
     canvas.scale(scale);
+
+    if (flipProgress > 0.001 && flipProgress < 0.999) {
+      canvas.translate(0, -60);
+      canvas.rotate(-flipProgress * 2.0 * math.pi);
+      canvas.translate(0, 60);
+    }
 
     // Squash & stretch cartoon physics!
     double stretchY = 1.0;
@@ -1096,7 +1122,12 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     canvas.save();
     canvas.clipPath(innerPath);
 
-    final gearAngle = idle * 2 * math.pi * (isTalking || isDancing ? 2.4 : 1.0);
+    final gearAngle = idle *
+        2 *
+        math.pi *
+        (overchargeProgress > 0.05
+            ? 3.6
+            : (isTalking || isDancing ? 2.4 : 1.0));
     // 3D Extruded shadow layer of cog
     final gearBack = project(const _Vec3(-5.8, -39.5, 18.8));
     _draw3DGear(
@@ -1121,9 +1152,13 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
     final ledPulse = 0.65 + 0.35 * math.sin(idle * 6 * math.pi);
     final gemCenter = project(const _Vec3(8.5, -40.0, 20.5));
     final gemR = 4.6 * gemCenter.scale * (0.94 + 0.1 * ledPulse);
-    final gemColor = mood == RobotMood.excited || isDancing
-        ? const Color(0xFF34D399)
-        : paintStyle.neonColor;
+    final gemColor = overchargeProgress > 0.05
+        ? const Color(0xFFFDE047)
+        : (isRainbowMode
+            ? _activeNeon
+            : (mood == RobotMood.excited || isDancing
+                ? const Color(0xFF34D399)
+                : paintStyle.neonColor));
     canvas.drawCircle(
       gemCenter.p,
       gemR * 2.1,
@@ -1310,8 +1345,9 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
         : (mood == RobotMood.thinking ? 1.5 : math.sin(headYaw) * 1.4);
     final pupilShiftY = mood == RobotMood.thinking ? -1.8 : 0.0;
 
-    final eyeGlowColor =
-        isJoySquint ? const Color(0xFF34D399) : paintStyle.neonColor;
+    final eyeGlowColor = isRainbowMode || overchargeProgress > 0.05
+        ? _activeNeon
+        : (isJoySquint ? const Color(0xFF34D399) : paintStyle.neonColor);
 
     for (final side in [-1.0, 1.0]) {
       final eyeCenter = project(_Vec3(side * 10.6, -96.5, 22.4));
@@ -2687,7 +2723,34 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
       }
     }
 
-    if (tapBounce > 0.02 || mood == RobotMood.excited || isDancing) {
+    if (overchargeProgress > 0.02) {
+      final pulseAlpha = (math.sin(overchargeProgress * math.pi)).clamp(0.25, 1.0);
+      final sparkPaint = Paint()
+        ..color = const Color(0xFFFDE047).withValues(alpha: pulseAlpha * 0.92)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..strokeCap = StrokeCap.round;
+      for (int i = 0; i < 4; i++) {
+        final a0 = idle * 6 * math.pi + i * (math.pi * 0.5);
+        final r = 46.0 + math.sin(idle * 12 * math.pi + i) * 5.0;
+        final p1 = Offset(math.cos(a0) * r, -64 + math.sin(a0) * r * 1.15);
+        final pMid = Offset(
+          math.cos(a0 + 0.22) * (r + 10),
+          -64 + math.sin(a0 + 0.22) * (r + 10) * 1.15,
+        );
+        final p2 = Offset(
+          math.cos(a0 + 0.44) * r,
+          -64 + math.sin(a0 + 0.44) * r * 1.15,
+        );
+        final bolt = Path()
+          ..moveTo(p1.dx, p1.dy)
+          ..lineTo(pMid.dx, pMid.dy)
+          ..lineTo(p2.dx, p2.dy);
+        canvas.drawPath(bolt, sparkPaint);
+      }
+    }
+
+    if (tapBounce > 0.02 || mood == RobotMood.excited || isDancing || isRainbowMode) {
       final burstPhase = tapBounce > 0.02 ? tapBounce : idle;
       for (int i = 0; i < 6; i++) {
         final ang = -math.pi * 0.88 + (i * math.pi * 0.35);
@@ -2729,6 +2792,9 @@ class TalkingRobot3DCartoonPainter extends CustomPainter {
         oldDelegate.userYaw != userYaw ||
         oldDelegate.userPitch != userPitch ||
         oldDelegate.showGroundShadow != showGroundShadow ||
-        oldDelegate.boostThrust != boostThrust;
+        oldDelegate.boostThrust != boostThrust ||
+        oldDelegate.isRainbowMode != isRainbowMode ||
+        oldDelegate.overchargeProgress != overchargeProgress ||
+        oldDelegate.flipProgress != flipProgress;
   }
 }

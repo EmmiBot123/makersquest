@@ -41,5 +41,17 @@ class SoundEffects {
     if (!enabled) return;
     playSoundBoostImpl();
   }
+
+  /// Plays an electric supercharge power-up triad when feeding Bolts a Power Cell
+  static void playPowerUp() {
+    if (!enabled) return;
+    playSoundPowerUpImpl();
+  }
+
+  /// Plays a playful zippy flip chirp when Bolts performs an aerial backflip
+  static void playBackflip() {
+    if (!enabled) return;
+    playSoundBackflipImpl();
+  }
 }
 

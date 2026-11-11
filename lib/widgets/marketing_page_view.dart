@@ -2,10 +2,14 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/bolts_storage.dart';
+import '../services/bolts_voice_service.dart';
 import '../services/external_launcher.dart';
 import '../services/quest_state.dart';
 import '../services/sound_effects.dart';
+import '../services/stencil_exporter.dart';
 import '../theme/app_theme.dart';
+import 'bolts_free_flight_overlay.dart';
 import 'kid_robot_builder_animation.dart';
 import 'robot_boost_flight_overlay.dart';
 import 'stem_infographics.dart';
@@ -39,6 +43,8 @@ class _MarketingPageViewState extends State<MarketingPageView>
   int _activeStage = 0;
   final int _robotEntranceKey = 0;
   int _confettiKey = 0;
+  int _overchargeKey = 0;
+  int _backflipKey = 0;
   int _highFiveCount = 0;
   bool _isRobotTalking = false;
   RobotMood _robotMood = RobotMood.greeting;
@@ -46,9 +52,24 @@ class _MarketingPageViewState extends State<MarketingPageView>
   RobotHat _robotHat = RobotHat.none;
   bool _hasBoosters = false;
   bool _isDancing = false;
+  bool _isRainbowMode = false;
   bool _soundEnabled = SoundEffects.enabled;
+  bool _voiceEnabled = BoltsVoiceService.enabled;
   String _botMessage =
       'Beep-boop! I am Bolts! Tap scraps on my bench, paint me a new color, or give me a high-five!';
+
+  // Persistent starter XP & mini-game high scores (carries into enrollment!)
+  int _demoXp = 0;
+  final Set<String> _clearedChallenges = {};
+  double _racerBestMeters = 0.0;
+  int _catapultBestStreak = 0;
+  int _skyGearsBest = 0;
+  int _jokeIdx = 0;
+  bool _isFreeFlightActive = false;
+
+  // Interactive command bar & Household scrap matcher
+  final _commandController = TextEditingController();
+  final Set<String> _homeScraps = {'box', 'straws', 'band'};
 
   // Jetpack boost & fly-into-page transition controller
   late final AnimationController _flightController;
@@ -58,10 +79,12 @@ class _MarketingPageViewState extends State<MarketingPageView>
   bool _stageSwappedForFlight = false;
 
   final GlobalKey _stageStackKey = GlobalKey();
+  final GlobalKey _viewportStackKey = GlobalKey();
   final GlobalKey _dockRobotKey = GlobalKey();
   final GlobalKey _rightPaneKey = GlobalKey();
 
   Offset? _takeoffCenter;
+  Offset? _freeFlightStartCenter;
   Offset? _portalTargetCenter;
   double _takeoffRobotHeight = 184.0;
 
@@ -104,6 +127,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
   @override
   void initState() {
     super.initState();
+    _loadSavedBoltsState();
     _flightController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: _isRunningTests ? 80 : 1550),
@@ -116,11 +140,72 @@ class _MarketingPageViewState extends State<MarketingPageView>
     });
   }
 
+  void _loadSavedBoltsState() {
+    final saved = BoltsStorage.load();
+    _robotPaint = RobotPaint.values.firstWhere(
+      (p) => p.name == saved.paintName,
+      orElse: () => RobotPaint.cobalt,
+    );
+    _robotHat = RobotHat.values.firstWhere(
+      (h) => h.name == saved.hatName,
+      orElse: () => RobotHat.none,
+    );
+    _hasBoosters = saved.hasBoosters;
+    _soundEnabled = saved.soundEnabled;
+    SoundEffects.enabled = _soundEnabled;
+    _voiceEnabled = saved.voiceEnabled;
+    BoltsVoiceService.enabled = _voiceEnabled;
+    _isRainbowMode = saved.isRainbowMode;
+    _highFiveCount = saved.highFives;
+    _demoXp = saved.demoXp;
+    _racerBestMeters = saved.racerBestMeters;
+    _catapultBestStreak = saved.catapultBestStreak;
+    _skyGearsBest = saved.skyGearsBest;
+    _clearedChallenges.addAll(saved.clearedChallenges);
+  }
+
+  void _persistBoltsState() {
+    BoltsStorage.save(
+      BoltsSavedState(
+        paintName: _robotPaint.name,
+        hatName: _robotHat.name,
+        hasBoosters: _hasBoosters,
+        soundEnabled: _soundEnabled,
+        voiceEnabled: _voiceEnabled,
+        isRainbowMode: _isRainbowMode,
+        highFives: _highFiveCount,
+        demoXp: _demoXp,
+        racerBestMeters: _racerBestMeters,
+        catapultBestStreak: _catapultBestStreak,
+        skyGearsBest: _skyGearsBest,
+        clearedChallenges: _clearedChallenges,
+      ),
+    );
+  }
+
+  void _awardDemoXp(String milestoneKey, int amount) {
+    if (_clearedChallenges.contains(milestoneKey)) return;
+    setState(() {
+      _clearedChallenges.add(milestoneKey);
+      _demoXp += amount;
+    });
+    _persistBoltsState();
+  }
+
+  void _setBotSpeech(String message, {RobotMood? mood, bool speak = true}) {
+    _botMessage = message;
+    if (mood != null) _robotMood = mood;
+    if (speak) {
+      BoltsVoiceService.speak(message);
+    }
+  }
+
   @override
   void dispose() {
     _flightController.dispose();
     _nameController.dispose();
     _emailController.dispose();
+    _commandController.dispose();
     super.dispose();
   }
 
@@ -148,6 +233,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
 
   void _commitPendingStage() {
     if (!mounted) return;
+    HapticFeedback.lightImpact();
     setState(() {
       _stageSwappedForFlight = true;
       _applyStageState(_pendingStage, customMessage: _pendingCustomMessage);
@@ -157,55 +243,80 @@ class _MarketingPageViewState extends State<MarketingPageView>
 
   void _captureFlightAnchors() {
     final stageRender = _stageStackKey.currentContext?.findRenderObject();
-    if (stageRender is! RenderBox || !stageRender.hasSize) return;
+    if (stageRender is RenderBox && stageRender.hasSize) {
+      final dockRender = _dockRobotKey.currentContext?.findRenderObject();
+      if (dockRender is RenderBox && dockRender.hasSize) {
+        _takeoffCenter = dockRender.localToGlobal(
+          dockRender.size.center(Offset.zero),
+          ancestor: stageRender,
+        );
+        _takeoffRobotHeight = dockRender.size.height;
 
-    final dockRender = _dockRobotKey.currentContext?.findRenderObject();
-    if (dockRender is RenderBox && dockRender.hasSize) {
-      _takeoffCenter = dockRender.localToGlobal(
-        dockRender.size.center(Offset.zero),
-        ancestor: stageRender,
-      );
-      _takeoffRobotHeight = dockRender.size.height;
-    }
+        final viewportRender =
+            _viewportStackKey.currentContext?.findRenderObject();
+        if (viewportRender is RenderBox && viewportRender.hasSize) {
+          final rel = dockRender.localToGlobal(
+            dockRender.size.center(Offset.zero),
+            ancestor: viewportRender,
+          );
+          _freeFlightStartCenter = Offset(
+            rel.dx.clamp(48.0, math.max(56.0, viewportRender.size.width - 48.0)),
+            rel.dy.clamp(76.0, math.max(96.0, viewportRender.size.height - 56.0)),
+          );
+        }
+      }
 
-    final rightRender = _rightPaneKey.currentContext?.findRenderObject();
-    if (rightRender is RenderBox && rightRender.hasSize) {
-      final topLeft = rightRender.localToGlobal(
-        Offset.zero,
-        ancestor: stageRender,
-      );
-      _portalTargetCenter = Offset(
-        topLeft.dx + rightRender.size.width * 0.48,
-        topLeft.dy + math.min(rightRender.size.height * 0.42, 165.0),
-      );
+      final rightRender = _rightPaneKey.currentContext?.findRenderObject();
+      if (rightRender is RenderBox && rightRender.hasSize) {
+        final topLeft = rightRender.localToGlobal(
+          Offset.zero,
+          ancestor: stageRender,
+        );
+        _portalTargetCenter = Offset(
+          topLeft.dx + rightRender.size.width * 0.48,
+          topLeft.dy + math.min(rightRender.size.height * 0.42, 165.0),
+        );
+      }
     }
   }
 
-  void _applyStageState(int stage, {String? customMessage}) {
+  void _applyStageState(int stage, {String? customMessage, bool speak = true}) {
     _activeStage = stage;
     switch (stage) {
       case 0:
-        _robotMood = _isDancing ? RobotMood.dancing : RobotMood.greeting;
-        _botMessage = customMessage ??
-            'Beep-boop! I am Bolts! Tap the household scraps on my bench — watch plain cardboard turn into a real moving robot!';
+        _setBotSpeech(
+          customMessage ??
+              'Beep-boop! I am Bolts! Tap the household scraps on my bench — watch plain cardboard turn into a real moving robot!',
+          mood: _isDancing ? RobotMood.dancing : RobotMood.greeting,
+          speak: speak,
+        );
         break;
       case 1:
-        _robotMood = _isDancing ? RobotMood.dancing : RobotMood.explaining;
-        _botMessage = customMessage ?? _machineIntros[_exampleIdx];
+        _setBotSpeech(
+          customMessage ?? _machineIntros[_exampleIdx],
+          mood: _isDancing ? RobotMood.dancing : RobotMood.explaining,
+          speak: speak,
+        );
         break;
       case 2:
-        _robotMood = _isDancing
-            ? RobotMood.dancing
-            : (_planReady ? RobotMood.excited : RobotMood.thinking);
-        _botMessage = customMessage ??
-            (_planReady
-                ? 'Awesome, $_safeName! Here are 3 cardboard machines tailored right for your skills!'
-                : 'Quick 10-second check! Tell me your name, age & favorite build — I will draft your starter plan.');
+        _setBotSpeech(
+          customMessage ??
+              (_planReady
+                  ? 'Awesome, $_safeName! Here are 3 cardboard machines tailored right for your skills!'
+                  : 'Quick 10-second check! Tell me your name, age & home scraps — I will draft your starter plan.'),
+          mood: _isDancing
+              ? RobotMood.dancing
+              : (_planReady ? RobotMood.excited : RobotMood.thinking),
+          speak: speak,
+        );
         break;
       case 3:
-        _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
-        _botMessage = customMessage ??
-            'All 17 projects, 3D blueprints & workshops unlock for ₹199 once! Tap any question below to ask me.';
+        _setBotSpeech(
+          customMessage ??
+              'All 17 projects, 3D blueprints & workshops unlock for ₹199 once! Tap any question below to ask me.',
+          mood: _isDancing ? RobotMood.dancing : RobotMood.excited,
+          speak: speak,
+        );
         break;
     }
   }
@@ -214,18 +325,24 @@ class _MarketingPageViewState extends State<MarketingPageView>
     final targetChanged = stage != _activeStage ||
         (_isFlightActive && stage != _pendingStage);
     if (!targetChanged) {
+      HapticFeedback.selectionClick();
       SoundEffects.playPop();
-      if (customMessage != null) {
+      if (_isFreeFlightActive || customMessage != null) {
         setState(() {
-          _applyStageState(stage, customMessage: customMessage);
+          _isFreeFlightActive = false;
+          if (customMessage != null) {
+            _applyStageState(stage, customMessage: customMessage);
+          }
         });
       }
       return;
     }
 
+    HapticFeedback.mediumImpact();
     _captureFlightAnchors();
     SoundEffects.playBoostFlight();
     setState(() {
+      _isFreeFlightActive = false;
       _pendingStage = stage;
       _pendingCustomMessage = customMessage;
       _stageSwappedForFlight = false;
@@ -244,89 +361,114 @@ class _MarketingPageViewState extends State<MarketingPageView>
       'Fun fact: Aligning cardboard flutes lengthwise makes a strip 300% stronger!',
       'Tap "2. Examples" anytime to test real cardboard linkages & play the Catapult game!',
     ];
+    late String speech;
     setState(() {
       _highFiveCount++;
       _confettiKey++;
-      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
       if (_highFiveCount == 3) {
         SoundEffects.playFanfare();
-        _botMessage = 'WOOT! 3× High-Five Combo! My cardboard gears are turbo-charged!';
+        speech = 'WOOT! 3× High-Five Combo! My cardboard gears are turbo-charged! (+10 Starter XP)';
       } else if (_highFiveCount == 5) {
         SoundEffects.playFanfare();
-        _botMessage = '5× INVENTOR STREAK! You unlocked maximum Bolts sparkle power!';
+        speech = '5× INVENTOR STREAK! You unlocked maximum Bolts sparkle power!';
       } else if (_highFiveCount % 10 == 0) {
         SoundEffects.playFanfare();
-        _botMessage = '$_highFiveCount× LEGENDARY COMBO! Even my straw wheels are cheering!';
+        speech = '$_highFiveCount× LEGENDARY COMBO! Even my straw wheels are cheering!';
       } else {
         _tapQuipIdx = (_tapQuipIdx + 1) % quips.length;
-        _botMessage = quips[_tapQuipIdx];
+        speech = quips[_tapQuipIdx];
       }
+      _setBotSpeech(
+        speech,
+        mood: _isDancing ? RobotMood.dancing : RobotMood.excited,
+      );
     });
+    if (_highFiveCount >= 3) {
+      _awardDemoXp('highfive_3', 10);
+    }
+    _persistBoltsState();
   }
 
   void _onSelectPaint(RobotPaint paint) {
+    HapticFeedback.selectionClick();
     SoundEffects.playPop();
     setState(() {
       _robotPaint = paint;
       _confettiKey++;
-      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
-      _botMessage =
-          'Whoa, ${paint.label} armor looks awesome on me! Zero paint fumes — pure digital flair!';
+      _setBotSpeech(
+        'Whoa, ${paint.label} armor looks awesome on me! Zero paint fumes — pure digital flair!',
+        mood: _isDancing ? RobotMood.dancing : RobotMood.excited,
+      );
     });
+    _persistBoltsState();
   }
 
   void _onCycleHat() {
+    HapticFeedback.selectionClick();
     final nextHat = _robotHat.next;
     SoundEffects.playRobotBeep();
     setState(() {
       _robotHat = nextHat;
       _confettiKey++;
-      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
+      late String hatMsg;
       switch (nextHat) {
         case RobotHat.cap:
-          _botMessage = 'Maker Cap on! Let\'s build something cool out of Amazon boxes!';
+          hatMsg = 'Maker Cap on! Let\'s build something cool out of Amazon boxes!';
           break;
         case RobotHat.crown:
-          _botMessage = 'Royal Inventor Crown equipped! Bow to the cardboard kingdom!';
+          hatMsg = 'Royal Inventor Crown equipped! Bow to the cardboard kingdom!';
           break;
         case RobotHat.topHat:
-          _botMessage = 'Ta-da! Magic Top Hat ready to turn scrap cardboard into physics!';
+          hatMsg = 'Ta-da! Magic Top Hat ready to turn scrap cardboard into physics!';
           break;
         case RobotHat.visor:
-          _botMessage = 'Cool Cyber Shades activated! Future robotics engineer coming through!';
+          hatMsg = 'Cool Cyber Shades activated! Future robotics engineer coming through!';
           break;
         case RobotHat.none:
-          _botMessage = 'Back to my classic glowing telemetry antenna — beep-boop!';
+          hatMsg = 'Back to my classic glowing telemetry antenna — beep-boop!';
           break;
       }
+      _setBotSpeech(
+        hatMsg,
+        mood: _isDancing ? RobotMood.dancing : RobotMood.excited,
+      );
     });
+    _persistBoltsState();
   }
 
   void _onToggleBoosters() {
+    HapticFeedback.lightImpact();
     SoundEffects.playBoing();
     setState(() {
       _hasBoosters = !_hasBoosters;
       _confettiKey++;
-      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
-      _botMessage = _hasBoosters
-          ? 'TWIN BOOSTERS ENGAGED! Hovering 6 millimeters off the workbench floor!'
-          : 'Boosters parked safely back in the toolbox!';
+      _setBotSpeech(
+        _hasBoosters
+            ? 'TWIN BOOSTERS ENGAGED! Hovering 6 millimeters off the workbench floor!'
+            : 'Boosters parked safely back in the toolbox!',
+        mood: _isDancing ? RobotMood.dancing : RobotMood.excited,
+      );
     });
+    _persistBoltsState();
   }
 
   void _onToggleDance() {
+    HapticFeedback.lightImpact();
     SoundEffects.playFanfare();
     setState(() {
       _isDancing = !_isDancing;
       _confettiKey++;
-      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.greeting;
-      _botMessage = _isDancing
-          ? 'DISCO BOLTS MODE! ♪ Boogie-woogie cardboard shuffle initiated! ♪'
-          : 'Whew, great dance workout! What build should we test next?';
+      _setBotSpeech(
+        _isDancing
+            ? 'DISCO BOLTS MODE! ♪ Boogie-woogie cardboard shuffle initiated! ♪'
+            : 'Whew, great dance workout! What build should we test next?',
+        mood: _isDancing ? RobotMood.dancing : RobotMood.greeting,
+      );
     });
   }
 
   void _onToggleSound() {
+    HapticFeedback.selectionClick();
     setState(() {
       _soundEnabled = !_soundEnabled;
       SoundEffects.enabled = _soundEnabled;
@@ -334,13 +476,254 @@ class _MarketingPageViewState extends State<MarketingPageView>
     if (_soundEnabled) {
       SoundEffects.playRobotBeep();
     }
+    _persistBoltsState();
+  }
+
+  void _onToggleVoice() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _voiceEnabled = !_voiceEnabled;
+      BoltsVoiceService.enabled = _voiceEnabled;
+      if (_voiceEnabled) {
+        SoundEffects.playChime();
+        _setBotSpeech(
+          'Voice module online! I will speak my tips out loud as you explore!',
+          mood: RobotMood.excited,
+        );
+      } else {
+        BoltsVoiceService.stop();
+        _botMessage = 'Voice muted — quiet builder mode ready!';
+      }
+    });
+    _persistBoltsState();
+  }
+
+  void _onFeedPowerCell() {
+    HapticFeedback.mediumImpact();
+    SoundEffects.playPowerUp();
+    setState(() {
+      _overchargeKey++;
+      _confettiKey++;
+      _setBotSpeech(
+        'ZAP! ⚡ Power Cell absorbed — Overdrive Core spinning at 360% speed!',
+        mood: RobotMood.excited,
+      );
+    });
+    _awardDemoXp('power_cell', 10);
+  }
+
+  void _triggerBackflip() {
+    HapticFeedback.mediumImpact();
+    SoundEffects.playBackflip();
+    setState(() {
+      _backflipKey++;
+      _confettiKey++;
+      _setBotSpeech(
+        'WHEEE! 🤸 Full 360° zero-gravity cardboard servo backflip nailed!',
+        mood: RobotMood.excited,
+      );
+    });
+    _awardDemoXp('easter_flip', 5);
+  }
+
+  void _toggleRainbowMode() {
+    HapticFeedback.lightImpact();
+    SoundEffects.playFanfare();
+    setState(() {
+      _isRainbowMode = !_isRainbowMode;
+      _confettiKey++;
+      _setBotSpeech(
+        _isRainbowMode
+            ? 'PRISM HYPER-GLOW ACTIVATED! 🌈 Full-spectrum maker aura engaged!'
+            : 'Back to classic crisp workshop LEDs — ready to build!',
+        mood: RobotMood.excited,
+      );
+    });
+    _persistBoltsState();
+  }
+
+  void _enterFreeFlight() {
+    HapticFeedback.mediumImpact();
+    _captureFlightAnchors();
+    SoundEffects.playBoostFlight();
+    setState(() {
+      _isFlightActive = false;
+      _isFreeFlightActive = true;
+      _setBotSpeech(
+        'FREE-FLIGHT ARCADE! Drag, tap, or use arrow keys to scoop up all 5 spinning gears in 15s!',
+        mood: RobotMood.excited,
+      );
+    });
+  }
+
+  void _handleFreeFlightExit(int collected, bool allCollected) {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _isFreeFlightActive = false;
+      _confettiKey++;
+      if (collected > _skyGearsBest) {
+        _skyGearsBest = collected;
+      }
+      if (allCollected) {
+        SoundEffects.playFanfare();
+        _setBotSpeech(
+          'SKY ACE! ✈️ You caught all 5/5 spinning gears (+25 Starter XP unlocked)!',
+          mood: RobotMood.excited,
+        );
+      } else {
+        SoundEffects.playChime();
+        _setBotSpeech(
+          'Nice flight! Caught $collected/5 spinning gears (Best: $_skyGearsBest/5). Fly again anytime to grab all 5!',
+          mood: RobotMood.greeting,
+        );
+      }
+    });
+    if (allCollected) {
+      _awardDemoXp('sky_ace', 25);
+    } else if (collected > 0) {
+      _awardDemoXp('sky_rookie', 10);
+    }
+    _persistBoltsState();
+  }
+
+  void _tellJoke() {
+    const jokes = [
+      'Why did the cardboard robot cross the desk? To prove glue sticks together! 😄',
+      'What is a rubber-band racer\'s favorite music? Anything with good TORQUE and roll! 🏎️',
+      'Why do I love delivery boxes? Every fold is a free robotics skeleton waiting to wake up! 📦',
+      'What did the scissor lift say to the bookshelf? "Need a 4× boost up there?" ✂️',
+    ];
+    HapticFeedback.selectionClick();
+    SoundEffects.playRobotBeep();
+    setState(() {
+      final joke = jokes[_jokeIdx % jokes.length];
+      _jokeIdx++;
+      _confettiKey++;
+      _setBotSpeech(joke, mood: RobotMood.excited);
+    });
+  }
+
+  void _handleBotCommand(String raw) {
+    final q = raw.trim().toLowerCase();
+    _commandController.clear();
+    if (q.isEmpty) return;
+
+    if (q.contains('flip') || q.contains('spin')) {
+      _triggerBackflip();
+      return;
+    }
+    if (q.contains('rainbow') || q.contains('prism') || q.contains('party')) {
+      _toggleRainbowMode();
+      return;
+    }
+    if (q.contains('charge') || q.contains('battery') || q.contains('power')) {
+      _onFeedPowerCell();
+      return;
+    }
+    if (q.contains('joke') || q.contains('funny') || q.contains('laugh')) {
+      _tellJoke();
+      return;
+    }
+    if (q.contains('dance') || q.contains('disco')) {
+      _onToggleDance();
+      return;
+    }
+    if (q.contains('fly') || q.contains('flight') || q.contains('arcade')) {
+      _enterFreeFlight();
+      return;
+    }
+    if (q.contains('catapult')) {
+      setState(() => _exampleIdx = 4);
+      _goToStage(1, customMessage: _machineIntros[4]);
+      return;
+    }
+    if (q.contains('coaster') || q.contains('marble')) {
+      setState(() => _exampleIdx = 3);
+      _goToStage(1, customMessage: _machineIntros[3]);
+      return;
+    }
+    if (q.contains('claw') || q.contains('grip')) {
+      setState(() => _exampleIdx = 2);
+      _goToStage(1, customMessage: _machineIntros[2]);
+      return;
+    }
+    if (q.contains('racer') || q.contains('car')) {
+      setState(() => _exampleIdx = 1);
+      _goToStage(1, customMessage: _machineIntros[1]);
+      return;
+    }
+    if (q.contains('scissor') || q.contains('lift') || q.contains('example')) {
+      setState(() => _exampleIdx = 0);
+      _goToStage(1, customMessage: _machineIntros[0]);
+      return;
+    }
+    if (q.contains('plan') || q.contains('draft')) {
+      _goToStage(2);
+      return;
+    }
+    if (q.contains('price') ||
+        q.contains('cost') ||
+        q.contains('199') ||
+        q.contains('pass') ||
+        q.contains('buy') ||
+        q.contains('enroll')) {
+      _goToStage(
+        3,
+        customMessage:
+            'Just ₹199 once — never monthly! Unlocks all 17 cardboard machines, 3D stencils & 30-day guarantee.',
+      );
+      return;
+    }
+    if (q.contains('kit') ||
+        q.contains('box') ||
+        q.contains('scrap') ||
+        q.contains('material')) {
+      SoundEffects.playPop();
+      setState(() {
+        _setBotSpeech(
+          'Zero expensive kits needed! Just clean Amazon boxes, straws, wooden skewers, rubber bands & glue.',
+          mood: RobotMood.explaining,
+        );
+      });
+      return;
+    }
+    if (q.contains('school') || q.contains('cbse') || q.contains('icse')) {
+      SoundEffects.playPop();
+      setState(() {
+        _setBotSpeech(
+          'Yes! Each machine teaches real CBSE/ICSE mechanics — levers, torque, elastic energy & linkages!',
+          mood: RobotMood.explaining,
+        );
+      });
+      return;
+    }
+    if (q.contains('whatsapp') || q.contains('help') || q.contains('mentor')) {
+      SoundEffects.playPop();
+      setState(() {
+        _setBotSpeech(
+          'Message our human maker mentors anytime on WhatsApp +918075971988 for instant photo alignment help!',
+          mood: RobotMood.explaining,
+        );
+      });
+      return;
+    }
+
+    SoundEffects.playRobotBeep();
+    setState(() {
+      _setBotSpeech(
+        'Beep! Try typing "backflip", "rainbow", "charge", "fly", "joke", "kit", or "price"!',
+        mood: RobotMood.thinking,
+      );
+    });
   }
 
   void _onSelectMachineExample(int idx) {
     setState(() {
       _exampleIdx = idx;
-      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.explaining;
-      _botMessage = _machineIntros[idx];
+      _setBotSpeech(
+        _machineIntros[idx],
+        mood: _isDancing ? RobotMood.dancing : RobotMood.explaining,
+      );
     });
   }
 
@@ -453,8 +836,10 @@ class _MarketingPageViewState extends State<MarketingPageView>
     setState(() {
       _isDraftingPlan = true;
       _planReady = false;
-      _robotMood = RobotMood.thinking;
-      _botMessage = 'Scanning $_safeName\'s build picks now... sketching your blueprint trajectory!';
+      _setBotSpeech(
+        'Scanning $_safeName\'s build picks now... sketching your blueprint trajectory!',
+        mood: RobotMood.thinking,
+      );
     });
   }
 
@@ -463,10 +848,12 @@ class _MarketingPageViewState extends State<MarketingPageView>
     setState(() {
       _isDraftingPlan = false;
       _planReady = true;
-      _robotMood = RobotMood.excited;
-      _botMessage =
-          'Boom, $_safeName! You are a $_archetype ($_aptitudeScore% match)! Start with these 3 builds:';
+      _setBotSpeech(
+        'Boom, $_safeName! You are a $_archetype ($_aptitudeScore% match)! Start with these 3 builds:',
+        mood: RobotMood.excited,
+      );
     });
+    _awardDemoXp('plan_draft', 10);
   }
 
   void _openCheckoutDialog() {
@@ -488,11 +875,13 @@ class _MarketingPageViewState extends State<MarketingPageView>
         aptitudeScore: _aptitudeScore,
         planPrice: _planPrice,
         currencySymbol: _currencySymbol,
+        bonusXp: _demoXp,
         onPaymentSuccess: (paidName, paidEmail) {
           widget.questState.registerNewCadet(
             name: paidName,
             email: paidEmail,
             avatar: _archetypeIcon,
+            bonusXp: _demoXp,
           );
           Navigator.of(ctx).pop();
           _showCelebrationDialog(paidName);
@@ -503,51 +892,67 @@ class _MarketingPageViewState extends State<MarketingPageView>
 
   void _showCelebrationDialog(String cadetName) {
     SoundEffects.playFanfare();
+    final totalStartXp = 50 + _demoXp;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
-        final isCompact = MediaQuery.sizeOf(ctx).width < 480;
+        final sz = MediaQuery.sizeOf(ctx);
+        final isCompact = sz.width < 480 || sz.height < 700;
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: isCompact ? 12 : 16,
+            vertical: isCompact ? 12 : 24,
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: GlassSurface(
               borderRadius: 24,
               blurSigma: 18,
               tintColor: AppColors.emerald,
-              padding: EdgeInsets.all(isCompact ? 18 : 24),
+              padding: EdgeInsets.all(isCompact ? 14 : 24),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 72,
-                      height: 72,
+                      width: isCompact ? 54 : 72,
+                      height: isCompact ? 54 : 72,
                       decoration: BoxDecoration(
                         color: AppColors.emeraldSoft.withValues(alpha: 0.85),
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.emerald, width: 2),
                       ),
-                      child: const Center(child: Text('🎉', style: TextStyle(fontSize: 36))),
+                      child: Center(
+                        child: Text(
+                          '🎉',
+                          style: TextStyle(fontSize: isCompact ? 28 : 36),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
+                    SizedBox(height: isCompact ? 10 : 16),
+                    Text(
                       'Enrollment Successful! 🏆',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textMain),
+                      style: TextStyle(
+                        fontSize: isCompact ? 18 : 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textMain,
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
-                      'Welcome aboard MakerQuest, Cadet $cadetName!\nYour All-Access Odyssey Pass has been activated with 50 XP starter bonus.',
+                      _demoXp > 0
+                          ? 'Welcome aboard MakerQuest, Cadet $cadetName!\nYour All-Access Odyssey Pass is active with $totalStartXp XP (50 welcome + $_demoXp earned with Bolts!).'
+                          : 'Welcome aboard MakerQuest, Cadet $cadetName!\nYour All-Access Odyssey Pass has been activated with 50 XP starter bonus.',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
+                      style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.45),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: isCompact ? 12 : 20),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.all(isCompact ? 10 : 12),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.65),
                         borderRadius: BorderRadius.circular(12),
@@ -555,7 +960,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
                       ),
                       child: Row(
                         children: [
-                          Text(_archetypeIcon, style: const TextStyle(fontSize: 24)),
+                          Text(_archetypeIcon, style: const TextStyle(fontSize: 22)),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
@@ -569,7 +974,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: isCompact ? 14 : 24),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -582,7 +987,10 @@ class _MarketingPageViewState extends State<MarketingPageView>
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: isCompact ? 11 : 14,
+                          ),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () {
@@ -724,6 +1132,33 @@ class _MarketingPageViewState extends State<MarketingPageView>
                       spacing: 10,
                       runSpacing: 8,
                       children: [
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.download_rounded, size: 16),
+                          label: const Text(
+                            'Download Free A4 Stencil 📐',
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary, width: 1.3),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            SoundEffects.playChime();
+                            StencilExporter.downloadScissorStencil();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Downloaded makerquest-free-scissor-stencil.svg — print at 100% A4 scale!',
+                                ),
+                                backgroundColor: Color(0xFF15803D),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                        ),
                         TextButton(
                           onPressed: () => Navigator.of(ctx).pop(),
                           child: const Text('Close Preview', style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w700)),
@@ -782,7 +1217,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
 
     return FrostedCloudBackdrop(
       accentColor: _robotPaint.swatch,
-      paused: _isFlightActive,
+      paused: _isFlightActive || _isFreeFlightActive,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         floatingActionButton: FloatingActionButton(
@@ -803,73 +1238,90 @@ class _MarketingPageViewState extends State<MarketingPageView>
             children: [
               _buildTopNavigation(context),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    isTiny ? 12 : 24,
-                    isTiny ? 12 : 22,
-                    isTiny ? 12 : 24,
-                    84, // clearance above WhatsApp FAB
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 980),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final stageW = constraints.maxWidth.isFinite
-                              ? constraints.maxWidth
-                              : 600.0;
-                          final fallbackStart = isWideStage
-                              ? Offset(stageW * 0.21, 224.0)
-                              : Offset(isTiny ? 56.0 : 66.0, 166.0);
-                          final fallbackTarget = isWideStage
-                              ? Offset(stageW * 0.68, 265.0)
-                              : Offset(stageW * 0.54, 390.0);
+                child: Stack(
+                  key: _viewportStackKey,
+                  children: [
+                    SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        isTiny ? 12 : 24,
+                        isTiny ? 12 : 22,
+                        isTiny ? 12 : 24,
+                        84, // clearance above WhatsApp FAB
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 980),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final stageW = constraints.maxWidth.isFinite
+                                  ? constraints.maxWidth
+                                  : 600.0;
+                              final fallbackStart = isWideStage
+                                  ? Offset(stageW * 0.21, 224.0)
+                                  : Offset(isTiny ? 56.0 : 66.0, 166.0);
+                              final fallbackTarget = isWideStage
+                                  ? Offset(stageW * 0.68, 265.0)
+                                  : Offset(stageW * 0.54, 390.0);
 
-                          return Stack(
-                            key: _stageStackKey,
-                            clipBehavior: Clip.none,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                              return Stack(
+                                key: _stageStackKey,
+                                clipBehavior: Clip.none,
                                 children: [
-                                  _buildMinimalHeaderStrip(isTiny),
-                                  SizedBox(height: isTiny ? 10 : 16),
-                                  _buildGuidedRobotStage(
-                                    isWideStage: isWideStage,
-                                    isTiny: isTiny,
-                                  ),
-                                  const SizedBox(height: 14),
-                                  _buildMinimalFooter(isTiny),
-                                ],
-                              ),
-                              if (_isFlightActive)
-                                Positioned.fill(
-                                  child: AnimatedBuilder(
-                                    animation: _flightController,
-                                    builder: (context, _) {
-                                      return BoostFlightStageOverlay(
-                                        progress: _flightController.value,
-                                        startCenter:
-                                            _takeoffCenter ?? fallbackStart,
-                                        portalTargetCenter:
-                                            _portalTargetCenter ??
-                                                fallbackTarget,
-                                        robotHeight: _takeoffRobotHeight,
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      _buildMinimalHeaderStrip(isTiny),
+                                      SizedBox(height: isTiny ? 10 : 16),
+                                      _buildGuidedRobotStage(
                                         isWideStage: isWideStage,
-                                        targetStage: _pendingStage,
-                                        paintStyle: _robotPaint,
-                                        hat: _robotHat,
-                                        isDancing: _isDancing,
-                                      );
-                                    },
+                                        isTiny: isTiny,
+                                      ),
+                                      const SizedBox(height: 14),
+                                      _buildMinimalFooter(isTiny),
+                                    ],
                                   ),
-                                ),
-                            ],
-                          );
-                        },
+                                  if (_isFlightActive)
+                                    Positioned.fill(
+                                      child: AnimatedBuilder(
+                                        animation: _flightController,
+                                        builder: (context, _) {
+                                          return BoostFlightStageOverlay(
+                                            progress: _flightController.value,
+                                            startCenter:
+                                                _takeoffCenter ?? fallbackStart,
+                                            portalTargetCenter:
+                                                _portalTargetCenter ??
+                                                    fallbackTarget,
+                                            robotHeight: _takeoffRobotHeight,
+                                            isWideStage: isWideStage,
+                                            targetStage: _pendingStage,
+                                            paintStyle: _robotPaint,
+                                            hat: _robotHat,
+                                            isDancing: _isDancing,
+                                            isRainbowMode: _isRainbowMode,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    if (_isFreeFlightActive)
+                      Positioned.fill(
+                        child: BoltsFreeFlightOverlay(
+                          initialCenter: _freeFlightStartCenter ??
+                              Offset(screenW * 0.35, 240.0),
+                          paintStyle: _robotPaint,
+                          hat: _robotHat,
+                          isRainbowMode: _isRainbowMode,
+                          onExit: _handleFreeFlightExit,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -1016,6 +1468,32 @@ class _MarketingPageViewState extends State<MarketingPageView>
           ),
         ),
         const SizedBox(height: 10),
+        if (_demoXp > 0 || _skyGearsBest > 0) ...[
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7).withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF59E0B)),
+                ),
+                child: Text(
+                  '⭐ +$_demoXp Starter XP${_skyGearsBest > 0 ? ' • ✈️ $_skyGearsBest/5 Gears' : ''} (Carries into Workshop)',
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
         // Minimal Step Selector Tabs
         Wrap(
           alignment: WrapAlignment.center,
@@ -1156,14 +1634,20 @@ class _MarketingPageViewState extends State<MarketingPageView>
       soundEnabled: _soundEnabled,
       onToggleSound: _onToggleSound,
       highFiveCount: _highFiveCount,
+      voiceEnabled: _voiceEnabled,
+      onToggleVoice: _onToggleVoice,
+      onFeedPowerCell: _onFeedPowerCell,
+      onEnterFreeFlight: _enterFreeFlight,
     );
+
+    final hideDockBot = _isFlightActive || _isFreeFlightActive;
 
     if (isWideStage) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -1182,7 +1666,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
             child: Column(
               children: [
                 Opacity(
-                  opacity: _isFlightActive ? 0.0 : 1.0,
+                  opacity: hideDockBot ? 0.0 : 1.0,
                   child: KeyedSubtree(
                     key: _dockRobotKey,
                     child: TalkingRobotCharacter(
@@ -1190,17 +1674,21 @@ class _MarketingPageViewState extends State<MarketingPageView>
                       isTalking: _isRobotTalking,
                       entranceKey: _robotEntranceKey,
                       confettiBurstKey: _confettiKey,
+                      overchargeKey: _overchargeKey,
+                      backflipKey: _backflipKey,
                       paintStyle: _robotPaint,
                       hat: _robotHat,
                       hasBoosters: _hasBoosters,
                       isDancing: _isDancing,
-                      height: 184,
+                      isRainbowMode: _isRainbowMode,
+                      height: 158,
                       onTap: _onTapRobot,
+                      onFeedPowerCell: _onFeedPowerCell,
                     ),
                   ),
                 ),
                 const Text(
-                  'Tap Bolts for high-fives • Drag or hover in 3D!',
+                  'Tap Bolts, drag 🔋 onto him, or spin in 3D!',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -1210,12 +1698,14 @@ class _MarketingPageViewState extends State<MarketingPageView>
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           toyBar,
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           bubble,
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _buildQuickReplyChips(),
+          const SizedBox(height: 10),
+          _buildCommandPromptBar(),
         ],
       );
     }
@@ -1245,7 +1735,7 @@ class _MarketingPageViewState extends State<MarketingPageView>
                 ),
               ),
               child: Opacity(
-                opacity: _isFlightActive ? 0.0 : 1.0,
+                opacity: hideDockBot ? 0.0 : 1.0,
                 child: KeyedSubtree(
                   key: _dockRobotKey,
                   child: TalkingRobotCharacter(
@@ -1253,12 +1743,16 @@ class _MarketingPageViewState extends State<MarketingPageView>
                     isTalking: _isRobotTalking,
                     entranceKey: _robotEntranceKey,
                     confettiBurstKey: _confettiKey,
+                    overchargeKey: _overchargeKey,
+                    backflipKey: _backflipKey,
                     paintStyle: _robotPaint,
                     hat: _robotHat,
                     hasBoosters: _hasBoosters,
                     isDancing: _isDancing,
+                    isRainbowMode: _isRainbowMode,
                     height: isTiny ? 84 : 102,
                     onTap: _onTapRobot,
+                    onFeedPowerCell: _onFeedPowerCell,
                   ),
                 ),
               ),
@@ -1269,7 +1763,119 @@ class _MarketingPageViewState extends State<MarketingPageView>
         ),
         const SizedBox(height: 10),
         toyBar,
+        const SizedBox(height: 8),
+        _buildCommandPromptBar(),
       ],
+    );
+  }
+
+  Widget _buildCommandPromptBar() {
+    return GlassSurface(
+      borderRadius: 14,
+      blurSigma: 8,
+      tintColor: _isRainbowMode ? const Color(0xFFEC4899) : _robotPaint.swatch,
+      topOpacity: 0.72,
+      bottomOpacity: 0.52,
+      borderColor: Colors.white.withValues(alpha: 0.88),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _commandController,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: _handleBotCommand,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMain,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Command Bolts (backflip, rainbow, joke)...',
+                    hintStyle: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textDim,
+                    ),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.92),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              ElevatedButton(
+                onPressed: () => _handleBotCommand(_commandController.text),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Icon(Icons.send_rounded, size: 15),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _cmdQuickChip('🤸 Flip', _triggerBackflip, active: false),
+              _cmdQuickChip('🌈 Prism', _toggleRainbowMode, active: _isRainbowMode),
+              _cmdQuickChip('😄 Joke', _tellJoke, active: false),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cmdQuickChip(
+    String label,
+    VoidCallback onTap, {
+    required bool active,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFFDF2F8) : Colors.white.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: active ? const Color(0xFFEC4899) : AppColors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w800,
+            color: active ? const Color(0xFFDB2777) : AppColors.textMain,
+          ),
+        ),
+      ),
     );
   }
 
@@ -1427,10 +2033,10 @@ class _MarketingPageViewState extends State<MarketingPageView>
       side: BorderSide(color: Colors.white.withValues(alpha: 0.90), width: 1.2),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       onPressed: () {
+        HapticFeedback.selectionClick();
         SoundEffects.playPop();
         setState(() {
-          _robotMood = RobotMood.explaining;
-          _botMessage = answer;
+          _setBotSpeech(answer, mood: RobotMood.explaining);
         });
       },
     );
@@ -1472,21 +2078,40 @@ class _MarketingPageViewState extends State<MarketingPageView>
                     ? ScrapToRobotWorkbench(
                         onReaction: (msg, {bool complete = false}) {
                           setState(() {
-                            _robotMood = complete
-                                ? RobotMood.excited
-                                : RobotMood.explaining;
-                            _botMessage = msg;
+                            _setBotSpeech(
+                              msg,
+                              mood: complete
+                                  ? RobotMood.excited
+                                  : RobotMood.explaining,
+                            );
                           });
+                          if (complete) {
+                            _awardDemoXp('scrap_bench', 15);
+                          }
                         },
                       )
                     : _activeStage == 1
                         ? InteractiveMachinePlayground(
                             activeIndex: _exampleIdx,
                             onSelectMachine: _onSelectMachineExample,
+                            clearedChallenges: _clearedChallenges,
+                            onChallengeCleared: (id) {
+                              _awardDemoXp(id, 15);
+                            },
+                            initialRacerBest: _racerBestMeters,
+                            onRacerBestChanged: (m) {
+                              _racerBestMeters = m;
+                              _persistBoltsState();
+                            },
+                            onCatapultStreakChanged: (s) {
+                              if (s > _catapultBestStreak) {
+                                _catapultBestStreak = s;
+                                _persistBoltsState();
+                              }
+                            },
                             onBoltsComment: (msg) {
                               setState(() {
-                                _robotMood = RobotMood.excited;
-                                _botMessage = msg;
+                                _setBotSpeech(msg, mood: RobotMood.excited);
                               });
                             },
                           )
@@ -1501,7 +2126,23 @@ class _MarketingPageViewState extends State<MarketingPageView>
     );
   }
 
+  int _countHomeScrapBuildsReady() {
+    final hasBox = _homeScraps.contains('box');
+    final hasStraws = _homeScraps.contains('straws');
+    final hasSkewers = _homeScraps.contains('skewers');
+    final hasBand = _homeScraps.contains('band');
+    final hasCaps = _homeScraps.contains('caps');
+    if (!hasBox) return 0;
+    int ready = 0;
+    if (hasStraws || hasSkewers) ready++; // Scissor Lift
+    if (hasStraws && hasBand) ready++; // Wind-Up Racer / Claw
+    if (hasStraws || hasCaps) ready++; // Coaster / Wheel Cart
+    if (hasSkewers && hasBand) ready++; // Catapult / Hoist
+    return ready;
+  }
+
   Widget _buildInteractivePlanCard(bool isTiny) {
+    final readyCount = _countHomeScrapBuildsReady();
     if (_isDraftingPlan) {
       return RobotPlanDraftingAnimation(
         studentName: _safeName,
@@ -1558,7 +2199,24 @@ class _MarketingPageViewState extends State<MarketingPageView>
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.emerald.withValues(alpha: 0.45)),
+              ),
+              child: Text(
+                '📦 $readyCount/4 starter builds ready TONIGHT from your home scraps!',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF065F46),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             ..._recommendedProjects.map(
               (p) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -1591,6 +2249,18 @@ class _MarketingPageViewState extends State<MarketingPageView>
                                 ),
                                 child: Text(p.time, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
                               ),
+                              if (readyCount > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDCFCE7),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    '✓ Ready tonight',
+                                    style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                                  ),
+                                ),
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -1639,12 +2309,19 @@ class _MarketingPageViewState extends State<MarketingPageView>
       );
     }
 
-    // Minimal 3-input interactive picker form
+    // Minimal 3-input interactive picker form + Household Scrap Matcher
     final vibeOptions = [
       (icon: '🏎️', short: 'Racers', value: 'Speed Racers & Drive Systems'),
       (icon: '✂️', short: 'Lifts', value: 'Scissor Lifts & Lifting Linkages'),
       (icon: '🦾', short: 'Claws', value: 'Articulated Robot Grippers'),
       (icon: '🎢', short: 'Coasters', value: 'Roller Coasters & Gravity'),
+    ];
+    const scrapOptions = [
+      (id: 'box', label: '📦 Box'),
+      (id: 'straws', label: '🥤 Straws'),
+      (id: 'skewers', label: '🪵 Skewers'),
+      (id: 'band', label: '🟡 Bands'),
+      (id: 'caps', label: '🍶 Caps'),
     ];
 
     return Form(
@@ -1751,6 +2428,63 @@ class _MarketingPageViewState extends State<MarketingPageView>
                   ),
                 );
               }).toList(),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.92)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Household Scrap Matcher • $readyCount/4 builds ready tonight',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.emerald,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: scrapOptions.map((s) {
+                      final hasIt = _homeScraps.contains(s.id);
+                      return FilterChip(
+                        label: Text(
+                          s.label,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: hasIt ? const Color(0xFF065F46) : AppColors.textMain,
+                          ),
+                        ),
+                        selected: hasIt,
+                        selectedColor: const Color(0xFFDCFCE7),
+                        backgroundColor: Colors.white,
+                        checkmarkColor: AppColors.emerald,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                        onSelected: (checked) {
+                          HapticFeedback.selectionClick();
+                          SoundEffects.playPop();
+                          setState(() {
+                            if (checked) {
+                              _homeScraps.add(s.id);
+                            } else {
+                              _homeScraps.remove(s.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 14),
             ElevatedButton.icon(
@@ -1961,6 +2695,7 @@ class _DummyCheckoutDialog extends StatefulWidget {
   final int aptitudeScore;
   final double planPrice;
   final String currencySymbol;
+  final int bonusXp;
   final void Function(String name, String email) onPaymentSuccess;
 
   const _DummyCheckoutDialog({
@@ -1972,6 +2707,7 @@ class _DummyCheckoutDialog extends StatefulWidget {
     required this.aptitudeScore,
     required this.planPrice,
     required this.currencySymbol,
+    this.bonusXp = 0,
     required this.onPaymentSuccess,
   });
 
@@ -2122,6 +2858,26 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                           Text('${widget.currencySymbol}${widget.planPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
                         ],
                       ),
+                      if (widget.bonusXp > 0) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFF59E0B)),
+                          ),
+                          child: Text(
+                            '⭐ Includes +${widget.bonusXp} Starter XP earned with Bolts!',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF92400E),
+                            ),
+                          ),
+                        ),
+                      ],
                       if (_discount > 0) ...[
                         const SizedBox(height: 6),
                         Row(

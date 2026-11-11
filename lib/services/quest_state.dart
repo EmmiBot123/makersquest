@@ -82,20 +82,25 @@ class QuestState extends ChangeNotifier {
 
   bool get isEnrolled => _isEnrolled;
 
-  void completeEnrollment({String? studentName, String? email}) {
+  void completeEnrollment({String? studentName, String? email, int bonusXp = 0}) {
     _isEnrolled = true;
+    final safeBonus = bonusXp < 0 ? 0 : bonusXp;
     if (studentName != null && studentName.trim().isNotEmpty) {
       _currentUser = User(
         id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
         name: studentName.trim(),
         email: email != null && email.trim().isNotEmpty ? email.trim() : 'cadet@makerquest.edu',
         avatar: '🚀',
-        currentXp: 100, // Welcome enrollment bonus
+        currentXp: 100 + safeBonus, // Welcome enrollment bonus + landing demo XP
         currentLevel: 1,
         unlockedBadges: const ['badge_first_spark'],
         streakDays: 1,
       );
       _userProgress = UserProgress();
+    } else if (safeBonus > 0) {
+      _currentUser = _currentUser.copyWith(
+        currentXp: _currentUser.currentXp + safeBonus,
+      );
     }
     notifyListeners();
   }
@@ -140,14 +145,16 @@ class QuestState extends ChangeNotifier {
     required String name,
     required String email,
     String avatar = '🚀',
+    int bonusXp = 0,
   }) {
     _isEnrolled = true;
+    final safeBonus = bonusXp < 0 ? 0 : bonusXp;
     _currentUser = User(
       id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
       name: name.trim().isEmpty ? 'Cadet' : name.trim(),
       email: email.trim(),
       avatar: avatar,
-      currentXp: 50, // Welcome bonus
+      currentXp: 50 + safeBonus, // Welcome bonus + starter demo XP earned with Bolts
       currentLevel: 1,
       unlockedBadges: const ['badge_first_spark'],
       streakDays: 1,

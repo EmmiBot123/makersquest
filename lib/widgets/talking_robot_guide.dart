@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/sound_effects.dart';
 import '../theme/app_theme.dart';
 import 'frosted_glass_background.dart';
@@ -27,12 +28,16 @@ class TalkingRobotCharacter extends StatefulWidget {
   final bool isTalking;
   final int entranceKey;
   final int confettiBurstKey;
+  final int overchargeKey;
+  final int backflipKey;
   final double height;
   final RobotPaint paintStyle;
   final RobotHat hat;
   final bool hasBoosters;
   final bool isDancing;
+  final bool isRainbowMode;
   final VoidCallback? onTap;
+  final VoidCallback? onFeedPowerCell;
 
   const TalkingRobotCharacter({
     super.key,
@@ -40,12 +45,16 @@ class TalkingRobotCharacter extends StatefulWidget {
     required this.isTalking,
     this.entranceKey = 0,
     this.confettiBurstKey = 0,
+    this.overchargeKey = 0,
+    this.backflipKey = 0,
     this.height = 176,
     this.paintStyle = RobotPaint.cobalt,
     this.hat = RobotHat.none,
     this.hasBoosters = false,
     this.isDancing = false,
+    this.isRainbowMode = false,
     this.onTap,
+    this.onFeedPowerCell,
   });
 
   @override
@@ -59,6 +68,8 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
   late AnimationController _tapController;
   late AnimationController _confettiController;
   late AnimationController _tiltSpringController;
+  late AnimationController _overchargeController;
+  late AnimationController _flipController;
 
   double _userYaw = 0.0;
   double _userPitch = 0.0;
@@ -100,6 +111,16 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
       vsync: this,
       duration: Duration(milliseconds: _isRunningTests ? 50 : 480),
     );
+
+    _overchargeController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: _isRunningTests ? 60 : 1400),
+    );
+
+    _flipController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: _isRunningTests ? 60 : 820),
+    );
   }
 
   @override
@@ -111,6 +132,14 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
     if (oldWidget.confettiBurstKey != widget.confettiBurstKey) {
       _confettiController.forward(from: 0.0);
     }
+    if (oldWidget.overchargeKey != widget.overchargeKey) {
+      _overchargeController.forward(from: 0.0);
+      _confettiController.forward(from: 0.0);
+    }
+    if (oldWidget.backflipKey != widget.backflipKey) {
+      _flipController.forward(from: 0.0);
+      _confettiController.forward(from: 0.0);
+    }
   }
 
   @override
@@ -120,10 +149,13 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
     _tapController.dispose();
     _confettiController.dispose();
     _tiltSpringController.dispose();
+    _overchargeController.dispose();
+    _flipController.dispose();
     super.dispose();
   }
 
   void _handleTap() {
+    HapticFeedback.lightImpact();
     SoundEffects.playRobotBeep();
     _tapController.forward(from: 0.0);
     _confettiController.forward(from: 0.0);
@@ -141,92 +173,124 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
   @override
   Widget build(BuildContext context) {
     final width = widget.height * 1.08;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onHover: (event) {
-        if (_isDragging3D || _isRunningTests) return;
-        final nx = ((event.localPosition.dx / width) - 0.5) * 2.0;
-        final ny = ((event.localPosition.dy / widget.height) - 0.5) * 2.0;
-        setState(() {
-          _isSpringingBack = false;
-          _userYaw = (nx * 0.45).clamp(-0.55, 0.55);
-          _userPitch = (ny * 0.22).clamp(-0.26, 0.26);
-        });
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (details) => details.data == 'power_cell',
+      onAcceptWithDetails: (_) {
+        _overchargeController.forward(from: 0.0);
+        _confettiController.forward(from: 0.0);
+        widget.onFeedPowerCell?.call();
       },
-      onExit: (_) {
-        if (!_isDragging3D && !_isRunningTests) {
-          _beginSpringBack();
-        }
-      },
-      child: GestureDetector(
-        onTap: _handleTap,
-        onHorizontalDragStart: (_) {
-          _isDragging3D = true;
-          _isSpringingBack = false;
-        },
-        onHorizontalDragUpdate: (details) {
-          setState(() {
-            _isSpringingBack = false;
-            _userYaw = (_userYaw + details.delta.dx * 0.015).clamp(-0.68, 0.68);
-          });
-        },
-        onHorizontalDragEnd: (_) => _beginSpringBack(),
-        onHorizontalDragCancel: _beginSpringBack,
-        behavior: HitTestBehavior.opaque,
-        child: Tooltip(
-          message: 'Tap Bolts for a high-five!',
-          child: SizedBox(
-            height: widget.height,
-            width: width,
-            child: AnimatedBuilder(
-              animation: Listenable.merge([
-                _idleController,
-                _entranceController,
-                _tapController,
-                _confettiController,
-                _tiltSpringController,
-              ]),
-              builder: (context, _) {
-                double effectiveYaw = _userYaw;
-                double effectivePitch = _userPitch;
-                if (_isSpringingBack) {
-                  final spring = Curves.easeOutBack.transform(
-                    _tiltSpringController.value.clamp(0.0, 1.0),
-                  );
-                  effectiveYaw = _springStartYaw * (1.0 - spring);
-                  effectivePitch = _springStartPitch * (1.0 - spring);
-                }
+      builder: (context, candidateData, rejectedData) {
+        final isDropHovering = candidateData.isNotEmpty;
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onHover: (event) {
+            if (_isDragging3D || _isRunningTests) return;
+            final nx = ((event.localPosition.dx / width) - 0.5) * 2.0;
+            final ny = ((event.localPosition.dy / widget.height) - 0.5) * 2.0;
+            setState(() {
+              _isSpringingBack = false;
+              _userYaw = (nx * 0.45).clamp(-0.55, 0.55);
+              _userPitch = (ny * 0.22).clamp(-0.26, 0.26);
+            });
+          },
+          onExit: (_) {
+            if (!_isDragging3D && !_isRunningTests) {
+              _beginSpringBack();
+            }
+          },
+          child: GestureDetector(
+            onTap: _handleTap,
+            onHorizontalDragStart: (_) {
+              _isDragging3D = true;
+              _isSpringingBack = false;
+            },
+            onHorizontalDragUpdate: (details) {
+              setState(() {
+                _isSpringingBack = false;
+                _userYaw =
+                    (_userYaw + details.delta.dx * 0.015).clamp(-0.68, 0.68);
+              });
+            },
+            onHorizontalDragEnd: (_) => _beginSpringBack(),
+            onHorizontalDragCancel: _beginSpringBack,
+            behavior: HitTestBehavior.opaque,
+            child: Tooltip(
+              message: 'Tap Bolts for a high-five!',
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                height: widget.height,
+                width: width,
+                decoration: isDropHovering
+                    ? BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFFACC15),
+                          width: 2.5,
+                        ),
+                        color: const Color(0xFFFEF08A).withValues(alpha: 0.24),
+                      )
+                    : null,
+                child: AnimatedBuilder(
+                  animation: Listenable.merge([
+                    _idleController,
+                    _entranceController,
+                    _tapController,
+                    _confettiController,
+                    _tiltSpringController,
+                    _overchargeController,
+                    _flipController,
+                  ]),
+                  builder: (context, _) {
+                    double effectiveYaw = _userYaw;
+                    double effectivePitch = _userPitch;
+                    if (_isSpringingBack) {
+                      final spring = Curves.easeOutBack.transform(
+                        _tiltSpringController.value.clamp(0.0, 1.0),
+                      );
+                      effectiveYaw = _springStartYaw * (1.0 - spring);
+                      effectivePitch = _springStartPitch * (1.0 - spring);
+                    }
 
-                return CustomPaint(
-                  painter: TalkingRobot3DCartoonPainter(
-                    idle: _idleController.value,
-                    entrance: Curves.easeOutBack.transform(
-                      _entranceController.value.clamp(0.0, 1.0),
-                    ),
-                    rawEntrance: _entranceController.value,
-                    tapBounce: _tapController.value,
-                    confettiProgress: _confettiController.value,
-                    mood: widget.mood,
-                    isTalking: widget.isTalking,
-                    paintStyle: widget.paintStyle,
-                    hat: widget.hat,
-                    hasBoosters: widget.hasBoosters,
-                    isDancing: widget.isDancing,
-                    userYaw: effectiveYaw,
-                    userPitch: effectivePitch,
-                  ),
-                );
-              },
+                    return CustomPaint(
+                      painter: TalkingRobot3DCartoonPainter(
+                        idle: _idleController.value,
+                        entrance: Curves.easeOutBack.transform(
+                          _entranceController.value.clamp(0.0, 1.0),
+                        ),
+                        rawEntrance: _entranceController.value,
+                        tapBounce: _tapController.value,
+                        confettiProgress: _confettiController.value,
+                        mood: widget.mood,
+                        isTalking: widget.isTalking,
+                        paintStyle: widget.paintStyle,
+                        hat: widget.hat,
+                        hasBoosters: widget.hasBoosters,
+                        isDancing: widget.isDancing,
+                        userYaw: effectiveYaw,
+                        userPitch: effectivePitch,
+                        isRainbowMode: widget.isRainbowMode,
+                        overchargeProgress: _overchargeController.isAnimating
+                            ? _overchargeController.value
+                            : 0.0,
+                        flipProgress: _flipController.isAnimating
+                            ? _flipController.value
+                            : 0.0,
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
 /// Tactile minimal toy dock letting kids customize Bolts (paint, hats, rocket
-/// boosters, dance mode, sound toggle) and track high-five confetti streaks!
+/// boosters, dance mode, Power Cell charge, Free Flight, voice & sound toggles).
 class BoltsCustomizeToyBar extends StatelessWidget {
   final RobotPaint paintStyle;
   final ValueChanged<RobotPaint> onSelectPaint;
@@ -239,6 +303,10 @@ class BoltsCustomizeToyBar extends StatelessWidget {
   final bool soundEnabled;
   final VoidCallback onToggleSound;
   final int highFiveCount;
+  final bool voiceEnabled;
+  final VoidCallback? onToggleVoice;
+  final VoidCallback? onFeedPowerCell;
+  final VoidCallback? onEnterFreeFlight;
 
   const BoltsCustomizeToyBar({
     super.key,
@@ -253,10 +321,22 @@ class BoltsCustomizeToyBar extends StatelessWidget {
     required this.soundEnabled,
     required this.onToggleSound,
     required this.highFiveCount,
+    this.voiceEnabled = false,
+    this.onToggleVoice,
+    this.onFeedPowerCell,
+    this.onEnterFreeFlight,
   });
 
   @override
   Widget build(BuildContext context) {
+    final powerCellChip = _toyPill(
+      icon: '🔋',
+      label: 'Charge',
+      active: false,
+      activeColor: const Color(0xFFEAB308),
+      onTap: onFeedPowerCell ?? () {},
+    );
+
     return GlassSurface(
       borderRadius: 16,
       blurSigma: 10,
@@ -330,6 +410,39 @@ class BoltsCustomizeToyBar extends StatelessWidget {
             activeColor: const Color(0xFFEC4899),
             onTap: onToggleDance,
           ),
+          // Tap OR drag Power Cell onto Bolts!
+          if (onFeedPowerCell != null)
+            Tooltip(
+              message: 'Tap or drag onto Bolts to supercharge!',
+              child: Draggable<String>(
+                data: 'power_cell',
+                feedback: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF08A),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFEAB308), width: 2),
+                    ),
+                    child: const Text(
+                      '🔋⚡',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ),
+                child: powerCellChip,
+              ),
+            ),
+          // Free-Flight Arcade Mode
+          if (onEnterFreeFlight != null)
+            _toyPill(
+              icon: '✈️',
+              label: 'Fly',
+              active: false,
+              activeColor: const Color(0xFF0284C7),
+              onTap: onEnterFreeFlight!,
+            ),
           // High-five combo pill
           if (highFiveCount > 0)
             Container(
@@ -345,6 +458,40 @@ class BoltsCustomizeToyBar extends StatelessWidget {
                   fontSize: 10.5,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF92400E),
+                ),
+              ),
+            ),
+          // Real spoken robot voice toggle
+          if (onToggleVoice != null)
+            Tooltip(
+              message: voiceEnabled ? 'Turn Off Bolts Voice' : 'Turn On Bolts Voice',
+              child: InkWell(
+                onTap: onToggleVoice,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: voiceEnabled ? const Color(0xFFDCFCE7) : Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: voiceEnabled ? AppColors.emerald : AppColors.border,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('🗣️', style: TextStyle(fontSize: 11)),
+                      const SizedBox(width: 3),
+                      Text(
+                        voiceEnabled ? 'Voice On' : 'Voice',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: voiceEnabled ? AppColors.emerald : AppColors.textMain,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1115,18 +1262,28 @@ class _ScrapAssemblyPainter extends CustomPainter {
   }
 }
 
-/// Stage 2 Interactive Examples: 5 playable physics & arcade cardboard demos
-/// with live sliders & action buttons so kids experience every mechanism first-hand.
+/// Stage 2 Interactive Examples: 5 playable physics & arcade cardboard mini-games
+/// with live sliders, target goals & action buttons so kids experience every mechanism first-hand.
 class InteractiveMachinePlayground extends StatefulWidget {
   final int activeIndex;
   final ValueChanged<int> onSelectMachine;
   final ValueChanged<String> onBoltsComment;
+  final Set<String> clearedChallenges;
+  final void Function(String challengeId)? onChallengeCleared;
+  final double initialRacerBest;
+  final ValueChanged<double>? onRacerBestChanged;
+  final ValueChanged<int>? onCatapultStreakChanged;
 
   const InteractiveMachinePlayground({
     super.key,
     required this.activeIndex,
     required this.onSelectMachine,
     required this.onBoltsComment,
+    this.clearedChallenges = const {},
+    this.onChallengeCleared,
+    this.initialRacerBest = 0.0,
+    this.onRacerBestChanged,
+    this.onCatapultStreakChanged,
   });
 
   @override
@@ -1137,26 +1294,36 @@ class InteractiveMachinePlayground extends StatefulWidget {
 class _InteractiveMachinePlaygroundState
     extends State<InteractiveMachinePlayground> with SingleTickerProviderStateMixin {
   double _scissorLift = 0.45;
-  double _racerWind = 3.0;
+  double _racerWind = 3.2;
   double _clawGrip = 0.65;
+  int _clawCargoIdx = 0; // 0: Cube 📦, 1: Fragile Paper Cup 🥤, 2: Space Egg 🥚
   double _rampAngle = 26.0;
   double _catapultPower = 0.64;
   int _catapultHits = 0;
   bool _catapultHitLast = false;
+  late double _racerBestMeters;
+  String? _lastGoalBadge;
 
   late AnimationController _actionController;
 
-  static const List<({String icon, String label, String badge})> _machines = [
-    (icon: '✂️', label: 'Scissor Lift', badge: '4x Height'),
-    (icon: '🏎️', label: 'Torque Racer', badge: '5m+ Sprint'),
-    (icon: '🦾', label: 'Claw Gripper', badge: '250g Pinch'),
-    (icon: '🎢', label: 'Gravity Coaster', badge: 'Banked Track'),
-    (icon: '🎯', label: 'Catapult', badge: 'Target Game'),
+  static const List<({String id, String icon, String label, String goal})> _machines = [
+    (id: 'scissor', icon: '✂️', label: 'Scissor Lift', goal: 'Reach Target Shelf (3.1×–4.0×)'),
+    (id: 'racer', icon: '🏎️', label: 'Torque Racer', goal: 'Sweet-Spot Winds (2.8–4.5)'),
+    (id: 'claw', icon: '🦾', label: 'Claw Gripper', goal: 'Gentle Lift Without Crushing (55–85%)'),
+    (id: 'coaster', icon: '🎢', label: 'Gravity Coaster', goal: 'Land Marble in Bucket (22°–34°)'),
+    (id: 'catapult', icon: '🎯', label: 'Catapult', goal: 'Score Basket Bullseye (50–78%)'),
+  ];
+
+  static const List<({String icon, String name})> _clawCargos = [
+    (icon: '📦', name: 'Cube'),
+    (icon: '🥤', name: 'Cup'),
+    (icon: '🥚', name: 'Egg'),
   ];
 
   @override
   void initState() {
     super.initState();
+    _racerBestMeters = widget.initialRacerBest;
     _actionController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: _isRunningTests ? 50 : 1100),
@@ -1170,49 +1337,121 @@ class _InteractiveMachinePlaygroundState
   }
 
   void _triggerAction() {
+    HapticFeedback.lightImpact();
     _actionController.forward(from: 0.0);
 
     switch (widget.activeIndex) {
       case 0:
-        SoundEffects.playChime();
-        final next = _scissorLift > 0.75 ? 0.25 : 0.95;
-        setState(() => _scissorLift = next);
-        widget.onBoltsComment(
-          next > 0.75
-              ? 'Full extension! 3 criss-cross cardboard stages turned 1 push into 4.0× vertical lift!'
-              : 'Compressed flat! That tiny 3 cm scissor fold is ready to spring sky-high.',
-        );
+        final next = _scissorLift > 0.72 ? 0.25 : 0.88;
+        final rescued = next >= 0.70;
+        setState(() {
+          _scissorLift = next;
+          _lastGoalBadge = rescued ? 'RESCUED! ✓' : null;
+        });
+        if (rescued) {
+          SoundEffects.playFanfare();
+          widget.onChallengeCleared?.call('scissor');
+          widget.onBoltsComment(
+            'CRATE RESCUED at ${(1.0 + next * 3.0).toStringAsFixed(1)}×! 3 criss-cross cardboard stages turned 1 push into sky-high lift!',
+          );
+        } else {
+          SoundEffects.playChime();
+          widget.onBoltsComment(
+            'Compressed flat! Slide Push Handle up or tap Lift 4× to reach the target shelf!',
+          );
+        }
         break;
+
       case 1:
-        SoundEffects.playBoing();
-        widget.onBoltsComment(
-          'Vroom! ${_racerWind.toInt()} rubber-band winds launched the racer ${(1.2 + _racerWind * 0.85).toStringAsFixed(1)} meters on straw bearings!',
-        );
+        final overWound = _racerWind >= 4.65;
+        final sweetSpot = _racerWind >= 2.8 && _racerWind <= 4.55;
+        final dist = overWound ? 1.9 : (1.2 + _racerWind * 0.92);
+        if (!overWound && dist > _racerBestMeters) {
+          setState(() => _racerBestMeters = dist);
+          widget.onRacerBestChanged?.call(dist);
+        }
+        if (overWound) {
+          SoundEffects.playBoing();
+          setState(() => _lastGoalBadge = 'BAND SPINOUT!');
+          widget.onBoltsComment(
+            'WHOOPS! $_racerWind winds overloaded the rubber band spinout! Aim inside 2.8–4.5 winds for maximum Sprint Range!',
+          );
+        } else if (sweetSpot) {
+          SoundEffects.playFanfare();
+          setState(() => _lastGoalBadge = 'NITRO SPRINT! ✓');
+          widget.onChallengeCleared?.call('racer');
+          widget.onBoltsComment(
+            'TURBO SPRINT! ${dist.toStringAsFixed(1)}m launched cleanly on straw bearings (Best: ${_racerBestMeters.toStringAsFixed(1)}m)!',
+          );
+        } else {
+          SoundEffects.playBoing();
+          setState(() => _lastGoalBadge = null);
+          widget.onBoltsComment(
+            'Nice cruise (${dist.toStringAsFixed(1)}m)! Wind a little higher (2.8–4.5) to hit the Nitro Sprint Challenge!',
+          );
+        }
         break;
+
       case 2:
-        SoundEffects.playChime();
-        final next = _clawGrip > 0.6 ? 0.15 : 0.92;
-        setState(() => _clawGrip = next);
-        widget.onBoltsComment(
-          next > 0.6
-              ? 'Snapped shut! Opposing cardboard levers pinched & lifted the cube without a single servo!'
-              : 'Released! Letting go of the trigger resets both jaws cleanly.',
-        );
+        final closing = _clawGrip <= 0.60;
+        final next = closing ? 0.74 : 0.15;
+        final gentleSuccess = next >= 0.52 && next <= 0.86;
+        final crushed = next > 0.86 && _clawCargos[_clawCargoIdx].name != 'Cube';
+        setState(() {
+          _clawGrip = next;
+          _lastGoalBadge = gentleSuccess ? 'GENTLE LIFT! ✓' : (crushed ? 'SQUISHED!' : null);
+        });
+        if (gentleSuccess) {
+          SoundEffects.playFanfare();
+          widget.onChallengeCleared?.call('claw');
+          widget.onBoltsComment(
+            'PRECISION GRIP on the ${_clawCargos[_clawCargoIdx].name}! Opposing cardboard levers hoisted cleanly without crushing!',
+          );
+        } else if (crushed) {
+          SoundEffects.playBoing();
+          widget.onBoltsComment(
+            'Oops, too tight on the fragile ${_clawCargos[_clawCargoIdx].name}! Keep Trigger Pull in the green 55–85% zone!',
+          );
+        } else {
+          SoundEffects.playChime();
+          widget.onBoltsComment(
+            'Released! Pulling the trigger gently clamps onto delicate cargo using pure lever physics!',
+          );
+        }
         break;
+
       case 3:
-        SoundEffects.playChime();
-        widget.onBoltsComment(
-          'Dropped at ${_rampAngle.toInt()}°! Banked cardboard guardrails convert gravity speed around every turn!',
-        );
+        final inBucket = _rampAngle >= 22.0 && _rampAngle <= 34.0;
+        setState(() {
+          _lastGoalBadge = inBucket ? 'BUCKET GOAL! ✓' : null;
+        });
+        if (inBucket) {
+          SoundEffects.playFanfare();
+          widget.onChallengeCleared?.call('coaster');
+          widget.onBoltsComment(
+            'BUCKET GOAL at ${_rampAngle.toInt()}°! Banked cardboard rails converted gravity right into the finish bucket!',
+          );
+        } else {
+          SoundEffects.playBoing();
+          widget.onBoltsComment(
+            _rampAngle < 22.0
+                ? 'Dropped at ${_rampAngle.toInt()}° — too shallow! Steepen Ramp Angle to 22°–34° to roll into the bucket!'
+                : 'Dropped at ${_rampAngle.toInt()}° — flew right over the bucket! Dial Ramp Angle back between 22°–34°!',
+          );
+        }
         break;
+
       case 4:
         final isBullseye = _catapultPower >= 0.50 && _catapultPower <= 0.78;
         setState(() {
           _catapultHitLast = isBullseye;
           if (isBullseye) _catapultHits++;
+          _lastGoalBadge = isBullseye ? 'BULLSEYE! ✓' : null;
         });
         if (isBullseye) {
           SoundEffects.playFanfare();
+          widget.onChallengeCleared?.call('catapult');
+          widget.onCatapultStreakChanged?.call(_catapultHits);
           widget.onBoltsComment(
             'BULLSEYE! Streak: $_catapultHits hit${_catapultHits == 1 ? '' : 's'}! Elastic rubber-band potential energy nailed the target!',
           );
@@ -1234,8 +1473,9 @@ class _InteractiveMachinePlaygroundState
         final mult = (1.0 + _scissorLift * 3.0).toStringAsFixed(1);
         return 'Lift Height: ${mult}x';
       case 1:
-        final dist = (1.2 + _racerWind * 0.85).toStringAsFixed(1);
-        return 'Sprint Range: ${dist}m';
+        final dist = (_racerWind >= 4.65 ? 1.9 : 1.2 + _racerWind * 0.92).toStringAsFixed(1);
+        final bestStr = _racerBestMeters > 0 ? ' • Best: ${_racerBestMeters.toStringAsFixed(1)}m' : '';
+        return 'Sprint Range: ${dist}m$bestStr';
       case 2:
         final g = (_clawGrip * 260).round();
         return 'Pinch Force: ${g}g';
@@ -1251,6 +1491,8 @@ class _InteractiveMachinePlaygroundState
   @override
   Widget build(BuildContext context) {
     final activeIdx = widget.activeIndex;
+    final clearedCount = _machines.where((m) => widget.clearedChallenges.contains(m.id)).length;
+    final currentMachine = _machines[activeIdx];
 
     return GlassSurface(
       borderRadius: 20,
@@ -1262,24 +1504,31 @@ class _InteractiveMachinePlaygroundState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Machine selector chips
+          // Machine selector chips + cleared indicator dot
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: List.generate(_machines.length, (i) {
               final m = _machines[i];
               final selected = i == activeIdx;
+              final cleared = widget.clearedChallenges.contains(m.id);
               return InkWell(
                 onTap: () {
                   SoundEffects.playPop();
+                  setState(() => _lastGoalBadge = null);
                   widget.onSelectMachine(i);
                 },
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : const Color(0xFFF1F5F9),
+                    color: selected
+                        ? AppColors.primary
+                        : (cleared ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9)),
                     borderRadius: BorderRadius.circular(10),
+                    border: cleared && !selected
+                        ? Border.all(color: AppColors.emerald.withValues(alpha: 0.5))
+                        : null,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1294,13 +1543,68 @@ class _InteractiveMachinePlaygroundState
                           color: selected ? Colors.white : AppColors.textMain,
                         ),
                       ),
+                      if (cleared) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 12,
+                          color: selected ? Colors.white : AppColors.emerald,
+                        ),
+                      ],
                     ],
                   ),
                 ),
               );
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+
+          // Mini-Game Goal + Progress Strip
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🎮 ', style: TextStyle(fontSize: 12)),
+                  Flexible(
+                    child: Text(
+                      'Goal: ${currentMachine.goal}',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: clearedCount == 5
+                      ? const Color(0xFFDCFCE7)
+                      : Colors.white.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: clearedCount == 5 ? AppColors.emerald : AppColors.border,
+                  ),
+                ),
+                child: Text(
+                  'Cleared: $clearedCount/5 🎯',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: clearedCount == 5 ? AppColors.emerald : AppColors.textMain,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
 
           // Live interactive simulation canvas + floating metric pill
           Stack(
@@ -1324,6 +1628,7 @@ class _InteractiveMachinePlaygroundState
                           scissorLift: _scissorLift,
                           racerWind: _racerWind,
                           clawGrip: _clawGrip,
+                          clawCargoIdx: _clawCargoIdx,
                           rampAngle: _rampAngle,
                           catapultPower: _catapultPower,
                           catapultHit: _catapultHitLast,
@@ -1334,23 +1639,79 @@ class _InteractiveMachinePlaygroundState
                   ),
                 ),
               ),
+              // Claw cargo selector toggle on top-left when on Claw Gripper
+              if (activeIdx == 2)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: InkWell(
+                    onTap: () {
+                      SoundEffects.playPop();
+                      setState(() {
+                        _clawCargoIdx = (_clawCargoIdx + 1) % _clawCargos.length;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text(
+                        'Target: ${_clawCargos[_clawCargoIdx].icon} ${_clawCargos[_clawCargoIdx].name} ↻',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textMain,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
                 top: 8,
                 right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _telemetryLabel(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF38BDF8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _telemetryLabel(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF38BDF8),
+                        ),
+                      ),
                     ),
-                  ),
+                    if (_lastGoalBadge != null) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _lastGoalBadge!.contains('✓')
+                              ? AppColors.emerald
+                              : AppColors.amber,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _lastGoalBadge!,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -1378,7 +1739,7 @@ class _InteractiveMachinePlaygroundState
         value = _scissorLift;
         min = 0.05;
         max = 1.0;
-        actionLabel = _scissorLift > 0.7 ? 'Lower ⬇' : 'Lift 4× ⬆';
+        actionLabel = _scissorLift > 0.72 ? 'Lower ⬇' : 'Lift 4× ⬆';
         onChanged = (v) => setState(() => _scissorLift = v);
         break;
       case 1:
@@ -1503,6 +1864,7 @@ class _InteractiveExamplePainter extends CustomPainter {
   final double scissorLift;
   final double racerWind;
   final double clawGrip;
+  final int clawCargoIdx;
   final double rampAngle;
   final double catapultPower;
   final bool catapultHit;
@@ -1513,6 +1875,7 @@ class _InteractiveExamplePainter extends CustomPainter {
     required this.scissorLift,
     required this.racerWind,
     required this.clawGrip,
+    required this.clawCargoIdx,
     required this.rampAngle,
     required this.catapultPower,
     required this.catapultHit,
@@ -1563,9 +1926,25 @@ class _InteractiveExamplePainter extends CustomPainter {
   }
 
   void _paintScissor(Canvas canvas, double w, double groundY) {
-    final cx = w * 0.5;
+    final cx = w * 0.44;
     final liftPx = 22.0 + scissorLift * 84.0;
     final halfSpan = 48.0 - scissorLift * 18.0;
+
+    // Rescue Shelf Target Zone on right
+    final shelfY = groundY - (22.0 + 0.78 * 84.0);
+    final inZone = scissorLift >= 0.70;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(cx + 56, shelfY - 4, 62, 8),
+        const Radius.circular(3),
+      ),
+      Paint()..color = inZone ? AppColors.emerald : const Color(0xFF94A3B8),
+    );
+    canvas.drawCircle(
+      Offset(cx + 87, shelfY - 14),
+      6,
+      Paint()..color = inZone ? AppColors.emerald : AppColors.amber,
+    );
 
     final strut = Paint()
       ..color = const Color(0xFFD97706)
@@ -1591,7 +1970,7 @@ class _InteractiveExamplePainter extends CustomPainter {
     canvas.drawLine(Offset(cx + halfSpan, y1), Offset(cx - halfSpan, y2), strut);
     canvas.drawCircle(Offset(cx, (y1 + y2) / 2), 3.5, pin);
 
-    // Payload platform + cargo box
+    // Payload platform + rescue crate
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(cx - 42, y2 - 9, 84, 9),
@@ -1604,15 +1983,31 @@ class _InteractiveExamplePainter extends CustomPainter {
         Rect.fromLTWH(cx - 13, y2 - 27, 26, 18),
         const Radius.circular(4),
       ),
-      Paint()..color = AppColors.emerald,
+      Paint()..color = inZone ? AppColors.emerald : AppColors.amber,
     );
   }
 
   void _paintRacer(Canvas canvas, double w, double groundY) {
-    final travel = math.sin(actionProgress * math.pi) *
-        (w * 0.25) *
-        (racerWind / 5.0);
-    final rx = (w * 0.42) + travel;
+    final overWound = racerWind >= 4.65;
+    final sweetSpot = racerWind >= 2.8 && racerWind <= 4.55;
+    final travel = overWound
+        ? math.sin(actionProgress * 6 * math.pi) * 14.0
+        : math.sin(actionProgress * math.pi) * (w * 0.30) * (racerWind / 5.0);
+    final rx = (w * 0.34) + travel;
+
+    // Sweet-spot finish flag on right!
+    final flagX = w * 0.80;
+    canvas.drawLine(
+      Offset(flagX, groundY),
+      Offset(flagX, groundY - 48),
+      Paint()
+        ..color = sweetSpot ? AppColors.emerald : const Color(0xFF64748B)
+        ..strokeWidth = 3,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(flagX, groundY - 48, 22, 13),
+      Paint()..color = sweetSpot ? AppColors.emerald : AppColors.amber,
+    );
 
     // Distance ticks on floor
     for (int i = 0; i <= 5; i++) {
@@ -1640,15 +2035,18 @@ class _InteractiveExamplePainter extends CustomPainter {
       ..lineTo(rx - 50, groundY - 44)
       ..lineTo(rx - 32, groundY - 44)
       ..close();
-    canvas.drawPath(spoiler, Paint()..color = AppColors.rose);
+    canvas.drawPath(
+      spoiler,
+      Paint()..color = overWound ? AppColors.rose : AppColors.primary,
+    );
 
-    // Rubber band stretched on chassis proportionally to wind
+    // Rubber band stretched on chassis (turns rose if over-wound!)
     final bandStretch = 14 + racerWind * 4.5;
     canvas.drawLine(
       Offset(rx - 14, groundY - 21),
       Offset(rx - 14 + bandStretch, groundY - 21),
       Paint()
-        ..color = AppColors.amber
+        ..color = overWound ? AppColors.rose : AppColors.amber
         ..strokeWidth = 3.5,
     );
 
@@ -1681,7 +2079,9 @@ class _InteractiveExamplePainter extends CustomPainter {
   void _paintGripper(Canvas canvas, double w, double groundY) {
     final cx = w * 0.5;
     final openAmt = (1.0 - clawGrip) * 28.0;
-    final hoistLift = clawGrip > 0.65 ? math.sin(actionProgress * math.pi) * 18.0 : 0.0;
+    final gentleLift = clawGrip >= 0.52 && clawGrip <= 0.86;
+    final crushed = clawGrip > 0.86 && clawCargoIdx != 0;
+    final hoistLift = gentleLift ? math.sin(actionProgress * math.pi) * 20.0 : 0.0;
     final baseBottom = groundY - hoistLift;
 
     // Handle shaft
@@ -1718,22 +2118,66 @@ class _InteractiveExamplePainter extends CustomPainter {
       Paint()..color = const Color(0xFFFDE68A),
     );
 
-    // Target payload block rises cleanly when gripped tightly!
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx, baseBottom - 96), width: 24, height: 24),
-        const Radius.circular(5),
-      ),
-      Paint()..color = clawGrip > 0.65 ? AppColors.emerald : AppColors.primary,
-    );
+    // Target payload shape (Cube / Paper Cup / Space Egg), squishes if crushed!
+    final pinchWidth = crushed ? 13.0 : 24.0;
+    final cargoColor = crushed
+        ? AppColors.rose
+        : (gentleLift ? AppColors.emerald : AppColors.primary);
+    if (clawCargoIdx == 2) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(cx, baseBottom - 96),
+          width: pinchWidth * 0.9,
+          height: 28,
+        ),
+        Paint()..color = cargoColor,
+      );
+    } else {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(cx, baseBottom - 96),
+            width: pinchWidth,
+            height: 24,
+          ),
+          Radius.circular(clawCargoIdx == 1 ? 8 : 5),
+        ),
+        Paint()..color = cargoColor,
+      );
+    }
   }
 
   void _paintCoaster(Canvas canvas, double w, double h, double groundY) {
+    final inBucketRange = rampAngle >= 22.0 && rampAngle <= 34.0;
     final startY = groundY - 36 - (rampAngle * 1.6);
     final p0 = Offset(32, startY);
     final p1 = Offset(w * 0.36, groundY - 6);
-    final p2 = Offset(w * 0.65, groundY - 46);
-    final p3 = Offset(w - 32, groundY - 8);
+    final p2 = Offset(w * 0.62, groundY - 46);
+    final p3 = Offset(w - 68, groundY - 12);
+
+    // Finish Catch Bucket on right!
+    final bucketCenter = Offset(w - 38, groundY - 12);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: bucketCenter, width: 34, height: 22),
+        const Radius.circular(6),
+      ),
+      Paint()
+        ..color = inBucketRange && actionProgress > 0.7
+            ? AppColors.emerald
+            : const Color(0xFF0F172A),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(bucketCenter.dx, bucketCenter.dy - 11),
+          width: 38,
+          height: 5,
+        ),
+        const Radius.circular(2.5),
+      ),
+      Paint()..color = const Color(0xFF38BDF8),
+    );
 
     final path = Path()
       ..moveTo(p0.dx, p0.dy)
@@ -1758,18 +2202,27 @@ class _InteractiveExamplePainter extends CustomPainter {
         ..strokeWidth = 5,
     );
 
-    // Sample point along track using actionProgress (or resting at top when 0)
+    // Marble along track, landing inside bucket if 22°–34°
     final t = actionProgress == 0 ? 0.08 : actionProgress;
-    final metrics = path.computeMetrics().toList();
     Offset ballPos = p0;
-    if (metrics.isNotEmpty) {
-      final tangent = metrics.first.getTangentForOffset(
-        metrics.first.length * t.clamp(0.0, 1.0),
-      );
-      if (tangent != null) {
-        ballPos = tangent.position;
+    if (t <= 0.82) {
+      final metrics = path.computeMetrics().toList();
+      if (metrics.isNotEmpty) {
+        final tangent = metrics.first.getTangentForOffset(
+          metrics.first.length * (t / 0.82).clamp(0.0, 1.0),
+        );
+        if (tangent != null) ballPos = tangent.position;
       }
+    } else {
+      final u = ((t - 0.82) / 0.18).clamp(0.0, 1.0);
+      final target = inBucketRange
+          ? bucketCenter - const Offset(0, 6)
+          : (rampAngle < 22.0
+              ? Offset(p3.dx + 6, groundY - 8)
+              : Offset(w - 10, groundY - 28));
+      ballPos = Offset.lerp(p3, target, u)! - Offset(0, math.sin(u * math.pi) * 14);
     }
+
     canvas.drawCircle(
       ballPos,
       8.5,
@@ -1793,7 +2246,10 @@ class _InteractiveExamplePainter extends CustomPainter {
         Rect.fromCenter(center: Offset(basketX, basketY), width: 48, height: 22),
         const Radius.circular(6),
       ),
-      Paint()..color = catapultHit && actionProgress > 0.7 ? AppColors.emerald : const Color(0xFF0F172A),
+      Paint()
+        ..color = catapultHit && actionProgress > 0.7
+            ? AppColors.emerald
+            : const Color(0xFF0F172A),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -1868,6 +2324,7 @@ class _InteractiveExamplePainter extends CustomPainter {
         oldDelegate.scissorLift != scissorLift ||
         oldDelegate.racerWind != racerWind ||
         oldDelegate.clawGrip != clawGrip ||
+        oldDelegate.clawCargoIdx != clawCargoIdx ||
         oldDelegate.rampAngle != rampAngle ||
         oldDelegate.catapultPower != catapultPower ||
         oldDelegate.catapultHit != catapultHit ||
