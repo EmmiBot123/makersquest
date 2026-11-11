@@ -32,10 +32,17 @@ class _MarketingPageViewState extends State<MarketingPageView> {
   // 3: Cadet Pass (Minimal ₹199 unlock card + Ask Bolts FAQ + WhatsApp help)
   int _activeStage = 0;
   int _robotEntranceKey = 0;
+  int _confettiKey = 0;
+  int _highFiveCount = 0;
   bool _isRobotTalking = false;
   RobotMood _robotMood = RobotMood.greeting;
+  RobotPaint _robotPaint = RobotPaint.cobalt;
+  RobotHat _robotHat = RobotHat.none;
+  bool _hasBoosters = false;
+  bool _isDancing = false;
+  bool _soundEnabled = SoundEffects.enabled;
   String _botMessage =
-      'Beep-boop! I am Bolts! Tap the household scraps on my bench — watch plain cardboard turn into a real moving robot!';
+      'Beep-boop! I am Bolts! Tap scraps on my bench, paint me a new color, or give me a high-five!';
 
   // Interactive example index (Stage 1)
   int _exampleIdx = 0;
@@ -68,8 +75,9 @@ class _MarketingPageViewState extends State<MarketingPageView> {
   static const List<String> _machineIntros = [
     'Example 1 — Scissor Lift: Slide the handle to stretch criss-cross cardboard arms 4× taller!',
     'Example 2 — Torque Racer: Wind the rubber band, hit Launch, and watch it zoom across the floor!',
-    'Example 3 — Claw Gripper: Pull the trigger slider to squeeze both cardboard jaws around objects!',
+    'Example 3 — Claw Gripper: Pull the trigger slider to squeeze & hoist the cargo cube!',
     'Example 4 — Gravity Coaster: Tilt the ramp slope and drop the marble through banked curves!',
+    'Example 5 — Catapult Mini-Game: Aim Launch Power around 50–78% and hit Launch Block to score!',
   ];
 
   @override
@@ -95,23 +103,25 @@ class _MarketingPageViewState extends State<MarketingPageView> {
       _robotEntranceKey++;
       switch (stage) {
         case 0:
-          _robotMood = RobotMood.greeting;
+          _robotMood = _isDancing ? RobotMood.dancing : RobotMood.greeting;
           _botMessage = customMessage ??
               'Beep-boop! I am Bolts! Tap the household scraps on my bench — watch plain cardboard turn into a real moving robot!';
           break;
         case 1:
-          _robotMood = RobotMood.explaining;
+          _robotMood = _isDancing ? RobotMood.dancing : RobotMood.explaining;
           _botMessage = customMessage ?? _machineIntros[_exampleIdx];
           break;
         case 2:
-          _robotMood = _planReady ? RobotMood.excited : RobotMood.thinking;
+          _robotMood = _isDancing
+              ? RobotMood.dancing
+              : (_planReady ? RobotMood.excited : RobotMood.thinking);
           _botMessage = customMessage ??
               (_planReady
                   ? 'Awesome, $_safeName! Here are 3 cardboard machines tailored right for your skills!'
                   : 'Quick 10-second check! Tell me your name, age & favorite build — I will draft your starter plan.');
           break;
         case 3:
-          _robotMood = RobotMood.excited;
+          _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
           _botMessage = customMessage ??
               'All 17 projects, 3D blueprints & workshops unlock for ₹199 once! Tap any question below to ask me.';
           break;
@@ -126,19 +136,104 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     const quips = [
       'High-five! Zero ₹2,500 plastic kits needed — just everyday delivery boxes and imagination!',
       'Fun fact: Aligning cardboard flutes lengthwise makes a strip 300% stronger!',
-      'Tap "2. Examples" anytime to test real cardboard linkages right on screen!',
+      'Tap "2. Examples" anytime to test real cardboard linkages & play the Catapult game!',
     ];
     setState(() {
-      _tapQuipIdx = (_tapQuipIdx + 1) % quips.length;
-      _robotMood = RobotMood.excited;
-      _botMessage = quips[_tapQuipIdx];
+      _highFiveCount++;
+      _confettiKey++;
+      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
+      if (_highFiveCount == 3) {
+        SoundEffects.playFanfare();
+        _botMessage = 'WOOT! 3× High-Five Combo! My cardboard gears are turbo-charged!';
+      } else if (_highFiveCount == 5) {
+        SoundEffects.playFanfare();
+        _botMessage = '5× INVENTOR STREAK! You unlocked maximum Bolts sparkle power!';
+      } else if (_highFiveCount % 10 == 0) {
+        SoundEffects.playFanfare();
+        _botMessage = '$_highFiveCount× LEGENDARY COMBO! Even my straw wheels are cheering!';
+      } else {
+        _tapQuipIdx = (_tapQuipIdx + 1) % quips.length;
+        _botMessage = quips[_tapQuipIdx];
+      }
     });
+  }
+
+  void _onSelectPaint(RobotPaint paint) {
+    SoundEffects.playPop();
+    setState(() {
+      _robotPaint = paint;
+      _confettiKey++;
+      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
+      _botMessage =
+          'Whoa, ${paint.label} armor looks awesome on me! Zero paint fumes — pure digital flair!';
+    });
+  }
+
+  void _onCycleHat() {
+    final nextHat = _robotHat.next;
+    SoundEffects.playRobotBeep();
+    setState(() {
+      _robotHat = nextHat;
+      _confettiKey++;
+      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
+      switch (nextHat) {
+        case RobotHat.cap:
+          _botMessage = 'Maker Cap on! Let\'s build something cool out of Amazon boxes!';
+          break;
+        case RobotHat.crown:
+          _botMessage = 'Royal Inventor Crown equipped! Bow to the cardboard kingdom!';
+          break;
+        case RobotHat.topHat:
+          _botMessage = 'Ta-da! Magic Top Hat ready to turn scrap cardboard into physics!';
+          break;
+        case RobotHat.visor:
+          _botMessage = 'Cool Cyber Shades activated! Future robotics engineer coming through!';
+          break;
+        case RobotHat.none:
+          _botMessage = 'Back to my classic glowing telemetry antenna — beep-boop!';
+          break;
+      }
+    });
+  }
+
+  void _onToggleBoosters() {
+    SoundEffects.playBoing();
+    setState(() {
+      _hasBoosters = !_hasBoosters;
+      _confettiKey++;
+      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.excited;
+      _botMessage = _hasBoosters
+          ? 'TWIN BOOSTERS ENGAGED! Hovering 6 millimeters off the workbench floor!'
+          : 'Boosters parked safely back in the toolbox!';
+    });
+  }
+
+  void _onToggleDance() {
+    SoundEffects.playFanfare();
+    setState(() {
+      _isDancing = !_isDancing;
+      _confettiKey++;
+      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.greeting;
+      _botMessage = _isDancing
+          ? 'DISCO BOLTS MODE! ♪ Boogie-woogie cardboard shuffle initiated! ♪'
+          : 'Whew, great dance workout! What build should we test next?';
+    });
+  }
+
+  void _onToggleSound() {
+    setState(() {
+      _soundEnabled = !_soundEnabled;
+      SoundEffects.enabled = _soundEnabled;
+    });
+    if (_soundEnabled) {
+      SoundEffects.playRobotBeep();
+    }
   }
 
   void _onSelectMachineExample(int idx) {
     setState(() {
       _exampleIdx = idx;
-      _robotMood = RobotMood.explaining;
+      _robotMood = _isDancing ? RobotMood.dancing : RobotMood.explaining;
       _botMessage = _machineIntros[idx];
     });
   }
@@ -861,12 +956,26 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     final bubble = RobotSpeechBubble(
       message: _botMessage,
       speakerTag: 'BOLTS',
-      accentColor: _activeStage == 3 ? AppColors.emerald : AppColors.primary,
+      accentColor: _activeStage == 3 ? AppColors.emerald : _robotPaint.swatch,
       onTalkingChanged: (talking) {
         if (mounted && _isRobotTalking != talking) {
           setState(() => _isRobotTalking = talking);
         }
       },
+    );
+
+    final toyBar = BoltsCustomizeToyBar(
+      paintStyle: _robotPaint,
+      onSelectPaint: _onSelectPaint,
+      hat: _robotHat,
+      onCycleHat: _onCycleHat,
+      hasBoosters: _hasBoosters,
+      onToggleBoosters: _onToggleBoosters,
+      isDancing: _isDancing,
+      onToggleDance: _onToggleDance,
+      soundEnabled: _soundEnabled,
+      onToggleSound: _onToggleSound,
+      highFiveCount: _highFiveCount,
     );
 
     if (isWideStage) {
@@ -885,11 +994,16 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   mood: _robotMood,
                   isTalking: _isRobotTalking,
                   entranceKey: _robotEntranceKey,
+                  confettiBurstKey: _confettiKey,
+                  paintStyle: _robotPaint,
+                  hat: _robotHat,
+                  hasBoosters: _hasBoosters,
+                  isDancing: _isDancing,
                   height: 174,
                   onTap: _onTapRobot,
                 ),
                 const Text(
-                  'Tap Bolts to say hi!',
+                  'Tap Bolts for high-fives & confetti!',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -899,34 +1013,48 @@ class _MarketingPageViewState extends State<MarketingPageView> {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          toyBar,
+          const SizedBox(height: 12),
           bubble,
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _buildQuickReplyChips(),
         ],
       );
     }
 
-    // Compact mobile top host row: Bolts next to his speech bubble!
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    // Compact mobile top host block: Bolts next to his speech bubble + playful toy dock!
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: TalkingRobotCharacter(
-            mood: _robotMood,
-            isTalking: _isRobotTalking,
-            entranceKey: _robotEntranceKey,
-            height: isTiny ? 84 : 102,
-            onTap: _onTapRobot,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: TalkingRobotCharacter(
+                mood: _robotMood,
+                isTalking: _isRobotTalking,
+                entranceKey: _robotEntranceKey,
+                confettiBurstKey: _confettiKey,
+                paintStyle: _robotPaint,
+                hat: _robotHat,
+                hasBoosters: _hasBoosters,
+                isDancing: _isDancing,
+                height: isTiny ? 84 : 102,
+                onTap: _onTapRobot,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(child: bubble),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(child: bubble),
+        const SizedBox(height: 10),
+        toyBar,
       ],
     );
   }
@@ -994,7 +1122,7 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: () => _onSelectMachineExample((_exampleIdx + 1) % 4),
+              onPressed: () => _onSelectMachineExample((_exampleIdx + 1) % 5),
             ),
             TextButton(
               onPressed: _showSampleSchematicPreviewDialog,

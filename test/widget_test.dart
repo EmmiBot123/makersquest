@@ -31,7 +31,33 @@ void main() {
     expect(find.text('Level Progression Map'), findsNothing);
     expect(find.textContaining('Cardboard Scissor Lift Mechanism'), findsNothing);
 
-    // 2. Interact with Stage 1 scrap-to-robot bench
+    // 1b. Play & customize Bolts (paint, hat, boosters, dance, high-five combo & sound toggle)
+    await tester.tap(find.byTooltip('Paint Bolts: Cosmic'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Cosmic armor'), findsOneWidget);
+
+    await tester.tap(find.text('Hat'));
+    await tester.pumpAndSettle();
+    expect(find.text('Cap'), findsOneWidget);
+
+    await tester.tap(find.text('Boost'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('TWIN BOOSTERS ENGAGED'), findsOneWidget);
+
+    await tester.tap(find.text('Dance'));
+    await tester.pumpAndSettle();
+    expect(find.text('Dancing'), findsOneWidget);
+    await tester.tap(find.text('Dancing')); // toggle back to calm so subsequent prompts read cleanly
+    await tester.pumpAndSettle();
+
+    // High-five streak combo (3x)
+    for (int i = 0; i < 3; i++) {
+      await tester.tap(find.byTooltip('Tap Bolts for a high-five!'));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('✋ 3×'), findsOneWidget);
+
+    // 2. Interact with Stage 1 scrap-to-robot bench & its live Wheelie / Honk toys
     await tester.tap(find.text('Delivery Box'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Straws'));
@@ -39,6 +65,12 @@ void main() {
     await tester.tap(find.text('Rubber Band'));
     await tester.pumpAndSettle();
     expect(find.textContaining('RUNNING FROM SCRAPS'), findsOneWidget);
+
+    await tester.tap(find.text('Wheelie Jump'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Honk!'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Cardboard horn honked'), findsOneWidget);
 
     // 3. Test "Preview 3D CAD" shows a sample preview, NOT open projects
     final previewBtn = find.text('Preview 3D CAD');
@@ -69,6 +101,12 @@ void main() {
     await tester.tap(find.text('Drop Marble 🔮'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Exit Speed:'), findsOneWidget);
+
+    await tester.tap(find.text('Catapult'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Launch Block 🎯'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Hits: 1'), findsOneWidget);
 
     // 5. Advance to Your Plan & let Bolts draft the starter trajectory
     await tester.tap(find.text('Pick Builds For Me'));

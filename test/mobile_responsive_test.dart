@@ -57,23 +57,33 @@ void main() {
         expect(find.text('Turn Cardboard into Real Robotics.'), findsOneWidget);
         expect(find.text('BOLTS'), findsOneWidget);
 
-        // Stage 0: Scrap workbench taps & CAD Preview
+        // Customize & Play with Bolts on mobile (paint, hat, boosters, dance, high-five, sound)
+        await _scrollCenterAndTap(tester, find.byTooltip('Paint Bolts: Solar'));
+        await _scrollCenterAndTap(tester, find.text('Hat'));
+        await _scrollCenterAndTap(tester, find.text('Boost'));
+        await _scrollCenterAndTap(tester, find.text('Dance'));
+        await _scrollCenterAndTap(tester, find.byTooltip('Tap Bolts for a high-five!'));
+        expect(find.text('✋ 1×'), findsOneWidget);
+
+        // Stage 0: Scrap workbench taps, wheelie toy & CAD Preview
         await _scrollCenterAndTap(tester, find.text('Delivery Box'));
         await _scrollCenterAndTap(tester, find.text('Straws'));
         await _scrollCenterAndTap(tester, find.text('Rubber Band'));
         expect(find.textContaining('RUNNING FROM SCRAPS'), findsOneWidget);
+        await _scrollCenterAndTap(tester, find.text('Wheelie Jump'));
 
         await _scrollCenterAndTap(tester, find.text('Preview 3D CAD'));
         expect(find.text('Sample 3D CAD Blueprint Preview'), findsOneWidget);
         await tester.tap(find.text('Close Preview'));
         await tester.pumpAndSettle();
 
-        // Stage 1: All 4 interactive machine playgrounds
+        // Stage 1: All 5 interactive machine & catapult playgrounds
         await _scrollCenterAndTap(tester, find.text('2. Examples'));
-        for (final machine in ['Scissor Lift', 'Torque Racer', 'Claw Gripper', 'Gravity Coaster']) {
+        for (final machine in ['Scissor Lift', 'Torque Racer', 'Claw Gripper', 'Gravity Coaster', 'Catapult']) {
           await _scrollCenterAndTap(tester, find.text(machine));
         }
-        await _scrollCenterAndTap(tester, find.text('Drop Marble 🔮'));
+        await _scrollCenterAndTap(tester, find.text('Launch Block 🎯'));
+        expect(find.textContaining('Hits: 1'), findsOneWidget);
 
         // Stage 2: Minimal planner & drafting hologram
         await _scrollCenterAndTap(tester, find.text('3. Your Plan'));

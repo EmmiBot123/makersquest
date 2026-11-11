@@ -78,3 +78,45 @@ void playSoundFanfareImpl() {
   } catch (_) {}
 }
 
+void playSoundRobotBeepImpl() {
+  try {
+    final ctx = _getAudioContext();
+    if (ctx == null) return;
+    final now = ctx.currentTime;
+    final notes = [880.0, 1174.66, 698.46, 1318.51];
+    final offsets = [0.0, 0.055, 0.11, 0.165];
+    for (int i = 0; i < notes.length; i++) {
+      final osc = ctx.createOscillator();
+      final gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      final t = now + offsets[i];
+      osc.frequency.setValueAtTime(notes[i], t);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      osc.start(t);
+      osc.stop(t + 0.07);
+    }
+  } catch (_) {}
+}
+
+void playSoundBoingImpl() {
+  try {
+    final ctx = _getAudioContext();
+    if (ctx == null) return;
+    final now = ctx.currentTime;
+    final osc = ctx.createOscillator();
+    final gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(240, now);
+    osc.frequency.exponentialRampToValueAtTime(760, now + 0.16);
+    gain.gain.setValueAtTime(0.11, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    osc.start(now);
+    osc.stop(now + 0.18);
+  } catch (_) {}
+}
+
