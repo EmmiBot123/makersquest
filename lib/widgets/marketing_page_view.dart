@@ -1037,11 +1037,11 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   hat: _robotHat,
                   hasBoosters: _hasBoosters,
                   isDancing: _isDancing,
-                  height: 174,
+                  height: 184,
                   onTap: _onTapRobot,
                 ),
                 const Text(
-                  'Tap Bolts for high-fives & confetti!',
+                  'Tap Bolts for high-fives • Drag or hover in 3D!',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,

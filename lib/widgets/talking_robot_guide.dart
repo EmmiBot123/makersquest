@@ -5,153 +5,17 @@ import 'package:flutter/material.dart';
 import '../services/sound_effects.dart';
 import '../theme/app_theme.dart';
 import 'frosted_glass_background.dart';
+import 'robot_3d_cartoon_painter.dart';
 
-enum RobotMood {
-  greeting,
-  explaining,
-  thinking,
-  excited,
-  dancing,
-}
-
-enum RobotHat {
-  none,
-  cap,
-  crown,
-  topHat,
-  visor,
-}
-
-extension RobotHatX on RobotHat {
-  String get emoji {
-    switch (this) {
-      case RobotHat.none:
-        return '📡';
-      case RobotHat.cap:
-        return '🧢';
-      case RobotHat.crown:
-        return '👑';
-      case RobotHat.topHat:
-        return '🎩';
-      case RobotHat.visor:
-        return '🕶️';
-    }
-  }
-
-  String get label {
-    switch (this) {
-      case RobotHat.none:
-        return 'Antenna';
-      case RobotHat.cap:
-        return 'Cap';
-      case RobotHat.crown:
-        return 'Crown';
-      case RobotHat.topHat:
-        return 'Magic';
-      case RobotHat.visor:
-        return 'Shades';
-    }
-  }
-
-  RobotHat get next {
-    final vals = RobotHat.values;
-    return vals[(index + 1) % vals.length];
-  }
-}
-
-enum RobotPaint {
-  cobalt,
-  amber,
-  mint,
-  magenta,
-}
-
-extension RobotPaintX on RobotPaint {
-  String get label {
-    switch (this) {
-      case RobotPaint.cobalt:
-        return 'Cobalt';
-      case RobotPaint.amber:
-        return 'Solar';
-      case RobotPaint.mint:
-        return 'Mint';
-      case RobotPaint.magenta:
-        return 'Cosmic';
-    }
-  }
-
-  Color get swatch {
-    switch (this) {
-      case RobotPaint.cobalt:
-        return AppColors.primary;
-      case RobotPaint.amber:
-        return AppColors.amber;
-      case RobotPaint.mint:
-        return AppColors.emerald;
-      case RobotPaint.magenta:
-        return const Color(0xFFEC4899);
-    }
-  }
-
-  Color get torsoColor {
-    switch (this) {
-      case RobotPaint.cobalt:
-        return const Color(0xFF334155);
-      case RobotPaint.amber:
-        return const Color(0xFF78350F);
-      case RobotPaint.mint:
-        return const Color(0xFF065F46);
-      case RobotPaint.magenta:
-        return const Color(0xFF581C87);
-    }
-  }
-
-  Color get headColor {
-    switch (this) {
-      case RobotPaint.cobalt:
-        return const Color(0xFF475569);
-      case RobotPaint.amber:
-        return const Color(0xFF92400E);
-      case RobotPaint.mint:
-        return const Color(0xFF047857);
-      case RobotPaint.magenta:
-        return const Color(0xFF701A75);
-    }
-  }
-
-  Color get neonColor {
-    switch (this) {
-      case RobotPaint.cobalt:
-        return const Color(0xFF38BDF8);
-      case RobotPaint.amber:
-        return const Color(0xFFFDE047);
-      case RobotPaint.mint:
-        return const Color(0xFF6EE7B7);
-      case RobotPaint.magenta:
-        return const Color(0xFFF472B6);
-    }
-  }
-
-  Color get trimColor {
-    switch (this) {
-      case RobotPaint.cobalt:
-        return AppColors.amber;
-      case RobotPaint.amber:
-        return const Color(0xFF38BDF8);
-      case RobotPaint.mint:
-        return const Color(0xFFFACC15);
-      case RobotPaint.magenta:
-        return const Color(0xFF38BDF8);
-    }
-  }
-}
+export 'robot_3d_cartoon_painter.dart'
+    show RobotMood, RobotHat, RobotHatX, RobotPaint, RobotPaintX;
 
 bool get _isRunningTests =>
     WidgetsBinding.instance.runtimeType.toString().contains('Test');
 
-/// Expressive customizable robot companion ("Bolts") that rolls onto the stage,
-/// wears upgradeable hats & paint, fires rocket boosters, dances on command,
-/// bursts confetti on high-fives, and animates a voice equalizer mouth.
+/// Expressive 3D Pixar/vinyl-style customizable cartoon robot ("Bolts") that rolls
+/// onto the stage, tracks cursor/touch in 3D, wears 3D hats & paint, fires rocket
+/// boosters, dances, bursts confetti on high-fives, and animates a cartoon face.
 class TalkingRobotCharacter extends StatefulWidget {
   final RobotMood mood;
   final bool isTalking;
@@ -188,6 +52,14 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
   late AnimationController _entranceController;
   late AnimationController _tapController;
   late AnimationController _confettiController;
+  late AnimationController _tiltSpringController;
+
+  double _userYaw = 0.0;
+  double _userPitch = 0.0;
+  double _springStartYaw = 0.0;
+  double _springStartPitch = 0.0;
+  bool _isSpringingBack = false;
+  bool _isDragging3D = false;
 
   @override
   void initState() {
@@ -217,6 +89,11 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
       vsync: this,
       duration: Duration(milliseconds: _isRunningTests ? 50 : 900),
     );
+
+    _tiltSpringController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: _isRunningTests ? 50 : 480),
+    );
   }
 
   @override
@@ -236,6 +113,7 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
     _entranceController.dispose();
     _tapController.dispose();
     _confettiController.dispose();
+    _tiltSpringController.dispose();
     super.dispose();
   }
 
@@ -246,637 +124,98 @@ class _TalkingRobotCharacterState extends State<TalkingRobotCharacter>
     widget.onTap?.call();
   }
 
+  void _beginSpringBack() {
+    _isDragging3D = false;
+    _springStartYaw = _userYaw;
+    _springStartPitch = _userPitch;
+    _isSpringingBack = true;
+    _tiltSpringController.forward(from: 0.0);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _handleTap,
-      behavior: HitTestBehavior.opaque,
-      child: Tooltip(
-        message: 'Tap Bolts for a high-five!',
-        child: SizedBox(
-          height: widget.height,
-          width: widget.height * 1.08,
-          child: AnimatedBuilder(
-            animation: Listenable.merge([
-              _idleController,
-              _entranceController,
-              _tapController,
-              _confettiController,
-            ]),
-            builder: (context, _) {
-              return CustomPaint(
-                painter: _TalkingRobotPainter(
-                  idle: _idleController.value,
-                  entrance: Curves.easeOutBack.transform(
-                    _entranceController.value.clamp(0.0, 1.0),
-                  ),
-                  rawEntrance: _entranceController.value,
-                  tapBounce: _tapController.value,
-                  confettiProgress: _confettiController.value,
-                  mood: widget.mood,
-                  isTalking: widget.isTalking,
-                  paintStyle: widget.paintStyle,
-                  hat: widget.hat,
-                  hasBoosters: widget.hasBoosters,
-                  isDancing: widget.isDancing,
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TalkingRobotPainter extends CustomPainter {
-  final double idle;
-  final double entrance;
-  final double rawEntrance;
-  final double tapBounce;
-  final double confettiProgress;
-  final RobotMood mood;
-  final bool isTalking;
-  final RobotPaint paintStyle;
-  final RobotHat hat;
-  final bool hasBoosters;
-  final bool isDancing;
-
-  _TalkingRobotPainter({
-    required this.idle,
-    required this.entrance,
-    required this.rawEntrance,
-    required this.tapBounce,
-    required this.confettiProgress,
-    required this.mood,
-    required this.isTalking,
-    required this.paintStyle,
-    required this.hat,
-    required this.hasBoosters,
-    required this.isDancing,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final scale = (h / 184.0).clamp(0.5, 1.35);
-
-    canvas.save();
-    // Roll in cleanly from left edge on entry
-    final slideX = (1.0 - entrance) * (-w * 0.42);
-    final groundY = h - 14 * scale;
-
-    // Ground glow pad / Disco beat spotlight!
-    final shadowWidth = (isDancing ? 98 : 84) * scale;
-    final shadowCenterX = (w * 0.5) + slideX * 0.85;
-    if (isDancing) {
-      final discoBeat = 0.25 + 0.2 * math.sin(idle * 8 * math.pi).abs();
-      final discoColor = (idle * 4).floor().isEven
-          ? const Color(0xFFEC4899)
-          : const Color(0xFF38BDF8);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(shadowCenterX, groundY),
-          width: shadowWidth * 1.15,
-          height: 16 * scale,
-        ),
-        Paint()..color = discoColor.withValues(alpha: discoBeat),
-      );
-    } else {
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(shadowCenterX, groundY),
-          width: shadowWidth,
-          height: 14 * scale,
-        ),
-        Paint()..color = paintStyle.swatch.withValues(alpha: 0.14),
-      );
-    }
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(shadowCenterX, groundY),
-        width: shadowWidth * 0.65,
-        height: 7 * scale,
-      ),
-      Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.16),
-    );
-
-    final boosterLift = hasBoosters
-        ? (6.0 + math.sin(idle * 6 * math.pi).abs() * 3.5) * scale
-        : 0.0;
-    final jumpOffset = math.sin(tapBounce * math.pi) * 20 * scale;
-    final danceHop = isDancing ? math.sin(idle * 10 * math.pi).abs() * 7 * scale : 0.0;
-    final danceSwayX = isDancing ? math.sin(idle * 6 * math.pi) * 6 * scale : 0.0;
-    final bobOffset = math.sin(idle * 2 * math.pi) * 2.5 * scale;
-    final cx = (w * 0.5) + slideX + danceSwayX;
-    final baseY = groundY - 6 * scale - jumpOffset - danceHop - boosterLift + bobOffset;
-
-    canvas.translate(cx, baseY);
-    canvas.scale(scale);
-    if (isDancing) {
-      canvas.rotate(math.sin(idle * 6 * math.pi) * 0.08);
-    }
-
-    // Celebratory sparkles + multi-color confetti fountain on tap or milestone!
-    if (confettiProgress > 0.01 && confettiProgress < 0.99) {
-      const palette = [
-        Color(0xFFF59E0B),
-        Color(0xFFEC4899),
-        Color(0xFF38BDF8),
-        Color(0xFF34D399),
-        Color(0xFFA855F7),
-      ];
-      final fade = (1.0 - confettiProgress).clamp(0.0, 1.0);
-      for (int i = 0; i < 14; i++) {
-        final angle = -math.pi * 0.95 + (i / 13.0) * math.pi * 0.9;
-        final radius = 34 + confettiProgress * (46 + (i % 3) * 14);
-        final drop = confettiProgress * confettiProgress * 28;
-        final px = math.cos(angle) * radius;
-        final py = -72 + math.sin(angle) * radius + drop;
-        canvas.save();
-        canvas.translate(px, py);
-        canvas.rotate(confettiProgress * 6.0 + i);
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            const Rect.fromLTWH(-3, -2, 6, 4),
-            const Radius.circular(1),
-          ),
-          Paint()..color = palette[i % palette.length].withValues(alpha: fade),
-        );
-        canvas.restore();
-      }
-    }
-
-    if (tapBounce > 0.02 || mood == RobotMood.excited || isDancing) {
-      final burstPhase = tapBounce > 0.02 ? tapBounce : idle;
-      for (int i = 0; i < 5; i++) {
-        final ang = -math.pi * 0.85 + (i * math.pi * 0.42);
-        final dist = 56 + math.sin(burstPhase * math.pi) * 16;
-        final sx = math.cos(ang) * dist;
-        final sy = -78 + math.sin(ang) * dist * 0.7;
-        final alpha = tapBounce > 0.02
-            ? (1.0 - tapBounce).clamp(0.0, 1.0)
-            : (0.4 + 0.4 * math.sin(idle * 2 * math.pi + i));
-        canvas.drawCircle(
-          Offset(sx, sy),
-          3.4,
-          Paint()
-            ..color = (i.isEven ? paintStyle.trimColor : paintStyle.neonColor)
-                .withValues(alpha: alpha),
-        );
-      }
-    }
-
-    // Optional Twin Jetpack Rocket Boosters!
-    if (hasBoosters) {
-      final flameLen = 12 + math.sin(idle * 18 * math.pi).abs() * 11 +
-          (isDancing || tapBounce > 0.02 ? 7 : 0);
-      for (final side in [-1.0, 1.0]) {
-        final bx = side * 31;
-        // Rocket canister
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromCenter(center: Offset(bx, -34), width: 10, height: 28),
-            const Radius.circular(4),
-          ),
-          Paint()..color = const Color(0xFF475569),
-        );
-        // Stripe trim
-        canvas.drawRect(
-          Rect.fromLTWH(bx - 5, -38, 10, 5),
-          Paint()..color = paintStyle.trimColor,
-        );
-        // Nozzle cone
-        canvas.drawRect(
-          Rect.fromLTWH(bx - 4, -20, 8, 5),
-          Paint()..color = const Color(0xFF1E293B),
-        );
-        // Outer orange flame plume
-        final outerFlame = Path()
-          ..moveTo(bx - 4.5, -15)
-          ..lineTo(bx, -15 + flameLen)
-          ..lineTo(bx + 4.5, -15)
-          ..close();
-        canvas.drawPath(outerFlame, Paint()..color = const Color(0xFFF97316));
-        // Inner bright cyan/yellow flame
-        final innerFlame = Path()
-          ..moveTo(bx - 2.2, -15)
-          ..lineTo(bx, -15 + flameLen * 0.62)
-          ..lineTo(bx + 2.2, -15)
-          ..close();
-        canvas.drawPath(innerFlame, Paint()..color = const Color(0xFFFDE047));
-      }
-    }
-
-    // Drive Wheels / Treads at base
-    final wheelRot = (1.0 - rawEntrance) * 6 * math.pi + tapBounce * 4 * math.pi;
-    _drawWheel(canvas, const Offset(-20, -4), 10, wheelRot);
-    _drawWheel(canvas, const Offset(20, -4), 10, wheelRot);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-22, -13, 44, 8),
-        const Radius.circular(4),
-      ),
-      Paint()..color = const Color(0xFF1E293B),
-    );
-
-    // Torso
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-27, -58, 54, 46),
-        const Radius.circular(12),
-      ),
-      Paint()..color = paintStyle.torsoColor,
-    );
-    // Crisp highlight border
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-27, -58, 54, 46),
-        const Radius.circular(12),
-      ),
-      Paint()
-        ..color = paintStyle.neonColor.withValues(alpha: 0.45)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6,
-    );
-
-    // Chest badge + spinning gear
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-18, -50, 36, 30),
-        const Radius.circular(8),
-      ),
-      Paint()..color = const Color(0xFF0F172A),
-    );
-    final gearAngle = idle * 2 * math.pi * (isTalking || isDancing ? 2.4 : 1.0);
-    _drawGear(canvas, const Offset(-5, -35), 9.5, gearAngle, paintStyle.trimColor);
-    // Heartbeat LED pill
-    final ledPulse = 0.5 + 0.5 * math.sin(idle * 6 * math.pi);
-    canvas.drawCircle(
-      const Offset(10, -35),
-      3.5,
-      Paint()
-        ..color = mood == RobotMood.excited || isDancing
-            ? AppColors.emerald
-            : paintStyle.neonColor.withValues(alpha: 0.55 + 0.45 * ledPulse),
-    );
-
-    // Arms (dynamic gestures or dance moves!)
-    final armPaint = Paint()
-      ..color = paintStyle.headColor
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round;
-
-    double leftEndX = -38;
-    double leftEndY = -28;
-    if (isDancing) {
-      final groove = math.sin(idle * 10 * math.pi);
-      leftEndX = -42 + groove * 6;
-      leftEndY = -62 - groove * 12;
-    } else if (mood == RobotMood.greeting) {
-      final wave = math.sin(idle * 6 * math.pi) * 0.45;
-      leftEndX = -40 + math.sin(wave) * 10;
-      leftEndY = -66 + math.cos(wave) * 6;
-    } else if (mood == RobotMood.excited) {
-      leftEndX = -42;
-      leftEndY = -68 - math.sin(idle * 4 * math.pi) * 5;
-    } else {
-      leftEndY = -28 + math.sin(idle * 2 * math.pi) * 4;
-    }
-    canvas.drawLine(const Offset(-27, -46), Offset(leftEndX, leftEndY), armPaint);
-    canvas.drawCircle(
-      Offset(leftEndX, leftEndY),
-      5.2,
-      Paint()..color = paintStyle.trimColor,
-    );
-
-    double rightEndX = 40;
-    double rightEndY = -30;
-    if (isDancing) {
-      final groove = math.sin(idle * 10 * math.pi);
-      rightEndX = 42 + groove * 6;
-      rightEndY = -62 + groove * 12;
-    } else if (mood == RobotMood.explaining) {
-      rightEndX = 48 + math.sin(idle * 4 * math.pi) * 4;
-      rightEndY = -44;
-    } else if (mood == RobotMood.excited) {
-      rightEndX = 42;
-      rightEndY = -68 - math.cos(idle * 4 * math.pi) * 5;
-    } else if (mood == RobotMood.thinking) {
-      rightEndX = 34;
-      rightEndY = -68;
-    } else {
-      rightEndY = -30 - math.sin(idle * 2 * math.pi) * 4;
-    }
-    canvas.drawLine(const Offset(27, -46), Offset(rightEndX, rightEndY), armPaint);
-    canvas.drawCircle(
-      Offset(rightEndX, rightEndY),
-      5.2,
-      Paint()
-        ..color = mood == RobotMood.explaining
-            ? paintStyle.neonColor
-            : paintStyle.trimColor,
-    );
-
-    // Neck
-    canvas.drawRect(
-      const Rect.fromLTWH(-7, -65, 14, 7),
-      Paint()..color = const Color(0xFF94A3B8),
-    );
-
-    // Antenna (drawn when wearing none, or peeking beside visor shades)
-    if (hat == RobotHat.none || hat == RobotHat.visor) {
-      canvas.drawLine(
-        const Offset(0, -109),
-        const Offset(0, -126),
-        Paint()
-          ..color = const Color(0xFF64748B)
-          ..strokeWidth = 4
-          ..strokeCap = StrokeCap.round,
-      );
-      final beaconColor = isTalking || isDancing
-          ? (math.sin(idle * 12 * math.pi) > 0
-              ? paintStyle.neonColor
-              : AppColors.emerald)
-          : (mood == RobotMood.thinking ? AppColors.amber : AppColors.emerald);
-      canvas.drawCircle(
-        const Offset(0, -130),
-        6.5,
-        Paint()..color = beaconColor.withValues(alpha: 0.28),
-      );
-      canvas.drawCircle(
-        const Offset(0, -130),
-        4.5,
-        Paint()..color = beaconColor,
-      );
-    }
-
-    // Earpods / bolts on side of head
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-36, -95, 6, 18),
-        const Radius.circular(3),
-      ),
-      Paint()..color = paintStyle.trimColor,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(30, -95, 6, 18),
-        const Radius.circular(3),
-      ),
-      Paint()..color = paintStyle.trimColor,
-    );
-
-    // Head outer chassis
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-31, -110, 62, 46),
-        const Radius.circular(14),
-      ),
-      Paint()..color = paintStyle.headColor,
-    );
-
-    // Visor screen
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-24, -103, 48, 32),
-        const Radius.circular(9),
-      ),
-      Paint()..color = const Color(0xFF0F172A),
-    );
-
-    // Expressive eyes
-    final isBlinking = idle > 0.93 && !isTalking && !isDancing;
-    final eyePaint = Paint()
-      ..color = mood == RobotMood.excited || isDancing
-          ? const Color(0xFF34D399)
-          : paintStyle.neonColor
-      ..strokeWidth = 2.6
-      ..strokeCap = StrokeCap.round
-      ..style = mood == RobotMood.excited || isDancing || isBlinking
-          ? PaintingStyle.stroke
-          : PaintingStyle.fill;
-
-    if (isBlinking) {
-      canvas.drawLine(const Offset(-15, -91), const Offset(-7, -91), eyePaint);
-      canvas.drawLine(const Offset(7, -91), const Offset(15, -91), eyePaint);
-    } else if (mood == RobotMood.excited || isDancing) {
-      final leftArc = Path()
-        ..moveTo(-16, -89)
-        ..quadraticBezierTo(-11, -97, -6, -89);
-      final rightArc = Path()
-        ..moveTo(6, -89)
-        ..quadraticBezierTo(11, -97, 16, -89);
-      canvas.drawPath(leftArc, eyePaint);
-      canvas.drawPath(rightArc, eyePaint);
-    } else {
-      final lookShift = mood == RobotMood.explaining ? 1.8 : 0.0;
-      canvas.drawCircle(Offset(-11 + lookShift, -91), 4.2, eyePaint);
-      canvas.drawCircle(Offset(11 + lookShift, -91), 4.2, eyePaint);
-      canvas.drawCircle(
-        Offset(-12 + lookShift, -92.5),
-        1.4,
-        Paint()..color = Colors.white,
-      );
-      canvas.drawCircle(
-        Offset(10 + lookShift, -92.5),
-        1.4,
-        Paint()..color = Colors.white,
-      );
-    }
-
-    // Animated Talking / Dancing Equalizer Mouth OR Calm Smile
-    if (isTalking || isDancing) {
-      final barPaint = Paint()
-        ..color = paintStyle.neonColor
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = 2.6;
-      for (int b = 0; b < 5; b++) {
-        final bx = -10.0 + b * 5.0;
-        final amp = (0.35 + 0.65 * math.sin(idle * 14 * math.pi + b * 1.3).abs());
-        final halfH = 1.5 + amp * 4.2;
-        canvas.drawLine(Offset(bx, -78 - halfH), Offset(bx, -78 + halfH), barPaint);
-      }
-    } else {
-      final smile = Path()
-        ..moveTo(-9, -79)
-        ..quadraticBezierTo(0, -73, 9, -79);
-      canvas.drawPath(
-        smile,
-        Paint()
-          ..color = paintStyle.neonColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.4
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-
-    // Accessories / Hats!
-    _drawHat(canvas);
-
-    canvas.restore();
-  }
-
-  void _drawHat(Canvas canvas) {
-    switch (hat) {
-      case RobotHat.none:
-        return;
-      case RobotHat.cap:
-        // Maker baseball cap
-        final dome = Path()
-          ..moveTo(-29, -108)
-          ..quadraticBezierTo(0, -132, 29, -108)
-          ..close();
-        canvas.drawPath(dome, Paint()..color = const Color(0xFFEF4444));
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            const Rect.fromLTWH(-8, -110, 44, 6),
-            const Radius.circular(3),
-          ),
-          Paint()..color = const Color(0xFFB91C1C),
-        );
-        canvas.drawCircle(
-          const Offset(0, -122),
-          3.2,
-          Paint()..color = Colors.white,
-        );
-        return;
-      case RobotHat.crown:
-        final crown = Path()
-          ..moveTo(-22, -108)
-          ..lineTo(-26, -129)
-          ..lineTo(-10, -118)
-          ..lineTo(0, -134)
-          ..lineTo(10, -118)
-          ..lineTo(26, -129)
-          ..lineTo(22, -108)
-          ..close();
-        canvas.drawPath(crown, Paint()..color = const Color(0xFFFACC15));
-        canvas.drawCircle(const Offset(0, -122), 2.5, Paint()..color = const Color(0xFFEC4899));
-        canvas.drawCircle(const Offset(-14, -116), 2.0, Paint()..color = const Color(0xFF38BDF8));
-        canvas.drawCircle(const Offset(14, -116), 2.0, Paint()..color = const Color(0xFF10B981));
-        return;
-      case RobotHat.topHat:
-        // Inventor magic top hat
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            const Rect.fromLTWH(-34, -113, 68, 6),
-            const Radius.circular(3),
-          ),
-          Paint()..color = const Color(0xFF1E293B),
-        );
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            const Rect.fromLTWH(-20, -138, 40, 27),
-            const Radius.circular(4),
-          ),
-          Paint()..color = const Color(0xFF0F172A),
-        );
-        canvas.drawRect(
-          const Rect.fromLTWH(-20, -118, 40, 5),
-          Paint()..color = AppColors.amber,
-        );
-        return;
-      case RobotHat.visor:
-        // Cool cyber shades over eyes!
-        canvas.drawLine(
-          const Offset(-24, -93),
-          const Offset(24, -93),
-          Paint()
-            ..color = paintStyle.trimColor
-            ..strokeWidth = 2.4,
-        );
-        for (final lx in [-22.0, 2.0]) {
-          canvas.drawRRect(
-            RRect.fromRectAndRadius(
-              Rect.fromLTWH(lx, -97, 20, 12),
-              const Radius.circular(3),
-            ),
-            Paint()..color = const Color(0xFF020617).withValues(alpha: 0.85),
-          );
-          canvas.drawRRect(
-            RRect.fromRectAndRadius(
-              Rect.fromLTWH(lx, -97, 20, 12),
-              const Radius.circular(3),
-            ),
-            Paint()
-              ..color = paintStyle.neonColor
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 1.6,
-          );
-          // Shine diagonal
-          canvas.drawLine(
-            Offset(lx + 4, -95),
-            Offset(lx + 9, -87),
-            Paint()
-              ..color = Colors.white.withValues(alpha: 0.6)
-              ..strokeWidth = 1.5,
-          );
+    final width = widget.height * 1.08;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onHover: (event) {
+        if (_isDragging3D || _isRunningTests) return;
+        final nx = ((event.localPosition.dx / width) - 0.5) * 2.0;
+        final ny = ((event.localPosition.dy / widget.height) - 0.5) * 2.0;
+        setState(() {
+          _isSpringingBack = false;
+          _userYaw = (nx * 0.45).clamp(-0.55, 0.55);
+          _userPitch = (ny * 0.22).clamp(-0.26, 0.26);
+        });
+      },
+      onExit: (_) {
+        if (!_isDragging3D && !_isRunningTests) {
+          _beginSpringBack();
         }
-        return;
-    }
-  }
+      },
+      child: GestureDetector(
+        onTap: _handleTap,
+        onHorizontalDragStart: (_) {
+          _isDragging3D = true;
+          _isSpringingBack = false;
+        },
+        onHorizontalDragUpdate: (details) {
+          setState(() {
+            _isSpringingBack = false;
+            _userYaw = (_userYaw + details.delta.dx * 0.015).clamp(-0.68, 0.68);
+          });
+        },
+        onHorizontalDragEnd: (_) => _beginSpringBack(),
+        onHorizontalDragCancel: _beginSpringBack,
+        behavior: HitTestBehavior.opaque,
+        child: Tooltip(
+          message: 'Tap Bolts for a high-five!',
+          child: SizedBox(
+            height: widget.height,
+            width: width,
+            child: AnimatedBuilder(
+              animation: Listenable.merge([
+                _idleController,
+                _entranceController,
+                _tapController,
+                _confettiController,
+                _tiltSpringController,
+              ]),
+              builder: (context, _) {
+                double effectiveYaw = _userYaw;
+                double effectivePitch = _userPitch;
+                if (_isSpringingBack) {
+                  final spring = Curves.easeOutBack.transform(
+                    _tiltSpringController.value.clamp(0.0, 1.0),
+                  );
+                  effectiveYaw = _springStartYaw * (1.0 - spring);
+                  effectivePitch = _springStartPitch * (1.0 - spring);
+                }
 
-  void _drawWheel(Canvas canvas, Offset center, double radius, double rot) {
-    canvas.drawCircle(center, radius, Paint()..color = const Color(0xFF0F172A));
-    canvas.drawCircle(
-      center,
-      radius * 0.45,
-      Paint()..color = paintStyle.trimColor,
-    );
-    final spoke = Paint()
-      ..color = Colors.white70
-      ..strokeWidth = 1.4;
-    for (int i = 0; i < 4; i++) {
-      final a = rot + i * math.pi / 2;
-      canvas.drawLine(
-        center,
-        Offset(
-          center.dx + math.cos(a) * radius * 0.85,
-          center.dy + math.sin(a) * radius * 0.85,
+                return CustomPaint(
+                  painter: TalkingRobot3DCartoonPainter(
+                    idle: _idleController.value,
+                    entrance: Curves.easeOutBack.transform(
+                      _entranceController.value.clamp(0.0, 1.0),
+                    ),
+                    rawEntrance: _entranceController.value,
+                    tapBounce: _tapController.value,
+                    confettiProgress: _confettiController.value,
+                    mood: widget.mood,
+                    isTalking: widget.isTalking,
+                    paintStyle: widget.paintStyle,
+                    hat: widget.hat,
+                    hasBoosters: widget.hasBoosters,
+                    isDancing: widget.isDancing,
+                    userYaw: effectiveYaw,
+                    userPitch: effectivePitch,
+                  ),
+                );
+              },
+            ),
+          ),
         ),
-        spoke,
-      );
-    }
-  }
-
-  void _drawGear(
-    Canvas canvas,
-    Offset center,
-    double radius,
-    double angle,
-    Color color,
-  ) {
-    final p = Paint()..color = color;
-    canvas.drawCircle(center, radius * 0.72, p);
-    canvas.drawCircle(
-      center,
-      radius * 0.3,
-      Paint()..color = const Color(0xFF0F172A),
+      ),
     );
-    for (int i = 0; i < 8; i++) {
-      final a = angle + i * math.pi / 4;
-      canvas.drawCircle(
-        Offset(center.dx + math.cos(a) * radius, center.dy + math.sin(a) * radius),
-        2.1,
-        p,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _TalkingRobotPainter oldDelegate) {
-    return oldDelegate.idle != idle ||
-        oldDelegate.entrance != entrance ||
-        oldDelegate.tapBounce != tapBounce ||
-        oldDelegate.confettiProgress != confettiProgress ||
-        oldDelegate.mood != mood ||
-        oldDelegate.isTalking != isTalking ||
-        oldDelegate.paintStyle != paintStyle ||
-        oldDelegate.hat != hat ||
-        oldDelegate.hasBoosters != hasBoosters ||
-        oldDelegate.isDancing != isDancing;
   }
 }
 
