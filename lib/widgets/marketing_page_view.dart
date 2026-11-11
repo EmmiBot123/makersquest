@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import 'kid_robot_builder_animation.dart';
 import 'stem_infographics.dart';
 import 'talking_robot_guide.dart';
+import 'frosted_glass_background.dart';
 
 class MarketingPageView extends StatefulWidget {
   final QuestState questState;
@@ -402,83 +403,92 @@ class _MarketingPageViewState extends State<MarketingPageView> {
       barrierDismissible: false,
       builder: (ctx) {
         final isCompact = MediaQuery.sizeOf(ctx).width < 480;
-        return AlertDialog(
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          contentPadding: EdgeInsets.all(isCompact ? 18 : 24),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: AppColors.emeraldSoft,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.emerald, width: 2),
-                  ),
-                  child: const Center(child: Text('🎉', style: TextStyle(fontSize: 36))),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Enrollment Successful! 🏆',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textMain),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Welcome aboard MakerQuest, Cadet $cadetName!\nYour All-Access Odyssey Pass has been activated with 50 XP starter bonus.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(_archetypeIcon, style: const TextStyle(fontSize: 24)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Cadet Archetype: $_archetype', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                            Text('Aptitude: $_aptitudeScore% • Level 1 Unlocked', style: const TextStyle(fontSize: 11, color: AppColors.emerald, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: GlassSurface(
+              borderRadius: 24,
+              blurSigma: 18,
+              tintColor: AppColors.emerald,
+              padding: EdgeInsets.all(isCompact ? 18 : 24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppColors.emeraldSoft.withValues(alpha: 0.85),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.emerald, width: 2),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.rocket_launch_rounded),
-                    label: const Text(
-                      'Launch Cadet Workshop Now 🚀',
+                      child: const Center(child: Text('🎉', style: TextStyle(fontSize: 36))),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Enrollment Successful! 🏆',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textMain),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Welcome aboard MakerQuest, Cadet $cadetName!\nYour All-Access Odyssey Pass has been activated with 50 XP starter bonus.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
                     ),
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      widget.onLaunchWorkshop();
-                    },
-                  ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.65),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(_archetypeIcon, style: const TextStyle(fontSize: 24)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Cadet Archetype: $_archetype', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                                Text('Aptitude: $_aptitudeScore% • Level 1 Unlocked', style: const TextStyle(fontSize: 11, color: AppColors.emerald, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.rocket_launch_rounded),
+                        label: const Text(
+                          'Launch Cadet Workshop Now 🚀',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          widget.onLaunchWorkshop();
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
@@ -494,11 +504,14 @@ class _MarketingPageViewState extends State<MarketingPageView> {
         final screenW = MediaQuery.sizeOf(ctx).width;
         final isCompact = screenW < 600;
         return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           insetPadding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 40, vertical: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 860, maxHeight: 880),
-            child: Padding(
+            child: GlassSurface(
+              borderRadius: 24,
+              blurSigma: 18,
               padding: EdgeInsets.all(isCompact ? 14 : 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -662,54 +675,57 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     final isWideStage = screenW >= 780;
     final isTiny = screenW < 420;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'whatsapp_marketing_fab',
-        tooltip: 'WhatsApp Mentor Helpline: ${ExternalLauncher.whatsAppPhoneDisplay}',
-        backgroundColor: const Color(0xFF25D366),
-        foregroundColor: Colors.white,
-        elevation: 5,
-        onPressed: () {
-          SoundEffects.playPop();
-          ExternalLauncher.openWhatsApp();
-        },
-        child: const Icon(Icons.chat_rounded, size: 24),
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _buildTopNavigation(context),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  isTiny ? 12 : 24,
-                  isTiny ? 12 : 22,
-                  isTiny ? 12 : 24,
-                  84, // clearance above WhatsApp FAB
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 980),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildMinimalHeaderStrip(isTiny),
-                        SizedBox(height: isTiny ? 10 : 16),
-                        _buildGuidedRobotStage(
-                          isWideStage: isWideStage,
-                          isTiny: isTiny,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildMinimalFooter(isTiny),
-                      ],
+    return FrostedCloudBackdrop(
+      accentColor: _robotPaint.swatch,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        floatingActionButton: FloatingActionButton(
+          heroTag: 'whatsapp_marketing_fab',
+          tooltip: 'WhatsApp Mentor Helpline: ${ExternalLauncher.whatsAppPhoneDisplay}',
+          backgroundColor: const Color(0xFF25D366),
+          foregroundColor: Colors.white,
+          elevation: 6,
+          onPressed: () {
+            SoundEffects.playPop();
+            ExternalLauncher.openWhatsApp();
+          },
+          child: const Icon(Icons.chat_rounded, size: 24),
+        ),
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              _buildTopNavigation(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    isTiny ? 12 : 24,
+                    isTiny ? 12 : 22,
+                    isTiny ? 12 : 24,
+                    84, // clearance above WhatsApp FAB
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 980),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildMinimalHeaderStrip(isTiny),
+                          SizedBox(height: isTiny ? 10 : 16),
+                          _buildGuidedRobotStage(
+                            isWideStage: isWideStage,
+                            isTiny: isTiny,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildMinimalFooter(isTiny),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -720,14 +736,10 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     final showWideNav = screenW >= 720;
     final isTiny = screenW < 420;
 
-    return Container(
+    return GlassChromeBar(
       padding: EdgeInsets.symmetric(
         horizontal: isTiny ? 12 : 24,
         vertical: isTiny ? 8 : 12,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
       ),
       child: SizedBox(
         width: double.infinity,
@@ -874,11 +886,31 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                   vertical: isTiny ? 7 : 8,
                 ),
                 decoration: BoxDecoration(
-                  color: active ? const Color(0xFF0F172A) : Colors.white,
+                  gradient: active
+                      ? const LinearGradient(
+                          colors: [Color(0xFF0F172A), Color(0xFF312E81)],
+                        )
+                      : LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.78),
+                            Colors.white.withValues(alpha: 0.54),
+                          ],
+                        ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: active ? const Color(0xFF0F172A) : AppColors.border,
+                    color: active
+                        ? const Color(0xFF4F46E5).withValues(alpha: 0.75)
+                        : Colors.white.withValues(alpha: 0.9),
+                    width: 1.2,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (active ? AppColors.primary : const Color(0xFF94A3B8))
+                          .withValues(alpha: active ? 0.22 : 0.12),
+                      blurRadius: active ? 12 : 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -907,20 +939,15 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     required bool isWideStage,
     required bool isTiny,
   }) {
-    return Container(
+    return GlassSurface(
+      borderRadius: 26,
+      blurSigma: 18,
+      tintColor: _robotPaint.swatch,
+      topOpacity: 0.78,
+      bottomOpacity: 0.56,
+      borderColor: Colors.white.withValues(alpha: 0.90),
+      borderWidth: 1.5,
       padding: EdgeInsets.all(isTiny ? 12 : 22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: AppColors.border, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 28,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
       child: isWideStage
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -985,8 +1012,19 @@ class _MarketingPageViewState extends State<MarketingPageView> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.66),
+                  _robotPaint.swatch.withValues(alpha: 0.11),
+                ],
+              ),
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.90),
+                width: 1.3,
+              ),
             ),
             child: Column(
               children: [
@@ -1033,8 +1071,19 @@ class _MarketingPageViewState extends State<MarketingPageView> {
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.68),
+                    _robotPaint.swatch.withValues(alpha: 0.12),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.88),
+                  width: 1.2,
+                ),
               ),
               child: TalkingRobotCharacter(
                 mood: _robotMood,
@@ -1209,8 +1258,8 @@ class _MarketingPageViewState extends State<MarketingPageView> {
         label,
         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMain),
       ),
-      backgroundColor: const Color(0xFFF1F5F9),
-      side: const BorderSide(color: Color(0xFFE2E8F0)),
+      backgroundColor: Colors.white.withValues(alpha: 0.72),
+      side: BorderSide(color: Colors.white.withValues(alpha: 0.90), width: 1.2),
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       onPressed: () {
         SoundEffects.playPop();
@@ -1263,13 +1312,12 @@ class _MarketingPageViewState extends State<MarketingPageView> {
     }
 
     if (_planReady) {
-      return Container(
+      return GlassSurface(
+        borderRadius: 20,
+        blurSigma: 12,
+        tintColor: AppColors.primary,
+        borderColor: Colors.white.withValues(alpha: 0.90),
         padding: EdgeInsets.all(isTiny ? 14 : 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.5),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1318,9 +1366,9 @@ class _MarketingPageViewState extends State<MarketingPageView> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white.withValues(alpha: 0.72),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.90)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1403,13 +1451,12 @@ class _MarketingPageViewState extends State<MarketingPageView> {
 
     return Form(
       key: _planFormKey,
-      child: Container(
+      child: GlassSurface(
+        borderRadius: 20,
+        blurSigma: 12,
+        tintColor: AppColors.primary,
+        borderColor: Colors.white.withValues(alpha: 0.90),
         padding: EdgeInsets.all(isTiny ? 14 : 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border, width: 1.5),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1530,13 +1577,13 @@ class _MarketingPageViewState extends State<MarketingPageView> {
   }
 
   Widget _buildMinimalPassCard(bool isTiny) {
-    return Container(
+    return GlassSurface(
+      isDark: true,
+      borderRadius: 20,
+      blurSigma: 16,
+      borderColor: const Color(0xFF60A5FA).withValues(alpha: 0.48),
+      borderWidth: 1.5,
       padding: EdgeInsets.all(isTiny ? 14 : 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.45), width: 1.5),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1800,11 +1847,14 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
     final total = math.max(0.0, widget.planPrice - _discount);
 
     return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       insetPadding: EdgeInsets.symmetric(horizontal: screenW < 480 ? 12 : 40, vertical: 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
+        child: GlassSurface(
+          borderRadius: 24,
+          blurSigma: 18,
           padding: EdgeInsets.all(screenW < 480 ? 16 : 24),
           child: SingleChildScrollView(
             child: Column(
@@ -1850,9 +1900,9 @@ class _DummyCheckoutDialogState extends State<_DummyCheckoutDialog> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
+                    color: Colors.white.withValues(alpha: 0.64),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.90)),
                   ),
                   child: Column(
                     children: [

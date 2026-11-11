@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/quest_state.dart';
 import '../theme/app_theme.dart';
 import '../models/project.dart';
+import 'frosted_glass_background.dart';
 
 class HeroDashboardCard extends StatelessWidget {
   final QuestState state;
@@ -30,30 +31,13 @@ class HeroDashboardCard extends StatelessWidget {
           orElse: () => null,
         );
 
-    return Container(
+    return GlassSurface(
       margin: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.bgSecondary,
-            AppColors.bgPrimary.withValues(alpha: 0.9),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+      borderRadius: 22,
+      blurSigma: 14,
+      tintColor: AppColors.primary,
+      borderColor: Colors.white.withValues(alpha: 0.90),
+      borderWidth: 1.5,
       padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -314,9 +298,9 @@ class HeroDashboardCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.bgPrimary.withValues(alpha: 0.6),
+        color: Colors.white.withValues(alpha: 0.60),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.88)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -397,9 +381,9 @@ class HeroDashboardCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         decoration: BoxDecoration(
-          color: AppColors.bgPrimary.withValues(alpha: 0.4),
+          color: Colors.white.withValues(alpha: 0.56),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.85)),
         ),
         child: Column(
           children: [

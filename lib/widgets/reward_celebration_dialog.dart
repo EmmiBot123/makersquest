@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/quest_state.dart';
 import '../theme/app_theme.dart';
+import 'frosted_glass_background.dart';
 
 class RewardCelebrationDialog extends StatelessWidget {
   final RewardEvent event;
@@ -17,15 +18,18 @@ class RewardCelebrationDialog extends StatelessWidget {
     final isCompact = screenW < 420;
 
     return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       insetPadding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 40, vertical: 20),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: const BorderSide(color: AppColors.amber, width: 2),
-      ),
-      backgroundColor: AppColors.bgSecondary,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 440),
-        child: SingleChildScrollView(
+        child: GlassSurface(
+          borderRadius: 24,
+          blurSigma: 18,
+          tintColor: AppColors.amber,
+          borderColor: AppColors.amber.withValues(alpha: 0.72),
+          borderWidth: 2,
+          child: SingleChildScrollView(
           padding: EdgeInsets.all(isCompact ? 18 : 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -151,6 +155,7 @@ class RewardCelebrationDialog extends StatelessWidget {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),

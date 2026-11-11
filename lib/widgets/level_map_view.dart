@@ -6,6 +6,7 @@ import '../services/sound_effects.dart';
 import '../models/project.dart';
 import '../models/challenge.dart';
 import '../theme/app_theme.dart';
+import 'frosted_glass_background.dart';
 import 'level_map_painter.dart';
 
 enum RoadmapNodeType {
@@ -98,17 +99,13 @@ class _LevelMapViewState extends State<LevelMapView> {
 
     final isCompact = MediaQuery.sizeOf(context).width < 420;
 
-    return Container(
+    return GlassSurface(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: EdgeInsets.all(isCompact ? 12 : 16),
-      decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 16, offset: Offset(0, 6)),
-        ],
-      ),
+      borderRadius: 24,
+      blurSigma: 14,
+      tintColor: AppColors.primary,
+      borderColor: Colors.white.withValues(alpha: 0.90),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -366,11 +363,15 @@ class _LevelMapViewState extends State<LevelMapView> {
           width: w,
           height: totalCanvasHeight,
           decoration: BoxDecoration(
-            color: const Color(0xFFFAFBFC),
+            color: Colors.white.withValues(alpha: 0.56),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: const [
-              BoxShadow(color: Colors.black12, blurRadius: 16, offset: Offset(0, 6)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.88), width: 1.3),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
             ],
           ),
           child: ClipRRect(
@@ -496,15 +497,22 @@ class _LevelMapViewState extends State<LevelMapView> {
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: EdgeInsets.symmetric(horizontal: isTight ? 12 : 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: 0.88),
+              Colors.white.withValues(alpha: 0.68),
+            ],
+          ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isCurrent
                 ? AppColors.emerald
                 : isUnlocked
                     ? AppColors.primary.withValues(alpha: 0.5)
-                    : AppColors.border,
-            width: isCurrent ? 2 : 1,
+                    : Colors.white.withValues(alpha: 0.88),
+            width: isCurrent ? 2 : 1.2,
           ),
           boxShadow: [
             BoxShadow(

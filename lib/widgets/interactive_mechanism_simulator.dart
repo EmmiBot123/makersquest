@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/project.dart';
 import '../theme/app_theme.dart';
 import '../services/sound_effects.dart';
+import 'frosted_glass_background.dart';
 
 class InteractiveMechanismSimulator extends StatefulWidget {
   final Project project;
@@ -87,21 +88,14 @@ class _InteractiveMechanismSimulatorState extends State<InteractiveMechanismSimu
     final p = widget.project;
     final isNarrow = MediaQuery.sizeOf(context).width < 420;
 
-    return Container(
+    return GlassSurface(
       margin: const EdgeInsets.symmetric(vertical: 12),
       padding: EdgeInsets.all(isNarrow ? 12 : 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.4), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cyan.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      borderRadius: 20,
+      blurSigma: 12,
+      tintColor: AppColors.cyan,
+      borderColor: AppColors.cyan.withValues(alpha: 0.42),
+      borderWidth: 1.5,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

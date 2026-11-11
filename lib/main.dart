@@ -11,6 +11,7 @@ import 'widgets/project_card.dart';
 import 'widgets/project_detail_view.dart';
 import 'widgets/challenge_quiz_dialog.dart';
 import 'widgets/badges_grid_view.dart';
+import 'widgets/frosted_glass_background.dart';
 import 'widgets/maker_notebook_view.dart';
 import 'widgets/marketing_page_view.dart';
 import 'services/external_launcher.dart';
@@ -102,19 +103,21 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
           );
         }
 
-        // When enrolled: show NavigationRail (on desktop) or NavigationBar (on mobile)
-        return Scaffold(
-          appBar: _buildAppBar(context),
-          body: isDesktop
-              ? Row(
-                  children: [
-                    _buildNavigationRail(),
-                    const VerticalDivider(width: 1, color: AppColors.border),
-                    Expanded(child: _buildCurrentView(context)),
-                  ],
-                )
-              : _buildCurrentView(context),
-          bottomNavigationBar: isDesktop ? null : _buildBottomNavigationBar(),
+        // When enrolled: Frosted Cloud Backdrop + glassmorphic AppBar & navigation chrome
+        return FrostedCloudBackdrop(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: _buildAppBar(context),
+            body: isDesktop
+                ? Row(
+                    children: [
+                      _buildNavigationRail(),
+                      Expanded(child: _buildCurrentView(context)),
+                    ],
+                  )
+                : _buildCurrentView(context),
+            bottomNavigationBar: isDesktop ? null : _buildBottomNavigationBar(),
+          ),
         );
       },
     );
@@ -128,6 +131,10 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
     final isCompact = screenW < 480;
 
     return AppBar(
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      flexibleSpace: const GlassChromeBar(child: SizedBox.expand()),
       titleSpacing: isCompact ? 10 : null,
       title: InkWell(
         onTap: () {
@@ -426,10 +433,18 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
 
   Widget _buildNavigationRail() {
     final locked = !_questState.isEnrolled;
-    return NavigationRail(
-      selectedIndex: locked ? 5 : _currentNavIndex,
-      backgroundColor: Colors.white,
-      selectedIconTheme: const IconThemeData(color: AppColors.primary),
+    return GlassChromeBar(
+      border: Border(
+        right: BorderSide(
+          color: Colors.white.withValues(alpha: 0.85),
+          width: 1.2,
+        ),
+      ),
+      child: NavigationRail(
+        selectedIndex: locked ? 5 : _currentNavIndex,
+        backgroundColor: Colors.transparent,
+        indicatorColor: AppColors.primary.withValues(alpha: 0.14),
+        selectedIconTheme: const IconThemeData(color: AppColors.primary),
       unselectedIconTheme: const IconThemeData(color: AppColors.textMuted),
       selectedLabelTextStyle: const TextStyle(
         color: AppColors.primary,
@@ -473,16 +488,25 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
           label: Text(locked ? 'Enroll ₹199 🚀' : 'Curriculum'),
         ),
       ],
+      ),
     );
   }
 
   Widget _buildBottomNavigationBar() {
     final locked = !_questState.isEnrolled;
     final isTiny = MediaQuery.sizeOf(context).width < 380;
-    return NavigationBar(
-      selectedIndex: locked ? 5 : _currentNavIndex,
-      backgroundColor: AppColors.bgSecondary,
-      indicatorColor: AppColors.primary.withValues(alpha: 0.25),
+    return GlassChromeBar(
+      border: Border(
+        top: BorderSide(
+          color: Colors.white.withValues(alpha: 0.85),
+          width: 1.2,
+        ),
+      ),
+      child: NavigationBar(
+        selectedIndex: locked ? 5 : _currentNavIndex,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: AppColors.primary.withValues(alpha: 0.18),
       labelBehavior: isTiny ? NavigationDestinationLabelBehavior.onlyShowSelected : NavigationDestinationLabelBehavior.alwaysShow,
       onDestinationSelected: _onSelectNav,
       destinations: [
@@ -511,6 +535,7 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
           label: locked ? 'Enroll 🚀' : 'Academy',
         ),
       ],
+      ),
     );
   }
 
@@ -610,15 +635,15 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                   hintStyle: const TextStyle(fontSize: 13, color: AppColors.textDim),
                   prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textDim),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Colors.white.withValues(alpha: 0.72),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.90)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.90)),
                   ),
                 ),
               ),
@@ -638,13 +663,14 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
               ),
               const SizedBox(height: 10),
               // Interactive Upcycle Household Finder
-              Container(
+              GlassSurface(
+                borderRadius: 16,
+                blurSigma: 10,
+                tintColor: AppColors.cyan,
+                topOpacity: 0.74,
+                bottomOpacity: 0.54,
+                borderColor: AppColors.cyan.withValues(alpha: 0.35),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.cyanSoft,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
-                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -855,18 +881,17 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
           final isCompleted = _questState.userProgress.isChallengeCompleted(c.id);
           final score = _questState.userProgress.challengeScores[c.id];
 
-          return Card(
+          return GlassSurface(
             margin: const EdgeInsets.only(bottom: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: isCompleted ? AppColors.emerald : AppColors.border,
-                width: isCompleted ? 1.5 : 1,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+            borderRadius: 18,
+            blurSigma: 12,
+            tintColor: isCompleted ? AppColors.emerald : AppColors.primary,
+            borderColor: isCompleted
+                ? AppColors.emerald.withValues(alpha: 0.55)
+                : Colors.white.withValues(alpha: 0.90),
+            borderWidth: isCompleted ? 1.5 : 1.3,
+            padding: const EdgeInsets.all(16),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
@@ -982,8 +1007,7 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
                   ),
                 ],
               ),
-            ),
-          );
+            );
         }),
       ],
     );
@@ -1033,99 +1057,120 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
       context: context,
       builder: (ctx) {
         final screenW = MediaQuery.sizeOf(ctx).width;
-        return AlertDialog(
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           insetPadding: EdgeInsets.symmetric(horizontal: screenW < 480 ? 14 : 40, vertical: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: AppColors.bgSecondary,
-          title: const Row(
-            children: [
-              Text('🎨', style: TextStyle(fontSize: 22)),
-              SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Cadet Avatar Studio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textMain)),
-                    Text('Choose your MakerQuest persona', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: math.min(500.0, screenW - 48),
-            child: GridView.builder(
-              shrinkWrap: true,
-              itemCount: avatars.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: screenW < 520 ? 1 : 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                mainAxisExtent: 68,
-              ),
-              itemBuilder: (context, i) {
-                final item = avatars[i];
-                final isCurrent = _questState.currentUser.avatar == item['emoji'];
-                return InkWell(
-                  onTap: () {
-                    SoundEffects.playChime();
-                    _questState.updateAvatar(item['emoji']!);
-                    Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Avatar updated to ${item['emoji']} ${item['title']}!'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isCurrent ? AppColors.primarySoft : AppColors.bgSurface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isCurrent ? AppColors.primary : AppColors.border,
-                        width: isCurrent ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(item['emoji']!, style: const TextStyle(fontSize: 26)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                item['title']!,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                item['desc']!,
-                                style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: math.min(540.0, screenW - 28),
+              maxHeight: MediaQuery.sizeOf(ctx).height * 0.86,
+            ),
+            child: GlassSurface(
+              borderRadius: 24,
+              blurSigma: 18,
+              tintColor: AppColors.primary,
+              padding: EdgeInsets.all(screenW < 480 ? 16 : 22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Row(
+                    children: [
+                      Text('🎨', style: TextStyle(fontSize: 22)),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Cadet Avatar Studio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textMain)),
+                            Text('Choose your MakerQuest persona', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                          ],
                         ),
-                        if (isCurrent)
-                          const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 16),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Flexible(
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      itemCount: avatars.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: screenW < 520 ? 1 : 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        mainAxisExtent: 68,
+                      ),
+                      itemBuilder: (context, i) {
+                        final item = avatars[i];
+                        final isCurrent = _questState.currentUser.avatar == item['emoji'];
+                        return InkWell(
+                          onTap: () {
+                            SoundEffects.playChime();
+                            _questState.updateAvatar(item['emoji']!);
+                            Navigator.of(ctx).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Avatar updated to ${item['emoji']} ${item['title']}!'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isCurrent
+                                  ? AppColors.primarySoft.withValues(alpha: 0.85)
+                                  : Colors.white.withValues(alpha: 0.65),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isCurrent ? AppColors.primary : Colors.white.withValues(alpha: 0.9),
+                                width: isCurrent ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(item['emoji']!, style: const TextStyle(fontSize: 26)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        item['title']!,
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMain),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        item['desc']!,
+                                        style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isCurrent)
+                                  const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 16),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                );
-              },
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Close'),
-            ),
-          ],
         );
       },
     );
@@ -1142,67 +1187,86 @@ class _MakerQuestHomePageState extends State<MakerQuestHomePage> {
         return StatefulBuilder(
           builder: (dialogCtx, setDialogState) {
             final screenW = MediaQuery.sizeOf(dialogCtx).width;
-            return AlertDialog(
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
               insetPadding: EdgeInsets.symmetric(horizontal: screenW < 480 ? 14 : 40, vertical: 20),
-              title: const Text('Create New Cadet Profile'),
-              content: SizedBox(
-                width: math.min(420.0, screenW - 48),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        controller: nameCtrl,
-                        decoration: const InputDecoration(labelText: 'Cadet Name', hintText: 'e.g. Jordan Maker'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: emailCtrl,
-                        decoration: const InputDecoration(labelText: 'Student Email', hintText: 'jordan@makerquest.edu'),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        initialValue: selectedAvatar,
-                        decoration: const InputDecoration(labelText: 'Maker Avatar'),
-                        items: const [
-                          DropdownMenuItem(value: '🚀', child: Text('🚀 Rocket Pioneer')),
-                          DropdownMenuItem(value: '🤖', child: Text('🤖 Bot Builder')),
-                          DropdownMenuItem(value: '🦊', child: Text('🦊 Clever Fox')),
-                          DropdownMenuItem(value: '⚡', child: Text('⚡ Spark Inventor')),
-                          DropdownMenuItem(value: '🌻', child: Text('🌻 Solar Architect')),
-                        ],
-                        onChanged: (val) {
-                          setDialogState(() {
-                            selectedAvatar = val ?? '🚀';
-                          });
-                        },
-                      ),
-                    ],
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: math.min(440.0, screenW - 28)),
+                child: GlassSurface(
+                  borderRadius: 24,
+                  blurSigma: 18,
+                  tintColor: AppColors.cyan,
+                  padding: EdgeInsets.all(screenW < 480 ? 16 : 22),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Create New Cadet Profile',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textMain),
+                        ),
+                        const SizedBox(height: 14),
+                        TextField(
+                          controller: nameCtrl,
+                          decoration: const InputDecoration(labelText: 'Cadet Name', hintText: 'e.g. Jordan Maker'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: emailCtrl,
+                          decoration: const InputDecoration(labelText: 'Student Email', hintText: 'jordan@makerquest.edu'),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          initialValue: selectedAvatar,
+                          decoration: const InputDecoration(labelText: 'Maker Avatar'),
+                          items: const [
+                            DropdownMenuItem(value: '🚀', child: Text('🚀 Rocket Pioneer')),
+                            DropdownMenuItem(value: '🤖', child: Text('🤖 Bot Builder')),
+                            DropdownMenuItem(value: '🦊', child: Text('🦊 Clever Fox')),
+                            DropdownMenuItem(value: '⚡', child: Text('⚡ Spark Inventor')),
+                            DropdownMenuItem(value: '🌻', child: Text('🌻 Solar Architect')),
+                          ],
+                          onChanged: (val) {
+                            setDialogState(() {
+                              selectedAvatar = val ?? '🚀';
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 18),
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.of(dialogCtx).pop(),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                if (nameCtrl.text.trim().isEmpty || emailCtrl.text.trim().isEmpty) return;
+                                _questState.registerNewCadet(
+                                  name: nameCtrl.text.trim(),
+                                  email: emailCtrl.text.trim(),
+                                  avatar: selectedAvatar,
+                                );
+                                Navigator.of(dialogCtx).pop();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Welcome, ${nameCtrl.text.trim()}! +50 XP bonus awarded!')),
+                                );
+                              },
+                              child: const Text('Create Cadet'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogCtx).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (nameCtrl.text.trim().isEmpty || emailCtrl.text.trim().isEmpty) return;
-                    _questState.registerNewCadet(
-                      name: nameCtrl.text.trim(),
-                      email: emailCtrl.text.trim(),
-                      avatar: selectedAvatar,
-                    );
-                    Navigator.of(dialogCtx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Welcome, ${nameCtrl.text.trim()}! +50 XP bonus awarded!')),
-                    );
-                  },
-                  child: const Text('Create Cadet'),
-                ),
-              ],
             );
           },
         );

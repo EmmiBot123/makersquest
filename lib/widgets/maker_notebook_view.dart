@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/quest_state.dart';
 import '../models/project.dart';
 import '../theme/app_theme.dart';
+import 'frosted_glass_background.dart';
 import 'project_detail_view.dart';
 
 class MakerNotebookView extends StatefulWidget {
@@ -88,20 +89,12 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
     int challengesCount,
     int badgesCount,
   ) {
-    return Container(
+    return GlassSurface(
+      borderRadius: 20,
+      blurSigma: 14,
+      tintColor: AppColors.primary,
+      borderColor: Colors.white.withValues(alpha: 0.90),
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.bgCard,
-            AppColors.primary.withValues(alpha: 0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -273,18 +266,17 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
     final checklist = widget.state.userProgress.getChecklistFor(p.id);
     final steps = widget.state.userProgress.getStepsFor(p.id);
 
-    return Card(
+    return GlassSurface(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isDone ? AppColors.emerald.withValues(alpha: 0.4) : AppColors.border,
-          width: isDone ? 1.5 : 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      borderRadius: 18,
+      blurSigma: 12,
+      tintColor: isDone ? AppColors.emerald : AppColors.primary,
+      borderColor: isDone
+          ? AppColors.emerald.withValues(alpha: 0.55)
+          : Colors.white.withValues(alpha: 0.90),
+      borderWidth: isDone ? 1.5 : 1.3,
+      padding: const EdgeInsets.all(16),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Status & Level row
@@ -362,9 +354,9 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.bgPrimary,
+                  color: Colors.white.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.borderLight),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.88)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,7 +383,7 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
-                        color: Color(0xFFCBD5E1),
+                        color: AppColors.textMuted,
                         height: 1.4,
                       ),
                     ),
@@ -485,8 +477,7 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildEmptyState() {
@@ -534,23 +525,18 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
         final maxDialogH = MediaQuery.sizeOf(ctx).height * 0.88;
         return Dialog(
           backgroundColor: Colors.transparent,
+          elevation: 0,
           insetPadding: EdgeInsets.all(isCompact ? 12 : 16),
-          child: Container(
+          child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: 620, maxHeight: maxDialogH),
-            padding: EdgeInsets.all(isCompact ? 16 : 24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.amber, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.amber.withValues(alpha: 0.25),
-                  blurRadius: 24,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: Column(
+            child: GlassSurface(
+              isDark: true,
+              borderRadius: 24,
+              blurSigma: 18,
+              borderColor: AppColors.amber,
+              borderWidth: 2,
+              padding: EdgeInsets.all(isCompact ? 16 : 24),
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Flexible(
@@ -737,6 +723,7 @@ class _MakerNotebookViewState extends State<MakerNotebookView> {
                   ],
                 ),
               ],
+            ),
             ),
           ),
         );

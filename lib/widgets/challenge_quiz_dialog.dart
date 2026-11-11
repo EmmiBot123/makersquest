@@ -4,6 +4,7 @@ import '../models/challenge.dart';
 import '../services/quest_state.dart';
 import '../services/sound_effects.dart';
 import '../theme/app_theme.dart';
+import 'frosted_glass_background.dart';
 import 'reward_celebration_dialog.dart';
 
 class ChallengeQuizDialog extends StatefulWidget {
@@ -33,15 +34,24 @@ class _ChallengeQuizDialogState extends State<ChallengeQuizDialog> {
     final isDesktop = screenW >= 700;
 
     return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       insetPadding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 60 : 12,
         vertical: 16,
       ),
-      child: Container(
-        width: isDesktop ? 680 : double.infinity,
-        constraints: const BoxConstraints(maxHeight: 700),
-        padding: EdgeInsets.all(screenW < 420 ? 14 : 20),
-        child: _result != null ? _buildResultsView() : _buildQuizRunner(c),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isDesktop ? 680 : double.infinity,
+          maxHeight: 700,
+        ),
+        child: GlassSurface(
+          borderRadius: 24,
+          blurSigma: 18,
+          tintColor: AppColors.primary,
+          padding: EdgeInsets.all(screenW < 420 ? 14 : 20),
+          child: _result != null ? _buildResultsView() : _buildQuizRunner(c),
+        ),
       ),
     );
   }

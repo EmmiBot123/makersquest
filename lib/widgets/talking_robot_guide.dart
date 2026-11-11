@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../services/sound_effects.dart';
 import '../theme/app_theme.dart';
+import 'frosted_glass_background.dart';
 
 enum RobotMood {
   greeting,
@@ -911,13 +912,14 @@ class BoltsCustomizeToyBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassSurface(
+      borderRadius: 16,
+      blurSigma: 10,
+      tintColor: paintStyle.swatch,
+      topOpacity: 0.72,
+      bottomOpacity: 0.50,
+      borderColor: Colors.white.withValues(alpha: 0.88),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
       child: Wrap(
         spacing: 6,
         runSpacing: 6,
@@ -1161,23 +1163,15 @@ class _RobotSpeechBubbleState extends State<RobotSpeechBubble> {
 
     return GestureDetector(
       onTap: _skipTyping,
-      child: Container(
+      child: GlassSurface(
+        borderRadius: 18,
+        blurSigma: 10,
+        tintColor: widget.accentColor,
+        topOpacity: 0.82,
+        bottomOpacity: 0.62,
+        borderColor: widget.accentColor.withValues(alpha: 0.35),
+        borderWidth: 1.5,
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: widget.accentColor.withValues(alpha: 0.35),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: widget.accentColor.withValues(alpha: 0.08),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -1369,16 +1363,15 @@ class _ScrapToRobotWorkbenchState extends State<ScrapToRobotWorkbench>
     final hasStraws = _addedScraps.contains('straws');
     final hasBand = _addedScraps.contains('band');
 
-    return Container(
+    return GlassSurface(
+      isDark: true,
+      borderRadius: 20,
+      blurSigma: 14,
+      borderColor: allReady
+          ? AppColors.emerald.withValues(alpha: 0.72)
+          : Colors.white.withValues(alpha: 0.24),
+      borderWidth: 1.5,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: allReady ? AppColors.emerald : const Color(0xFF334155),
-          width: 1.5,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1914,20 +1907,13 @@ class _InteractiveMachinePlaygroundState
   Widget build(BuildContext context) {
     final activeIdx = widget.activeIndex;
 
-    return Container(
+    return GlassSurface(
+      borderRadius: 20,
+      blurSigma: 12,
+      tintColor: AppColors.primary,
+      borderColor: Colors.white.withValues(alpha: 0.90),
+      borderWidth: 1.5,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

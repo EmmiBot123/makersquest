@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import 'reward_celebration_dialog.dart';
 import 'interactive_mechanism_simulator.dart';
 import 'stem_infographics.dart';
+import 'frosted_glass_background.dart';
 
 class ProjectDetailView extends StatefulWidget {
   final Project project;
@@ -57,10 +58,15 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
     final isUnlocked = widget.state.isLevelUnlocked(p.levelRequired);
     final isNarrowTabs = MediaQuery.sizeOf(context).width < 620;
 
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      appBar: AppBar(
-        title: Text(
+    return FrostedCloudBackdrop(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: const GlassChromeBar(child: SizedBox.expand()),
+          title: Text(
           p.title,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
@@ -154,6 +160,7 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -185,13 +192,11 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
         const SizedBox(height: 16),
 
         // Supplies Checklist Header & Progress Bar
-        Container(
+        GlassSurface(
+          borderRadius: 16,
+          blurSigma: 12,
+          tintColor: pct == 1.0 ? AppColors.emerald : AppColors.primary,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.bgSecondary,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -346,20 +351,12 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
 
   // 🔬 Student STEM Concept Card Widget
   Widget _buildStemScienceCard(Project p) {
-    return Container(
+    return GlassSurface(
+      borderRadius: 18,
+      blurSigma: 12,
+      tintColor: AppColors.cyan,
+      borderColor: AppColors.cyan.withValues(alpha: 0.42),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha: 0.15),
-            AppColors.cyan.withValues(alpha: 0.12),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.35)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -466,12 +463,10 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
 
   // 👩‍🏫 Teacher & Parent Learning Guide Widget (NGSS Standards Aligned)
   Widget _buildTeacherParentGuideCard(Project p) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.bgSecondary,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
-      ),
+    return GlassSurface(
+      borderRadius: 16,
+      blurSigma: 10,
+      tintColor: AppColors.primary,
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
@@ -610,18 +605,16 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
         final step = p.steps[idx];
         final isDone = completedSteps.contains(step.stepNumber);
 
-        return Card(
+        return GlassSurface(
           margin: const EdgeInsets.only(bottom: 16),
-          color: isDone ? AppColors.emerald.withValues(alpha: 0.05) : AppColors.bgCard,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: isDone ? AppColors.emerald.withValues(alpha: 0.4) : AppColors.border,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+          borderRadius: 18,
+          blurSigma: 12,
+          tintColor: isDone ? AppColors.emerald : AppColors.primary,
+          borderColor: isDone
+              ? AppColors.emerald.withValues(alpha: 0.50)
+              : Colors.white.withValues(alpha: 0.90),
+          padding: const EdgeInsets.all(16),
+          child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Step header
@@ -738,7 +731,7 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: const TextStyle(fontSize: 11, color: Color(0xFFFDA4AF)),
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF9F1239)),
                               children: [
                                 const TextSpan(text: 'Safety Check: ', style: TextStyle(fontWeight: FontWeight.w700)),
                                 TextSpan(text: step.safetyNote),
@@ -752,7 +745,6 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
                 ],
               ],
             ),
-          ),
         );
       },
     );
@@ -768,18 +760,12 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
       padding: const EdgeInsets.all(16),
       children: [
         // Reward Hero Banner
-        Container(
+        GlassSurface(
+          borderRadius: 18,
+          blurSigma: 12,
+          tintColor: AppColors.primary,
+          borderColor: AppColors.primary.withValues(alpha: 0.35),
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withValues(alpha: 0.2),
-                AppColors.amber.withValues(alpha: 0.2),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -820,13 +806,11 @@ class _ProjectDetailViewState extends State<ProjectDetailView> with SingleTicker
         const SizedBox(height: 20),
 
         // Photo Preview / Picker
-        Container(
+        GlassSurface(
+          borderRadius: 16,
+          blurSigma: 10,
+          tintColor: AppColors.primary,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.bgSecondary,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderLight, style: BorderStyle.solid),
-          ),
           child: Column(
             children: [
               if (_selectedProofImage.isNotEmpty) ...[

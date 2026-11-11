@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/quest_state.dart';
 import '../theme/app_theme.dart';
+import 'frosted_glass_background.dart';
 
 class BadgesGridView extends StatelessWidget {
   final QuestState state;
@@ -36,18 +37,18 @@ class BadgesGridView extends StatelessWidget {
             final b = badges[idx];
             final isUnlocked = unlockedIds.contains(b.id);
 
-            return Card(
-              color: isUnlocked ? AppColors.bgSecondary : AppColors.bgSecondary.withValues(alpha: 0.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: isUnlocked ? AppColors.amber.withValues(alpha: 0.5) : AppColors.border,
-                  width: isUnlocked ? 1.5 : 1,
-                ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(cols <= 2 ? 12 : 14),
-                child: Column(
+            return GlassSurface(
+              borderRadius: 18,
+              blurSigma: 10,
+              tintColor: isUnlocked ? AppColors.amber : AppColors.primary,
+              topOpacity: isUnlocked ? 0.82 : 0.56,
+              bottomOpacity: isUnlocked ? 0.62 : 0.38,
+              borderColor: isUnlocked
+                  ? AppColors.amber.withValues(alpha: 0.60)
+                  : Colors.white.withValues(alpha: 0.82),
+              borderWidth: isUnlocked ? 1.5 : 1.2,
+              padding: EdgeInsets.all(cols <= 2 ? 12 : 14),
+              child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Icon circle
@@ -132,8 +133,7 @@ class BadgesGridView extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            );
+              );
           },
         );
       },

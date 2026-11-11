@@ -2,13 +2,15 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Vibrant, cheerful, student-friendly Light Palette
-  static const Color bgPrimary = Color(0xFFF8FAFC);     // Clean crisp slate-white background
-  static const Color bgSecondary = Color(0xFFFFFFFF);   // Pure white surface for cards & panels
-  static const Color bgCard = Color(0xFFFFFFFF);        // White elevated cards
-  static const Color bgSurface = Color(0xFFF1F5F9);     // Soft pill/container fill
-  static const Color border = Color(0xFFE2E8F0);        // Subtle clean border
-  static const Color borderLight = Color(0xFFCBD5E1);   // Light accent border
+  // Vibrant, cheerful, student-friendly Frosted Cloud Light Palette
+  static const Color bgPrimary = Color(0xFFEEF4FF);     // Soft luminous sky canvas fallback
+  static const Color bgSecondary = Color(0xCCFFFFFF);   // Frosted translucent white surface
+  static const Color bgCard = Color(0xC2FFFFFF);        // Translucent elevated frosted card
+  static const Color bgSurface = Color(0x99F1F5F9);     // Frosted soft pill/container fill
+  static const Color border = Color(0xB3CBD5E1);        // Subtle frosted rim divider
+  static const Color borderLight = Color(0xE6FFFFFF);   // Bright specular glass highlight rim
+  static const Color glassStroke = Color(0xDDFFFFFF);   // Specular top-left glass edge stroke
+  static const Color glassWhite = Color(0xB8FFFFFF);    // Standard frosted cloud glass fill
 
   static const Color primary = Color(0xFF4F46E5);        // Quest Indigo (Vibrant & Energetic)
   static const Color primaryLight = Color(0xFF4338CA);   // Deep readable indigo for light background
@@ -65,17 +67,18 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.bgCard,
-        elevation: 1.5,
-        shadowColor: Colors.black.withValues(alpha: 0.06),
+        elevation: 2,
+        shadowColor: AppColors.primary.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.border, width: 1.2),
+          side: const BorderSide(color: AppColors.glassStroke, width: 1.3),
         ),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xBDFFFFFF),
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 2,
+        scrolledUnderElevation: 1,
         centerTitle: false,
         iconTheme: IconThemeData(color: AppColors.textMain),
         titleTextStyle: TextStyle(
@@ -115,11 +118,13 @@ class AppTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: Colors.white,
-        elevation: 12,
+        backgroundColor: const Color(0xEAFFFFFF),
+        surfaceTintColor: Colors.transparent,
+        elevation: 14,
+        shadowColor: AppColors.primary.withValues(alpha: 0.14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppColors.border, width: 1),
+          side: const BorderSide(color: AppColors.glassStroke, width: 1.5),
         ),
       ),
       chipTheme: ChipThemeData(

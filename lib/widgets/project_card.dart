@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/project.dart';
 import '../services/quest_state.dart';
 import '../theme/app_theme.dart';
+import 'frosted_glass_background.dart';
 
 class ProjectCard extends StatelessWidget {
   final Project project;
@@ -24,20 +25,21 @@ class ProjectCard extends StatelessWidget {
     final totalMaterials = project.materialsList.length;
     final gatherPercent = totalMaterials > 0 ? checkedCount / totalMaterials : 0.0;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isCompleted
-              ? AppColors.amber.withValues(alpha: 0.5)
-              : (isUnlocked ? AppColors.border : AppColors.border.withValues(alpha: 0.3)),
-          width: isCompleted ? 1.5 : 1,
-        ),
-      ),
-      child: InkWell(
-        onTap: isUnlocked ? onOpen : null,
-        child: Padding(
+    return GlassSurface(
+      borderRadius: 18,
+      blurSigma: 10,
+      tintColor: isCompleted ? AppColors.amber : AppColors.primary,
+      borderColor: isCompleted
+          ? AppColors.amber.withValues(alpha: 0.55)
+          : (isUnlocked
+              ? Colors.white.withValues(alpha: 0.90)
+              : Colors.white.withValues(alpha: 0.50)),
+      borderWidth: isCompleted ? 1.5 : 1.2,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: isUnlocked ? onOpen : null,
+          child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,6 +225,7 @@ class ProjectCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
